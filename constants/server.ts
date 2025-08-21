@@ -2,4 +2,4 @@
 export const SERVER_URL = "https://mohaemoyong.store";
 
 // token
-export const TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxIiwiaWF0IjoxNzU1NzM5NDIzLCJleHAiOjE3NTU3NjEwMjN9.vUavbLDZvwLnqf2fl87QNRH6xJozH7VvllNRrLl9HQKWumBB_jkh56G9unINs60OaDWkgwJh5U42CVEMsT4Tww";
+export const TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIyIiwiaWF0IjoxNzU1NzYzMTAwLCJleHAiOjE3NTU3ODQ3MDB9._CqGdfEC-o_usXZGbl4I36gwkNPbvGcNkOaiW3COhM-hq6I4q4F1DSra1KAtAmU-xTAwXknyZpY1eo8uSh6vow";

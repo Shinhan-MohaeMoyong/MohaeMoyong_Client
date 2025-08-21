@@ -61,7 +61,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token =
         data = (await res.json()) as PlanEntity[];
       }
 
-             setPlans(prev => ({ ...prev, [friendId]: data }));
+    setPlans(prev => ({ ...prev, [friendId]: data }));
     } catch (e) {
       console.error('Failed to fetch plans:', e);
       setError(e);
@@ -92,6 +92,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token =
           const user = (await resCurrentUser.json()) as UserEntity;
           setCurrentUser(toUserDTO(user));
           console.log('currentUser!!:', user);
+
         }
 
         const res = await fetch(endpointFriends, {
@@ -104,7 +105,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token =
         const entities = (await res.json()) as FriendEntity[];
         // 서버엔 isNew 없음 → DTO 변환 후 기본 false
           data = toUserDTOList(entities);
-          console.log(data);
+          console.log('friends data:',data);
       }
 
              const mapped: UserDTO[] = await Promise.all(
@@ -138,7 +139,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token =
                   friendPlans = await dataFetchPlans();
                 } else {
                   // 실제 서버 통신
-                  const res = await fetch(`${serverUrl}/api/v1/friends/${friend.id}/plans/week`, {
+                  const res = await fetch(`${serverUrl}/api/v1/friends/${friend.id}/plans`, {
                     headers: {
                       "Content-Type": "application/json",
                       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -150,7 +151,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token =
                 
                                  // 친구 ID를 키로 해서 일정 저장
                  plansByFriend[friend.id] = friendPlans;
-                 console.log(plansByFriend);
+                 console.log('||| plansByFriend:',plansByFriend);
                } catch (e) {
                  console.error(`Failed to fetch plans for friend ${friend.id}:`, e);
                  // 에러 발생 시 빈 배열로 설정
@@ -172,6 +173,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token =
 
   useEffect(() => {
     fetchDatas();
+    console.log('useEffect currentPlan:', plans[currentUser?.id || 0]);
   }, [fetchDatas]);
 
   const onItemPress = useCallback((u: UserDTO) => {
@@ -180,7 +182,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token =
   }, []);
 
   const setCurrentUserTo = useCallback((user: UserDTO) => {
-    console.log("Setting current user to:", user.name);
+    console.log("|||||Setting current user to:", user.name);
     setCurrentUser(user);
   }, []);
 

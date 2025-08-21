@@ -36,13 +36,14 @@ export default function MohaeyoungScreen() {
   return (
           <View style={styles.container}>
               <View>
-                  <FriendsList
-                    friends={friends}
-                    loading={loading}
-                    errorText={error ? String(error) : null}
-                    onRefresh={refetch}
-                    onItemPress={onItemPress}
-                    numColumns={4}
+                                      <FriendsList
+                      friends={friends}
+                      loading={loading}
+                      errorText={error ? String(error) : null}
+                      onRefresh={refetch}
+                      onItemPress={onItemPress}
+                      numColumns={4}
+                      setCurrentUserTo={setCurrentUserTo}
                     />
               </View>
               {currentUser && (

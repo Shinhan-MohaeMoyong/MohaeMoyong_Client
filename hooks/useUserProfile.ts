@@ -1,4 +1,3 @@
-import { router } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { PROFILE_IMAGE_SIZE, PROFILE_RING_PADDING } from "../constants/layout";
 import type { UserDTO } from "../types/dto/UserDTO";
@@ -36,12 +35,13 @@ export function useUserProfile({ user, size = PROFILE_IMAGE_SIZE, onPress, enabl
     
     // currentUser를 클릭한 사용자로 설정
     setCurrentUserTo?.(user);
+    console.log('setCurrentUserTo:', user);
     
     // 네비게이션이 활성화되어 있으면 MohaeyoungScreen으로 이동
     if (enableNavigation) {
       console.log("Navigating to MohaeyoungScreen with user:", user.name);
       // 스택을 리셋하고 MohaeyoungScreen으로 이동
-      router.replace("/");
+      //router.replace("/");
     }
   }, [onPress, user, enableNavigation, setCurrentUserTo]);
 

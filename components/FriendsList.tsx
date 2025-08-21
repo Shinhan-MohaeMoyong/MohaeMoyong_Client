@@ -11,6 +11,7 @@ type Props = {
   onRefresh?: () => void;
   onItemPress?: (u: UserDTO) => void;
   numColumns?: number;
+  setCurrentUserTo?: (user: UserDTO) => void;
 };
 
 export default function FriendsList({
@@ -20,6 +21,7 @@ export default function FriendsList({
   onRefresh,
   onItemPress,
   numColumns = 4,
+  setCurrentUserTo,
 }: Props) {
   if (loading) {
     return (
@@ -54,6 +56,7 @@ export default function FriendsList({
           onPress={onItemPress}
           containerStyle={{ marginBottom: 16, marginRight: 16 }}
           enableNavigation={true}
+          setCurrentUserTo={setCurrentUserTo}
         />
       )}
       refreshing={loading}
