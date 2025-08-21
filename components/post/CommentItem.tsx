@@ -1,12 +1,21 @@
+import type { UserDTO } from '@/types/dto';
 import React from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import UserProfile from '../ui/UserProfile';
 
-export default function CommentItem({ user, time, text }: any) {
+type Props = {
+  user: string | UserDTO;
+  time: string;
+  text: string;
+};
+
+export default function CommentItem({ user, time, text }: Props) {
+  const userDto: UserDTO = typeof user === 'string' ? { id: 0, name: user, email: 'unknown@example.com', imageUrl: null } : user;
   return (
     <View style={styles.row}>
-      <Image source={{ uri: 'https://placehold.co/32x32' }} style={styles.avatar} />
+      <UserProfile user={userDto} size={32} showName={false} />
       <View style={{ flex: 1 }}>
-        <Text style={styles.user}>{user} <Text style={styles.time}>{time}</Text></Text>
+        <Text style={styles.user}>{userDto.name} <Text style={styles.time}>{time}</Text></Text>
         <Text>{text}</Text>
       </View>
     </View>
@@ -14,8 +23,7 @@ export default function CommentItem({ user, time, text }: any) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', marginVertical: 8 },
-  avatar: { width: 32, height: 32, borderRadius: 16, marginRight: 10 },
+  row: { flexDirection: 'row', marginVertical: 10, alignItems: 'flex-start', gap: 10 },
   user: { fontWeight: '600' },
   time: { fontSize: 12, color: '#777' }
 });

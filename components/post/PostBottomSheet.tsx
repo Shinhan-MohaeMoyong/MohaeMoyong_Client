@@ -1,5 +1,5 @@
 import type { PlanEntity } from "@/types/entity/PlanEntity";
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView, BottomSheetView } from "@gorhom/bottom-sheet";
+import { BottomSheetBackdrop, BottomSheetFooter, BottomSheetModal, BottomSheetScrollView, BottomSheetView } from "@gorhom/bottom-sheet";
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -73,6 +73,22 @@ export default function PostBottomSheet({
             />
             );
         }}
+      footerComponent={(footerProps) => (
+        <BottomSheetFooter {...footerProps} bottomInset={insets.bottom}>
+          <View
+            style={styles.footer}
+            onLayout={(e: any) => {
+              const h = e.nativeEvent.layout.height + 8;
+              if (Math.abs(footerHeightRef.current - h) > 1) {
+                footerHeightRef.current = h;
+                setFooterHeight(h);
+              }
+            }}
+          >
+            <CommentInput onFocusExpand={() => sheetRef.current?.snapToIndex(1)} />
+          </View>
+        </BottomSheetFooter>
+      )}
     >
       <BottomSheetView style={styles.sheetContent}>
         <BottomSheetScrollView
@@ -81,25 +97,20 @@ export default function PostBottomSheet({
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={true}
           indicatorStyle="black"
+          scrollIndicatorInsets={{ bottom: footerHeight + 8 }}
           bounces={true}
         >
-          <PostHeader />
+          
+          <PostHeader plan={plan} images={[
+            'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1200&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1558611848-73f7eb4001a1?q=80&w=1200&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1571907480495-3c4479d19f9a?q=80&w=1200&auto=format&fit=crop'
+          ]} description={'오늘은 등운동~!'} user={{ id: 1, name: '조현우', email: 'me@example.com', imageUrl: null }} />
+          
           {dummyComments.map((item) => (
             <CommentItem key={item.id} {...item} />
           ))}
         </BottomSheetScrollView>
-        <View
-          style={[styles.footer, { paddingBottom: 8 + insets.bottom }]}
-          onLayout={(e) => {
-            const h = e.nativeEvent.layout.height + 8; // include shadow/spacing
-            if (Math.abs(footerHeightRef.current - h) > 1) {
-              footerHeightRef.current = h;
-              setFooterHeight(h);
-            }
-          }}
-        >
-          <CommentInput onFocusExpand={() => sheetRef.current?.snapToIndex(1)} />
-        </View>
       </BottomSheetView>
     </BottomSheetModal>
   );
@@ -120,13 +131,8 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     minHeight: 0,
-    flex: 1,
   },
   footer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
     paddingHorizontal: 16,
     paddingBottom: 8,
     paddingTop: 6,
