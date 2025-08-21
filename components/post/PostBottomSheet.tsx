@@ -1,7 +1,8 @@
 import type { PlanEntity } from "@/types/entity/PlanEntity";
-import { BottomSheetBackdrop, BottomSheetFlatList, BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
-import React, { useEffect, useMemo, useRef } from 'react';
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView, BottomSheetView } from "@gorhom/bottom-sheet";
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CommentInput from './CommentInput';
 import CommentItem from './CommentItem';
 import PostHeader from './PostHeader';
@@ -43,7 +44,10 @@ export default function PostBottomSheet({
     onClose
 }: Props) {
   const sheetRef = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ['40%', '80%'], []);
+  const snapPoints = useMemo(() => ['35%', '70%', '95%'], []);
+  const insets = useSafeAreaInsets();
+  const [footerHeight, setFooterHeight] = useState(0);
+  const footerHeightRef = useRef(0);
 
   useEffect(() => {
     sheetRef.current?.present();
@@ -56,6 +60,9 @@ export default function PostBottomSheet({
       snapPoints={snapPoints}
       enablePanDownToClose={true}
       onDismiss={onClose}
+      // 입력창은 항상 표시
+      keyboardBehavior="extend"
+      keyboardBlurBehavior="restore"
       backdropComponent={(props) => {
         return (
             <BottomSheetBackdrop
@@ -67,26 +74,34 @@ export default function PostBottomSheet({
             );
         }}
     >
-      <BottomSheetScrollView style={{flex:1}}>
-    {/* 스크롤 영역 묶기 */}
-            <View style={{flex:1}}>
-            <PostHeader />
-            <BottomSheetFlatList
-                style={{flex:1}}
-                data={dummyComments}
-                keyExtractor={(item) => item.id}
-                renderItem={({item}) => <CommentItem {...item}/>}
-                contentContainerStyle={{paddingBottom:80}}
-            />
-            </View>
-
-    {/* 고정 입력창은 반드시 container 바깥 */}
-    
-  </BottomSheetScrollView>
-  <View style={styles.inputWrapper}>
-      <CommentInput/>
-    </View>
-</BottomSheetModal>
+      <BottomSheetView style={styles.sheetContent}>
+        <BottomSheetScrollView
+          style={styles.listContainer}
+          contentContainerStyle={{ paddingBottom: footerHeight + 8 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={true}
+          indicatorStyle="black"
+          bounces={true}
+        >
+          <PostHeader />
+          {dummyComments.map((item) => (
+            <CommentItem key={item.id} {...item} />
+          ))}
+        </BottomSheetScrollView>
+        <View
+          style={[styles.footer, { paddingBottom: 8 + insets.bottom }]}
+          onLayout={(e) => {
+            const h = e.nativeEvent.layout.height + 8; // include shadow/spacing
+            if (Math.abs(footerHeightRef.current - h) > 1) {
+              footerHeightRef.current = h;
+              setFooterHeight(h);
+            }
+          }}
+        >
+          <CommentInput onFocusExpand={() => sheetRef.current?.snapToIndex(1)} />
+        </View>
+      </BottomSheetView>
+    </BottomSheetModal>
   );
 }
 
@@ -96,14 +111,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingHorizontal: 16,
   },
-  
-  inputWrapper: {
-    position: 'absolute', // 👈 시트 하단 고정
+  sheetContent: {
+    flex: 1,
+    position: 'relative',
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    minHeight: 0,
+  },
+  listContainer: {
+    minHeight: 0,
+    flex: 1,
+  },
+  footer: {
+    position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingBottom: 8,
+    paddingTop: 6,
     backgroundColor: '#fff',
-  }
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#eee',
+  },
 });
