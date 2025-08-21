@@ -52,6 +52,7 @@ export default function WeekGrid({
   const pullProgress = useRef(new Animated.Value(0)).current;
   const pullSide = useRef<"left" | "right" | null>(null);
 
+
   const hours = useMemo(() => {
     const arr: number[] = [];
     for (let h = startHour; h <= endHour; h++) arr.push(h);

@@ -17,9 +17,6 @@ export default function MohaeyoungScreen() {
         closeBottomSheet 
     } = useBottomSheet();
 
-    console.log('currentUser:', currentUser?.name);
-    console.log('currentPlan:', plans[currentUser?.id || 0]);
-
     const { startDay, endDay } = getCurrentWeekRange();
     console.log('startDay:', startDay);
     console.log('endDay:', endDay);
@@ -52,7 +49,7 @@ export default function MohaeyoungScreen() {
                         plans={plans[currentUser.id] || []}
                         startDay={startDay}
                         endDay={endDay}
-                        startHour={9}
+                        startHour={5}
                         endHour={21}
                         hourHeight={60}
                         visibleDays={5}
