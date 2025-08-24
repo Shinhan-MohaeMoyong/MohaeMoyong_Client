@@ -3,9 +3,10 @@ import { SERVER_URL, TOKEN } from "@/constants/server";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { dataFetchFriends } from "../constants/localData/friendsListData";
 import { dataFetchPlans } from "../constants/localData/PlanData";
+import { useUser } from "../contexts/UserContext";
 import { toUserDTO, toUserDTOList } from "../mappers/userMapper";
 import type { UserDTO } from "../types/dto";
-import type { FriendEntity, PlanEntity, UserEntity } from "../types/entity";
+import type { FriendEntity, PlanEntity } from "../types/entity";
 
 type Options = {
   serverUrl?: string;
@@ -14,12 +15,21 @@ type Options = {
   currentUser?: UserDTO;
 };
 
-export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token = TOKEN }: Options = {}) {
+export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token = TOKEN, currentUser: initialCurrentUser }: Options = {}) {
   const [friends, setFriends] = useState<UserDTO[]>([]);
   const [plans, setPlans] = useState<Record<number, PlanEntity[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
-  const [currentUser, setCurrentUser] = useState<UserDTO | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserDTO | null>(initialCurrentUser || null);
+  const { loggedUser } = useUser();
+
+  // currentUser가 변경될 때마다 해당 사용자의 일정을 가져오기
+  useEffect(() => {
+    if (currentUser) {
+      console.log('currentUser Change : ', currentUser);
+      fetchPlans(currentUser.id);
+    }
+  }, [currentUser]);
 
   // 현재 주의 시작일과 끝일 계산 (월요일 ~ 일요일)
   const getCurrentWeekRange = useCallback(() => {
@@ -51,7 +61,8 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token =
         data = await dataFetchPlans();
       } else {
         // 2) 실 서버 통신
-        const res = await fetch(`${serverUrl}/api/v1/home/plans/week/myPlans`, {
+        const apiUrl = (friendId === loggedUser?.userId) ? `${serverUrl}/api/v1/home/plans/week/myPlans` : `${serverUrl}/api/v1/friends/${friendId}/plans`;
+        const res = await fetch(apiUrl, {
           headers: {
             "Content-Type": "application/json",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -70,6 +81,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token =
   }, [serverUrl, token, useMock]);
 
   const fetchDatas = useCallback(async () => {
+    setFriends([]);
     setLoading(true);
     setError(null);
     try {
@@ -79,24 +91,12 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token =
         // 1) 목 데이터
         data = await dataFetchFriends();
       } else {
-
-        console.log('currentUser:', currentUser);
-        if (!currentUser) {
-          console.log('currentUser is null');
-          const resCurrentUser = await fetch(`${serverUrl}/user/me`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-          });
-          if (!resCurrentUser.ok) throw new Error(`HTTP ${resCurrentUser.status}`);
-          const user = (await resCurrentUser.json()) as UserEntity;
-          fetchPlans(user.userId);
-          setCurrentUser(toUserDTO(user));
-          setFriends(prev => [...prev, toUserDTO(user)]);
+        // loggedUser를 friends에 추가 (중복 방지)
+        if (loggedUser) {
+          const userDTO = toUserDTO(loggedUser);
+          setFriends(prev => [userDTO]);
         }
-
+        
         const res = await fetch(endpointFriends, {
           headers: {
             "Content-Type": "application/json",
@@ -169,14 +169,18 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token =
     } finally {
       setLoading(false);
     }
-  }, [endpointFriends, serverUrl, token, useMock]);
-
-
+  }, [endpointFriends, serverUrl, token, useMock]); // loggedUser 의존성 제거
 
   useEffect(() => {
-    fetchDatas();
+    // loggedUser가 있을 때만 fetchDatas 호출
+    if (loggedUser) {
+      fetchDatas();
+    }
+  }, [loggedUser, fetchDatas]);
+
+  useEffect(() => {
     console.log('useEffect currentPlan:', plans[currentUser?.id || 0]);
-  }, [fetchDatas]);
+  }, [plans, currentUser]);
 
   useEffect(() => {
     console.log('useEffect currentUser:', currentUser);
@@ -195,8 +199,6 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token =
     console.log("|||||Setting current user to:", user.name);
     setCurrentUser(user);
   }, []);
-
-
 
   return {
     currentUser,
