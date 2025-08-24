@@ -15,12 +15,18 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadingComplete }) => {
   const [showLogin, setShowLogin] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const { login } = useUser();
+  const didInit = React.useRef(false);
 
   useEffect(() => {
+    if (didInit.current) return;
+    didInit.current = true;
     if (!showLogin && !isInitialized) {
       initializeApp();
     }
-  }, [showLogin, isInitialized]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
 
   const initializeApp = async () => {
     try {
@@ -42,6 +48,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadingComplete }) => {
         setLoadingText('로그인 완료!');
         
         // 전역 상태에 사용자 정보와 토큰 설정
+        console.log('initializeApp login 호출');
         login(userData, TOKEN);
         
         // 초기화 완료 표시
@@ -75,8 +82,13 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadingComplete }) => {
     updateToken(token);
     setShowLogin(false);
     setError(null);
-    // 로그인 성공 후 다시 초기화
-    initializeApp();
+    
+    // 로그인 성공 후 바로 로딩 완료 콜백 호출 (initializeApp 재호출 제거)
+    setTimeout(() => {
+      if (onLoadingComplete) {
+        onLoadingComplete();
+      }
+    }, 1000);
   };
 
   // 로그인 화면 표시

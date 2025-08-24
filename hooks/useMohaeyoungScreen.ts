@@ -169,18 +169,12 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token =
     } finally {
       setLoading(false);
     }
-  }, [endpointFriends, serverUrl, token, useMock]); // loggedUser 의존성 제거
+  }, [endpointFriends, serverUrl, token, useMock, loggedUser]);
 
   useEffect(() => {
-    // loggedUser가 있을 때만 fetchDatas 호출
-    if (loggedUser) {
-      fetchDatas();
-    }
-  }, [loggedUser, fetchDatas]);
-
-  useEffect(() => {
+    fetchDatas();
     console.log('useEffect currentPlan:', plans[currentUser?.id || 0]);
-  }, [plans, currentUser]);
+  }, [fetchDatas]);
 
   useEffect(() => {
     console.log('useEffect currentUser:', currentUser);

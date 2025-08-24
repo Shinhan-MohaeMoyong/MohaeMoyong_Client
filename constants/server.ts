@@ -2,7 +2,7 @@
 export const SERVER_URL = "https://mohaemoyong.store";
 
 // 토큰 관리
-let currentToken = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIyIiwiaWF0IjoxNzU1OTY1OTMxLCJleHAiOjE3NTU5ODc1MzF9.crYN0p4LUlu8GCyUrShsgR5OC6CA5ICXmAgdBmJ_0bjWlaHP_Y_Ps5EG4efjWYuaC9I8-xO0qe0OS7d-6mccQQ";
+let currentToken = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIyIiwiaWF0IjoxNzU2MDEwMTI4LCJleHAiOjE3NTYwMzE3Mjh9.X4bLdKCpd23fF8dxGR7IjiU3EcXTADXTtNGfSlYqfGuvsXW6IZnwWA-hA0OKcfAeTbIMwp0JA9UXoAspoZ3gvg";
 
 export const TOKEN = currentToken;
 
