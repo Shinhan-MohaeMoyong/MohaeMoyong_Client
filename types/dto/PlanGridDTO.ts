@@ -8,4 +8,5 @@ export type PlanGridDTO = {
     width: number;
     height: number;
   };
+  isNew: boolean;
 };

@@ -18,13 +18,19 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadingComplete }) => {
   const didInit = React.useRef(false);
 
   useEffect(() => {
+    // 이미 초기화가 완료되었거나 로그인 화면을 보여주고 있다면 실행하지 않음
+    if (isInitialized || showLogin) return;
+    
+    // didInit 체크로 중복 실행 방지
     if (didInit.current) return;
+    
+    console.log('LoadingScreen initializeApp');
+    console.log('isInitialized', isInitialized);
+    console.log('showLogin', showLogin);
+    console.log('didInit', didInit.current);
     didInit.current = true;
-    if (!showLogin && !isInitialized) {
-      initializeApp();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    initializeApp();
+  }, [isInitialized]);
 
 
 

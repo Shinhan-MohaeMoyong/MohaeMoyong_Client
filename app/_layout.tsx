@@ -10,6 +10,7 @@ export default function RootLayout() {
         <BottomSheetModalProvider>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index"></Stack.Screen>
+            <Stack.Screen name="add-plan"></Stack.Screen>
           </Stack>
         </BottomSheetModalProvider>
       </GestureHandlerRootView>
