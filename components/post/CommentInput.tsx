@@ -1,26 +1,47 @@
 import { Ionicons } from '@expo/vector-icons';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import React from 'react';
-import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { Platform, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { useUser } from '../../contexts/UserContext';
 
-export default function CommentInput() {
+type Props = {
+  onFocusExpand?: () => void;
+};
+
+const CommentInput: React.FC<Props> = ({ onFocusExpand }) => {
+  const { loggedUser } = useUser();
+  const BSInput = Platform.OS === 'web' ? TextInput : BottomSheetTextInput;
+
+
   return (
     <View style={styles.wrapper}>
-      <TextInput
+      <BSInput
         placeholder="댓글 작성"
         style={styles.input}
+        onFocus={onFocusExpand}
       />
       <TouchableOpacity style={styles.btn}>
         <Ionicons name="send" size={20} color="#fff" />
       </TouchableOpacity>
     </View>
   );
-}
+};
+
+export default CommentInput;
 
 const styles = StyleSheet.create({
   wrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
+  },
+  userInfo: {
+    marginRight: 8,
+  },
+  username: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '500',
   },
   input: {
     flex: 1,

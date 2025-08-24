@@ -1,24 +1,31 @@
 // src/screens/MohaeyoungScreen.tsx
 import PostBottomSheet from "@/components/post/PostBottomSheet";
-import React from "react";
+import React, { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import FriendsList from "../components/FriendsList";
 import WeekGrid from "../components/WeekGrid";
-import { useBottomSheet } from "../hooks/useBottomSheet";
+import { useUser } from "../contexts/UserContext";
 import { useMohaeyoung } from "../hooks/useMohaeyoungScreen";
+import { usePostBottomSheet } from "../hooks/usePostBottomSheet";
 import type { PlanEntity } from "../types";
 
 export default function MohaeyoungScreen() {
-    const { currentUser, friends, plans, loading, error, getCurrentWeekRange, refetch, onItemPress, setCurrentUserTo } = useMohaeyoung();
+    const { loggedUser } = useUser();
+    const { currentUser, friends, plans, loading, error, getCurrentWeekRange, refetch, onItemPress, setCurrentUserTo } = useMohaeyoung({
+        currentUser: loggedUser ? {
+            id: loggedUser.userId,
+            name: loggedUser.username,
+            email: loggedUser.email,
+            imageUrl: loggedUser.imageUrl,
+            isNew: false
+        } : undefined
+    });
     const { 
         isVisible, 
         selectedPlan, 
         openBottomSheet, 
         closeBottomSheet 
-    } = useBottomSheet();
-
-    console.log('currentUser:', currentUser?.name);
-    console.log('currentPlan:', plans[currentUser?.id || 0]);
+    } = usePostBottomSheet();
 
     const { startDay, endDay } = getCurrentWeekRange();
     console.log('startDay:', startDay);
@@ -33,26 +40,40 @@ export default function MohaeyoungScreen() {
         // TODO: 주 변경 시 startDay, endDay 업데이트 로직 추가
     };
 
-  return (
-          <View style={styles.container}>
-              <View>
-                                      <FriendsList
-                      friends={friends}
-                      loading={loading}
-                      errorText={error ? String(error) : null}
-                      onRefresh={refetch}
-                      onItemPress={onItemPress}
-                      numColumns={4}
-                      setCurrentUserTo={setCurrentUserTo}
-                    />
-              </View>
-              {currentUser && (
+    // loggedUser가 변경될 때마다 currentUser 업데이트
+    useEffect(() => {
+        if (loggedUser && setCurrentUserTo) {
+            const userDTO = {
+                id: loggedUser.userId,
+                name: loggedUser.username,
+                email: loggedUser.email,
+                imageUrl: loggedUser.imageUrl,
+                isNew: false
+            };
+            setCurrentUserTo(userDTO);
+        }
+    }, [loggedUser, setCurrentUserTo]);
+
+    return (
+        <View style={styles.container}>
+            <View>
+                <FriendsList
+                    friends={friends}
+                    loading={loading}
+                    errorText={error ? String(error) : null}
+                    onRefresh={refetch}
+                    onItemPress={onItemPress}
+                    numColumns={4}
+                    setCurrentUserTo={setCurrentUserTo}
+                />
+            </View>
+            {currentUser && (
                 <View style={styles.weekGridContainer}>
                     <WeekGrid
                         plans={plans[currentUser.id] || []}
                         startDay={startDay}
                         endDay={endDay}
-                        startHour={9}
+                        startHour={5}
                         endHour={21}
                         hourHeight={60}
                         visibleDays={5}
@@ -60,19 +81,18 @@ export default function MohaeyoungScreen() {
                         onPressPlan={handlePlanPress}
                     />
                 </View>
-              )}
-              
-              {
+            )}
+            
+            {
                 selectedPlan && (
                     <PostBottomSheet
-                    plan={selectedPlan}
-                    onClose={closeBottomSheet}/>
+                        plan={selectedPlan}
+                        onClose={closeBottomSheet}/>
                 )
-              }
-              
-          </View>
-      
-  );
+            }
+            
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({

@@ -42,15 +42,17 @@ const styles = StyleSheet.create({
   },
   inner: {
     gap: 2,
+    marginTop:-2,
+    marginLeft:-2
   },
   title: {
-    fontSize: 13,
+    fontSize: 9,
     fontWeight: "800",
     color: "#fff",
     includeFontPadding: false,
   },
   meta: {
-    fontSize: 11,
+    fontSize: 8,
     fontWeight: "600",
     color: "rgba(255,255,255,0.9)",
     includeFontPadding: false,

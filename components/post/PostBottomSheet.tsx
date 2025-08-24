@@ -1,7 +1,8 @@
 import type { PlanEntity } from "@/types/entity/PlanEntity";
-import { BottomSheetBackdrop, BottomSheetFlatList, BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
-import React, { useEffect, useMemo, useRef } from 'react';
+import { BottomSheetBackdrop, BottomSheetFooter, BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CommentInput from './CommentInput';
 import CommentItem from './CommentItem';
 import PostHeader from './PostHeader';
@@ -43,7 +44,11 @@ export default function PostBottomSheet({
     onClose
 }: Props) {
   const sheetRef = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ['40%', '80%'], []);
+  const snapPoints = useMemo(() => ['35%', '70%', '95%'], []);
+  const insets = useSafeAreaInsets();
+  const [footerHeight, setFooterHeight] = useState(0);
+  const footerHeightRef = useRef(0);
+  
 
   useEffect(() => {
     sheetRef.current?.present();
@@ -56,6 +61,9 @@ export default function PostBottomSheet({
       snapPoints={snapPoints}
       enablePanDownToClose={true}
       onDismiss={onClose}
+      // 입력창은 항상 표시
+      keyboardBehavior="extend"
+      keyboardBlurBehavior="restore"
       backdropComponent={(props) => {
         return (
             <BottomSheetBackdrop
@@ -66,27 +74,50 @@ export default function PostBottomSheet({
             />
             );
         }}
-    >
-      <BottomSheetScrollView style={{flex:1}}>
-    {/* 스크롤 영역 묶기 */}
-            <View style={{flex:1}}>
-            <PostHeader />
-            <BottomSheetFlatList
-                style={{flex:1}}
-                data={dummyComments}
-                keyExtractor={(item) => item.id}
-                renderItem={({item}) => <CommentItem {...item}/>}
-                contentContainerStyle={{paddingBottom:80}}
-            />
+        footerComponent={(footerProps) => (
+          <BottomSheetFooter {...footerProps} bottomInset={insets.bottom}>
+            <View
+              style={styles.footer}
+              onLayout={(e: any) => {
+                // ✅ 푸터 실제 높이 + safe area inset 을 합산
+                const measured = e.nativeEvent.layout.height;
+                const h = measured + insets.bottom;   // <- 핵심
+                if (Math.abs(footerHeightRef.current - h) > 1) {
+                  footerHeightRef.current = h;
+                  setFooterHeight(h);
+                }
+              }}
+            >
+              <CommentInput onFocusExpand={() => sheetRef.current?.snapToIndex(1)} />
             </View>
-
-    {/* 고정 입력창은 반드시 container 바깥 */}
-    
-  </BottomSheetScrollView>
-  <View style={styles.inputWrapper}>
-      <CommentInput/>
-    </View>
-</BottomSheetModal>
+          </BottomSheetFooter>
+        )}
+      >
+        <BottomSheetScrollView
+          style={styles.listContainer}
+          contentContainerStyle={{ paddingBottom: footerHeight }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={true}
+          indicatorStyle="black"
+          scrollIndicatorInsets={{ bottom: footerHeight}}
+          bounces={true}
+        >
+          <PostHeader 
+            plan={plan} 
+            images={[
+              'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1200&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1558611848-73f7eb4001a1?q=80&w=1200&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1571907480495-3c4479d19f9a?q=80&w=1200&auto=format&fit=crop'
+            ]} 
+            description={'오늘은 등운동~!'} 
+            user={{ id: 1, name: '조현우', email: 'me@example.com', imageUrl: null }} 
+          />
+          
+          {dummyComments.map((item) => (
+            <CommentItem key={item.id} {...item} />
+          ))}
+        </BottomSheetScrollView>
+    </BottomSheetModal>
   );
 }
 
@@ -96,14 +127,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingHorizontal: 16,
   },
-  
-  inputWrapper: {
-    position: 'absolute', // 👈 시트 하단 고정
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+  sheetContent: {
+    flex: 1,
+    position: 'relative',
     backgroundColor: '#fff',
-  }
+    paddingHorizontal: 16,
+    minHeight: 0,
+  },
+  listContainer: {
+    flex: 1,
+    minHeight: 0,
+  },
+  footer: {
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    paddingTop: 6,
+    backgroundColor: '#fff',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#eee',
+  },
 });
