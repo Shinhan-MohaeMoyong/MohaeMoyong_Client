@@ -4,7 +4,7 @@ export type PlanDetailEntity = {
   authorName: string[];
   title: string;
   content: string;
-  imageUrl: string;
+  photos: PhotoPostEntity[];
   place: string;
   startTime: string;
   endTime: string;
@@ -13,4 +13,12 @@ export type PlanDetailEntity = {
   savingsAmount: number;
   privacyLevel: 'PUBLIC' | 'PRIVATE' | 'FRIENDS_ONLY';
   commentCount: number;
+};
+
+export type PhotoPostEntity = {
+  photoId: number;
+  url: string;
+  orderNo: number;
+  width: number;
+  height: number;
 };

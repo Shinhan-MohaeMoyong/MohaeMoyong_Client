@@ -1,4 +1,5 @@
 import type { UserDTO } from '@/types/dto';
+import type { PlanDetailEntity } from '@/types/entity/PlanDetailEntity';
 import type { PlanEntity } from '@/types/entity/PlanEntity';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
@@ -7,12 +8,15 @@ import UserProfile from '../ui/UserProfile';
 
 type Props = {
   plan: PlanEntity;
+  planDetail?: PlanDetailEntity | null;
+  isLoadingDetail?: boolean;
   images?: string[];
   description?: string;
   user?: UserDTO;
+  loggedUser?: UserDTO;
 };
 
-export default function PostHeader({ plan, images = [], description, user }: Props) {
+export default function PostHeader({ plan, planDetail, isLoadingDetail, images = [], description, user, loggedUser }: Props) {
   const [current, setCurrent] = useState(0);
   const [imageWidth, setImageWidth] = useState(0);
   const hasImages = images.length > 0;
@@ -33,7 +37,9 @@ export default function PostHeader({ plan, images = [], description, user }: Pro
             <Text style={styles.time}>5시간 전</Text>
           </View>
         </View>
-        <Ionicons name="ellipsis-horizontal" size={22} color="#333" />
+        {loggedUser && planDetail?.authorId?.includes(loggedUser.id) && (
+          <Ionicons name="ellipsis-horizontal" size={22} color="#333" />
+        )}
       </View>
 
       {/* 본문 2열 레이아웃 */}
@@ -77,11 +83,35 @@ export default function PostHeader({ plan, images = [], description, user }: Pro
 
         {/* 우측: 일정 정보 카드 + 상세 카드 */}
         <View style={styles.rightCol}>
-          <View style={[styles.card, styles.infoCard]}>
-            <Text style={styles.cardTitle}>{plan.title}</Text>
+          <View style={[
+            styles.card, 
+            planDetail?.completed ? styles.completedInfoCard : styles.infoCard
+          ]}>
+            {/* 완료된 일정 표시 배지 */}
+            {planDetail?.completed && (
+              <View style={styles.completedBadge}>
+                <Text style={styles.completedBadgeText}>종료된 일정</Text>
+              </View>
+            )}
+            
+            <Text style={[
+              styles.cardTitle,
+              planDetail?.completed && styles.completedCardTitle
+            ]}>
+              {plan.title}
+            </Text>
             <View style={styles.placeRow}>
-              <Ionicons name="location-outline" size={16} color="#3B3B3B" />
-              <Text style={styles.placeText}>{plan.place}</Text>
+              <Ionicons 
+                name="location-outline" 
+                size={16} 
+                color={planDetail?.completed ? "#999" : "#3B3B3B"} 
+              />
+              <Text style={[
+                styles.placeText,
+                planDetail?.completed && styles.completedPlaceText
+              ]}>
+                {plan.place}
+              </Text>
             </View>
           </View>
 
@@ -107,8 +137,8 @@ export default function PostHeader({ plan, images = [], description, user }: Pro
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginVertical: 12,
-    gap: 12,
+    marginVertical: 8,
+    gap: 8,
   },
   headerRow: {
     flexDirection: 'row',
@@ -120,9 +150,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  avatar: { width: 40, height: 40, borderRadius: 20 },
-  name: { fontWeight: '700', fontSize: 15 },
-  time: { fontSize: 12, color: '#777' },
+  avatar: { width: 32, height: 32, borderRadius: 16 },
+  name: { fontWeight: '700', fontSize: 13 },
+  time: { fontSize: 11, color: '#777' },
 
   contentRow: {
     flexDirection: 'row',
@@ -142,11 +172,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#eee',
   },
   imagePlaceholder: {
-    height: 220,
+    height: 160,
   },
   postImage: {
     width: '100%',
-    height: 220,
+    height: 160,
     resizeMode: 'cover',
   },
   carouselBadge: {
@@ -179,25 +209,48 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 12,
+    padding: 10,
   },
   infoCard: {
     backgroundColor: '#E5E4FF',
+  },
+  completedInfoCard: {
+    backgroundColor: '#F5F5F5',
+  },
+  completedBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: '#FF3B30',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  completedBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  completedCardTitle: {
+    color: '#999',
+  },
+  completedPlaceText: {
+    color: '#999',
   },
   descCard: {
     backgroundColor: '#EEF2F6',
   },
   cardTitle: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '800',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   placeRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  placeText: { fontSize: 14, color: '#3B3B3B' },
-  descText: { fontSize: 14, color: '#333' },
-  commentHeader: { marginTop: 12 },
-  separator: { height: 1, backgroundColor: '#EDEDED', marginBottom: 8 },
+  placeText: { fontSize: 12, color: '#3B3B3B' },
+  descText: { fontSize: 12, color: '#333' },
+  commentHeader: { marginTop: 8 },
+  separator: { height: 1, backgroundColor: '#EDEDED', marginBottom: 6 },
   commentCountRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  commentCountText: { color: '#333' },
+  commentCountText: { color: '#333', fontSize: 12 },
 });

@@ -1,3 +1,4 @@
+import { usePostBottomSheet } from '@/hooks/usePostBottomSheet';
 import type { PlanEntity } from "@/types/entity/PlanEntity";
 import { BottomSheetBackdrop, BottomSheetFooter, BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -49,6 +50,8 @@ export default function PostBottomSheet({
   const [footerHeight, setFooterHeight] = useState(0);
   const footerHeightRef = useRef(0);
   
+  // usePostBottomSheet 훅 사용
+  const { planDetail, isLoadingDetail } = usePostBottomSheet();
 
   useEffect(() => {
     sheetRef.current?.present();
@@ -104,18 +107,22 @@ export default function PostBottomSheet({
         >
           <PostHeader 
             plan={plan} 
-            images={[
-              'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1200&auto=format&fit=crop',
-              'https://images.unsplash.com/photo-1558611848-73f7eb4001a1?q=80&w=1200&auto=format&fit=crop',
-              'https://images.unsplash.com/photo-1571907480495-3c4479d19f9a?q=80&w=1200&auto=format&fit=crop'
-            ]} 
-            description={'오늘은 등운동~!'} 
+            planDetail={planDetail}
+            isLoadingDetail={isLoadingDetail}
+            images={planDetail?.photos?.map(photo => photo.url) || []} 
+            description={planDetail?.content || '설명 없음'} 
             user={{ id: 1, name: '조현우', email: 'me@example.com', imageUrl: null }} 
+            loggedUser={{ id: 1, name: '조현우', email: 'me@example.com', imageUrl: null }}
           />
           
-          {dummyComments.map((item) => (
-            <CommentItem key={item.id} {...item} />
-          ))}
+                     {dummyComments.map((item) => (
+             <CommentItem 
+               key={item.id} 
+               {...item} 
+               loggedUser={{ id: 1, name: '조현우', email: 'me@example.com', imageUrl: null }}
+               isAfterPlanEnd={planDetail?.completed}
+             />
+           ))}
         </BottomSheetScrollView>
     </BottomSheetModal>
   );

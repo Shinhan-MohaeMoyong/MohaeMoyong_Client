@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Alert, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { SERVER_URL } from '../constants/server';
 import { useUser } from '../contexts/UserContext';
@@ -15,10 +15,101 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const webViewRef = useRef<WebView>(null);
 
+  // 웹 환경 감지
+  const isWeb = Platform.OS === 'web' || (typeof window !== 'undefined' && typeof localStorage !== 'undefined');
+
+  // 웹에서 메시지 수신 리스너 설정
+  React.useEffect(() => {
+    if (isWeb && typeof window !== 'undefined') {
+      const messageListener = (event: MessageEvent) => {
+        // 카카오 로그인 팝업에서 온 메시지인지 확인
+        if (event.data && (event.data.token || event.data.access_token)) {
+          console.log('팝업에서 토큰 받음:', event.data);
+          const token = event.data.token || event.data.access_token;
+          handleLoginSuccess(token);
+        }
+      };
+
+      window.addEventListener('message', messageListener);
+      
+      return () => {
+        window.removeEventListener('message', messageListener);
+      };
+    }
+  }, [isWeb]);
+
   const handleKakaoLogin = () => {
-    // 로그인 상태 초기화
-    setIsLoggedIn(false);
-    setShowWebView(true);
+    if (isWeb) {
+      // 웹에서는 새 창으로 열기
+      const loginUrl = `${SERVER_URL}/oauth2/authorization/kakao`;
+      const popup = window.open(loginUrl, 'kakaoLogin', 'width=500,height=600,scrollbars=yes,resizable=yes');
+      
+      if (popup) {
+        // 팝업 창이 로드된 후 토큰을 찾는 간단한 방법
+        const checkToken = setInterval(() => {
+          try {
+            if (popup.closed) {
+              clearInterval(checkToken);
+              return;
+            }
+
+            // 팝업 창에 토큰 추출 요청 메시지 전송
+            popup.postMessage({
+              type: 'EXTRACT_TOKEN',
+              action: 'findToken'
+            }, SERVER_URL);
+
+          } catch (error) {
+            console.error('팝업 체크 에러:', error);
+          }
+        }, 1000);
+
+        // 30초 후 체크 중단
+        setTimeout(() => {
+          clearInterval(checkToken);
+        }, 30000);
+
+        // 팝업이 닫힐 때 정리
+        const checkClosed = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(checkClosed);
+          }
+        }, 1000);
+      }
+    } else {
+      // 모바일에서는 WebView 모달 열기
+      setIsLoggedIn(false);
+      setShowWebView(true);
+    }
+  };
+
+  const handleLoginSuccess = (token: string) => {
+    if (isLoggedIn) return; // 중복 로그인 방지
+    
+    setIsLoggedIn(true);
+    
+    // 임시 사용자 정보 생성 (실제로는 서버에서 받아야 함)
+    const tempUser: UserEntity = {
+      userId: 1,
+      username: '카카오 사용자',
+      userkey: 'kakao_user',
+      email: 'kakao@example.com',
+      imageUrl: 'https://example.com/profile.jpg',
+    };
+    
+    // UserContext에 로그인 정보 저장
+    login(tempUser, token);
+    
+    Alert.alert('로그인 성공', `토큰: ${token}`);
+    console.log('받은 토큰:', token);
+    
+    // WebView 닫기
+    setShowWebView(false);
+    
+    // 로그인 성공 콜백 호출
+    if (onLoginSuccess) {
+      onLoginSuccess(token);
+    }
   };
 
   const handleWebViewMessage = (event: any) => {
@@ -28,32 +119,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       
       if ((data.token || data.access_token) && !isLoggedIn) {
         const token = data.token || data.access_token;
-        
-        // 중복 로그인 방지
-        setIsLoggedIn(true);
-        
-        // 임시 사용자 정보 생성 (실제로는 서버에서 받아야 함)
-        const tempUser: UserEntity = {
-          userId: 1,
-          username: '카카오 사용자',
-          userkey: 'kakao_user',
-          email: 'kakao@example.com',
-          imageUrl: 'https://example.com/profile.jpg',
-        };
-        
-        // UserContext에 로그인 정보 저장
-        login(tempUser, token);
-        
-        Alert.alert('로그인 성공', `토큰: ${token}`);
-        console.log('받은 토큰:', token);
-        
-        // WebView 닫기
-        setShowWebView(false);
-        
-        // 로그인 성공 콜백 호출
-        if (onLoginSuccess) {
-          onLoginSuccess(token);
-        }
+        handleLoginSuccess(token);
       }
     } catch (error) {
       console.error('WebView 메시지 파싱 에러:', error);
@@ -69,26 +135,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       const token = urlParams.searchParams.get('token') || urlParams.searchParams.get('access_token');
       
       if (token) {
-        // 중복 로그인 방지
-        setIsLoggedIn(true);
-        
-        // 임시 사용자 정보 생성
-        const tempUser: UserEntity = {
-          userId: 1,
-          username: '카카오 사용자',
-          userkey: 'kakao_user',
-          email: 'kakao@example.com',
-          imageUrl: 'https://example.com/profile.jpg',
-        };
-        
-        login(tempUser, token);
-        Alert.alert('로그인 성공', `토큰: ${token}`);
-        console.log('받은 토큰:', token);
-        setShowWebView(false);
-        
-        if (onLoginSuccess) {
-          onLoginSuccess(token);
-        }
+        handleLoginSuccess(token);
       }
     }
   };
@@ -232,33 +279,36 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         </TouchableOpacity>
       </View>
 
-      <Modal
-        visible={showWebView}
-        animationType="slide"
-        onRequestClose={() => setShowWebView(false)}
-      >
-        <View style={styles.webViewContainer}>
-          <TouchableOpacity 
-            style={styles.closeButton} 
-            onPress={() => setShowWebView(false)}
-          >
-            <Text style={styles.closeButtonText}>닫기</Text>
-          </TouchableOpacity>
-          
-          <WebView
-            ref={webViewRef}
-            source={{ uri: `${SERVER_URL}/oauth2/authorization/kakao` }}
-            style={styles.webview}
-            onMessage={handleWebViewMessage}
-            onNavigationStateChange={handleWebViewNavigationStateChange}
-            injectedJavaScript={injectedJavaScript}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-            startInLoadingState={true}
-            scalesPageToFit={true}
-          />
-        </View>
-      </Modal>
+      {/* 모바일에서만 WebView 모달 표시 */}
+      {!isWeb && (
+        <Modal
+          visible={showWebView}
+          animationType="slide"
+          onRequestClose={() => setShowWebView(false)}
+        >
+          <View style={styles.webViewContainer}>
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={() => setShowWebView(false)}
+            >
+              <Text style={styles.closeButtonText}>닫기</Text>
+            </TouchableOpacity>
+            
+            <WebView
+              ref={webViewRef}
+              source={{ uri: `${SERVER_URL}/oauth2/authorization/kakao` }}
+              style={styles.webview}
+              onMessage={handleWebViewMessage}
+              onNavigationStateChange={handleWebViewNavigationStateChange}
+              injectedJavaScript={injectedJavaScript}
+              javaScriptEnabled={true}
+              domStorageEnabled={true}
+              startInLoadingState={true}
+              scalesPageToFit={true}
+            />
+          </View>
+        </Modal>
+      )}
     </View>
   );
 };

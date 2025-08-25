@@ -1,5 +1,5 @@
+import { PROFILE_IMAGE_SIZE, PROFILE_RING_PADDING } from "@/constants/layout";
 import { useCallback, useMemo, useState } from "react";
-import { PROFILE_IMAGE_SIZE, PROFILE_RING_PADDING } from "../constants/layout";
 import type { UserDTO } from "../types/dto/UserDTO";
 
 type UseUserProfileParams = {
@@ -10,10 +10,13 @@ type UseUserProfileParams = {
   setCurrentUserTo?: (user: UserDTO) => void; // currentUser 설정 함수
 };
 
-export function useUserProfile({ user, size = PROFILE_IMAGE_SIZE, onPress, enableNavigation = false, setCurrentUserTo }: UseUserProfileParams) {
+export function useUserProfile({ user, size, onPress, enableNavigation = false, setCurrentUserTo }: UseUserProfileParams) {
   const [loading, setLoading] = useState(true);
 
   // 이미지 사이즈/스타일 계산
+  if(size === undefined) {
+    size = PROFILE_IMAGE_SIZE;
+  }
   const ringSize = size + PROFILE_RING_PADDING; // 테두리 png가 바깥으로 4px씩
   const imageSize = size;
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { SERVER_URL, TOKEN, updateToken } from '../constants/server';
+import { SERVER_URL } from '../constants/server';
+import { TokenManager } from '../contexts/tokenManager';
 import { useUser } from '../contexts/UserContext';
 import { UserEntity } from '../types/entity/UserEntity';
 import LoginScreen from './LoginScreen';
@@ -18,77 +19,99 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadingComplete }) => {
   const didInit = React.useRef(false);
 
   useEffect(() => {
+    // 이미 초기화가 완료되었거나 로그인 화면을 보여주고 있다면 실행하지 않음
+    if (isInitialized || showLogin) return;
+    
+    // didInit 체크로 중복 실행 방지
     if (didInit.current) return;
+    
+    console.log('LoadingScreen initializeApp');
+    console.log('isInitialized', isInitialized);
+    console.log('showLogin', showLogin);
+    console.log('didInit', didInit.current);
     didInit.current = true;
-    if (!showLogin && !isInitialized) {
-      initializeApp();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-
+    initializeApp();
+  }, [isInitialized]);
 
   const initializeApp = async () => {
     try {
-      setLoadingText('사용자 정보를 확인하는 중...');
+      setLoadingText('토큰을 확인하는 중...');
       
-      // constants에 있는 토큰으로 사용자 정보 요청
-      const response = await fetch(`${SERVER_URL}/user/me`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      // localStorage에서 토큰 확인
+      const { isValid, token } = await TokenManager.checkAuthStatus();
+      
+      if (isValid && token) {
+        // 토큰이 유효하면 사용자 정보 가져오기
+        setLoadingText('사용자 정보를 확인하는 중...');
+        
+        const response = await fetch(`${SERVER_URL}/user/me`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
 
-      if (response.ok) {
-        const userData: UserEntity = await response.json();
-        console.log('사용자 정보 받음:', userData);
-        
-        setLoadingText('로그인 완료!');
-        
-        // 전역 상태에 사용자 정보와 토큰 설정
-        console.log('initializeApp login 호출');
-        login(userData, TOKEN);
-        
-        // 초기화 완료 표시
-        setIsInitialized(true);
-        
-        // 잠시 후 로딩 완료 콜백 호출
-        setTimeout(() => {
-          if (onLoadingComplete) {
-            onLoadingComplete();
-          }
-        }, 1000);
-        
+        if (response.ok) {
+          const userData: UserEntity = await response.json();
+          console.log('사용자 정보 받음:', userData);
+          
+          setLoadingText('로그인 완료!');
+          
+          // 전역 상태에 사용자 정보와 토큰 설정
+          console.log('initializeApp login 호출');
+          login(userData, token);
+          
+          // 초기화 완료 표시
+          setIsInitialized(true);
+          
+          // 잠시 후 로딩 완료 콜백 호출
+          setTimeout(() => {
+            if (onLoadingComplete) {
+              onLoadingComplete();
+            }
+          }, 1000);
+          
+        } else {
+          console.error('사용자 정보 요청 실패:', response.status, response.statusText);
+          // 토큰이 유효하지 않으면 삭제하고 로그인 화면으로
+          await TokenManager.removeToken();
+          setShowLogin(true);
+        }
       } else {
-        console.error('사용자 정보 요청 실패:', response.status, response.statusText);
-        setError('사용자 정보를 가져올 수 없습니다.');
-        // 로그인 화면 표시
+        // 토큰이 없거나 유효하지 않으면 로그인 화면으로
+        console.log('토큰이 없거나 유효하지 않음');
         setShowLogin(true);
       }
       
     } catch (error) {
       console.error('앱 초기화 에러:', error);
       setError('네트워크 오류가 발생했습니다.');
-      // 로그인 화면 표시
+      // 에러 발생 시 로그인 화면 표시
       setShowLogin(true);
     }
   };
 
-  const handleLoginSuccess = (token: string) => {
-    console.log('로그인 성공, 토큰 갱신:', token);
-    // 토큰을 constants/server.ts에 갱신
-    updateToken(token);
-    setShowLogin(false);
-    setError(null);
+  const handleLoginSuccess = async (token: string) => {
+    console.log('로그인 성공, 토큰 저장:', token);
     
-    // 로그인 성공 후 바로 로딩 완료 콜백 호출 (initializeApp 재호출 제거)
-    setTimeout(() => {
-      if (onLoadingComplete) {
-        onLoadingComplete();
-      }
-    }, 1000);
+    try {
+      // 새 토큰을 localStorage에 저장
+      await TokenManager.saveToken(token);
+      
+      setShowLogin(false);
+      setError(null);
+      
+      // 로그인 성공 후 바로 로딩 완료 콜백 호출
+      setTimeout(() => {
+        if (onLoadingComplete) {
+          onLoadingComplete();
+        }
+      }, 1000);
+    } catch (error) {
+      console.error('토큰 저장 실패:', error);
+      setError('토큰 저장에 실패했습니다.');
+    }
   };
 
   // 로그인 화면 표시

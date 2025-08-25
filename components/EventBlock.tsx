@@ -11,17 +11,33 @@ type Props = {
     width: number;
     height: number;
   };
+  isNew?: boolean;
   onPress?: (plan: PlanEntity, e: GestureResponderEvent) => void;
 };
 
-export default function EventBlock({ plan, rect, onPress }: Props) {
+export default function EventBlock({ plan, rect, isNew = false, onPress }: Props) {
   // ViewModel 로직을 훅으로 분리
   const { eventBlockStyle, shouldShowMeta } = useEventBlock(plan);
 
+  const handlePress = (e: GestureResponderEvent) => {
+    // plan.new가 true면 false로 변경
+    if (plan.new) {
+      plan.new = false;
+    }
+    
+    // 기존 onPress 콜백 호출
+    onPress?.(plan, e);
+  };
+
   return (
     <Pressable 
-      onPress={(e) => onPress?.(plan, e)} 
-      style={[styles.wrap, rect, eventBlockStyle]}
+      onPress={handlePress} 
+      style={[
+        styles.wrap, 
+        rect, 
+        eventBlockStyle,
+        plan.new && styles.newEvent
+      ]}
     >
       <View style={styles.inner}>
         <Text numberOfLines={1} style={styles.title}>{plan.title}</Text>
@@ -56,5 +72,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "rgba(255,255,255,0.9)",
     includeFontPadding: false,
+  },
+  newEvent: {
+    borderWidth: 2,
+    borderColor: "#FF3B30",
   },
 });

@@ -45,16 +45,16 @@ export default function FriendsList({
     <FlatList
       data={friends}
       keyExtractor={(item) => String(item.id)}
+      style={{ height: 120 }}
       contentContainerStyle={{ padding: 16 }}
       numColumns={numColumns}
       columnWrapperStyle={{ gap: 16 }}
       renderItem={({ item }) => (
         <UserProfile
           user={item}
-          size={72}
           showName
           onPress={onItemPress}
-          containerStyle={{ marginBottom: 16, marginRight: 16 }}
+          containerStyle={{ marginRight: 16 }}
           enableNavigation={true}
           setCurrentUserTo={setCurrentUserTo}
         />

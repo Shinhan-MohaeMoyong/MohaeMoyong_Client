@@ -14,9 +14,9 @@ export const samplePlans: PlanEntity[] = [
         planId: 2,
         title: "스터디 모임",
         place: "동아리실",
-        startTime: "2024-01-15T13:00:00",
-        endTime: "2024-01-15T16:00:00",
-        new: false
+        startTime: "2024-08-22T13:00:00",
+        endTime: "2024-08-22T16:00:00",
+        new: true
     },
     {
         planId: 3,

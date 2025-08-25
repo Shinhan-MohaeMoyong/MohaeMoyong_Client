@@ -1,5 +1,7 @@
 // src/screens/MohaeyoungScreen.tsx
+import MohaeyoungHeader from "@/components/MohaeyoungHeader";
 import PostBottomSheet from "@/components/post/PostBottomSheet";
+import { useRouter } from "expo-router";
 import React, { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import FriendsList from "../components/FriendsList";
@@ -10,6 +12,7 @@ import { usePostBottomSheet } from "../hooks/usePostBottomSheet";
 import type { PlanEntity } from "../types";
 
 export default function MohaeyoungScreen() {
+    const router = useRouter();
     const { loggedUser } = useUser();
     const { currentUser, friends, plans, loading, error, getCurrentWeekRange, refetch, onItemPress, setCurrentUserTo } = useMohaeyoung({
         currentUser: loggedUser ? {
@@ -17,7 +20,7 @@ export default function MohaeyoungScreen() {
             name: loggedUser.username,
             email: loggedUser.email,
             imageUrl: loggedUser.imageUrl,
-            isNew: false
+            isNew: false,
         } : undefined
     });
     const { 
@@ -40,6 +43,10 @@ export default function MohaeyoungScreen() {
         // TODO: 주 변경 시 startDay, endDay 업데이트 로직 추가
     };
 
+    const handleAddPlan = () => {
+        router.push('/add-plan');
+    };
+
     // loggedUser가 변경될 때마다 currentUser 업데이트
     useEffect(() => {
         if (loggedUser && setCurrentUserTo) {
@@ -52,10 +59,11 @@ export default function MohaeyoungScreen() {
             };
             setCurrentUserTo(userDTO);
         }
-    }, [loggedUser, setCurrentUserTo]);
+    }, [loggedUser]);
 
     return (
         <View style={styles.container}>
+            <MohaeyoungHeader onPressAdd={handleAddPlan}/>
             <View>
                 <FriendsList
                     friends={friends}
@@ -99,6 +107,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+    padding: 16,
   },
   weekGridContainer: {
     marginBottom: 60,
