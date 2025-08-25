@@ -16,6 +16,7 @@ import WeekSelector from "../components/WeekSelector";
 import { useUser } from "../contexts/UserContext";
 import { useMohaeyoung } from "../hooks/useMohaeyoungScreen";
 import type { PlanEntity } from "../types";
+import AccountDetailScreen from './AccountDetailScreen';
 import AccountScreen from './AccountScreen';
 import SavingScreen from './SavingScreen';
 
@@ -45,6 +46,8 @@ export default function ScheduleCalendarScreen() {
   const [monthDate, setMonthDate] = useState<Date>(new Date(today));
   const [selectedDate, setSelectedDate] = useState<Date>(new Date(today));
   const [activeTab, setActiveTab] = useState<TopTabKey>("일정");
+  const [selectedAccount, setSelectedAccount] = useState<any>(null);
+  const [showAccountDetail, setShowAccountDetail] = useState(false);
   
   // 바텀시트 관련 상태
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
@@ -228,12 +231,22 @@ export default function ScheduleCalendarScreen() {
 
   const handleTabChange = (tab: TopTabKey) => {
     setActiveTab(tab);
+    setShowAccountDetail(false);
+    setSelectedAccount(null);
+  };
+
+  const handleAccountPress = (account: any) => {
+    setSelectedAccount(account);
+    setShowAccountDetail(true);
   };
 
   const renderContent = () => {
     switch (activeTab) {
       case "계좌":
-        return <AccountScreen />;
+        if (showAccountDetail && selectedAccount) {
+          return <AccountDetailScreen account={selectedAccount} />;
+        }
+        return <AccountScreen onAccountPress={handleAccountPress} />;
       case "일정":
         return (
           <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>

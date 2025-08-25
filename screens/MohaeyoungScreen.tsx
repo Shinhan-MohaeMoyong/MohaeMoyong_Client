@@ -9,11 +9,15 @@ import { useUser } from "../contexts/UserContext";
 import { useMohaeyoung } from "../hooks/useMohaeyoungScreen";
 import { usePostBottomSheet } from "../hooks/usePostBottomSheet";
 import type { PlanEntity } from "../types";
+import AccountDetailScreen from "./AccountDetailScreen";
 import AccountScreen from "./AccountScreen";
 import SavingScreen from "./SavingScreen";
 
 export default function MohaeyoungScreen() {
     const [activeTab, setActiveTab] = useState<TopTabKey>("계좌");
+    const [selectedAccount, setSelectedAccount] = useState<any>(null);
+    const [showAccountDetail, setShowAccountDetail] = useState(false);
+    
     const { loggedUser } = useUser();
     const { currentUser, friends, plans, loading, error, getCurrentWeekRange, refetch, onItemPress, setCurrentUserTo } = useMohaeyoung({
         currentUser: loggedUser ? {
@@ -46,6 +50,18 @@ export default function MohaeyoungScreen() {
 
     const handleTabChange = (tab: TopTabKey) => {
         setActiveTab(tab);
+        setShowAccountDetail(false);
+        setSelectedAccount(null);
+    };
+
+    const handleAccountPress = (account: any) => {
+        setSelectedAccount(account);
+        setShowAccountDetail(true);
+    };
+
+    const handleBackToAccounts = () => {
+        setShowAccountDetail(false);
+        setSelectedAccount(null);
     };
 
     // loggedUser가 변경될 때마다 currentUser 업데이트
@@ -65,7 +81,10 @@ export default function MohaeyoungScreen() {
     const renderContent = () => {
         switch (activeTab) {
             case "계좌":
-                return <AccountScreen />;
+                if (showAccountDetail && selectedAccount) {
+                    return <AccountDetailScreen account={selectedAccount} />;
+                }
+                return <AccountScreen onAccountPress={handleAccountPress} />;
             case "일정":
                 return (
                     <View style={styles.weekGridContainer}>

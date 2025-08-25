@@ -9,6 +9,7 @@ import {
     View,
 } from 'react-native';
 import AccountCard from '../components/AccountCard';
+import AddAccountScreen from './AddAccountScreen';
 
 interface Account {
   id: string;
@@ -18,51 +19,58 @@ interface Account {
   bankName: string;
 }
 
-export default function AccountScreen() {
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+interface AccountScreenProps {
+  onAccountPress: (account: Account) => void;
+}
 
-  // 계좌 정보를 가져오는 함수
+export default function AccountScreen({ onAccountPress }: AccountScreenProps) {
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showAddAccount, setShowAddAccount] = useState(false);
+
+  // 임시 데이터 (나중에 백엔드 API로 교체)
+  const mockAccounts: Account[] = [
+    {
+      id: '1',
+      accountNumber: '000-000-0000-000',
+      balance: 189000,
+      accountAlias: '학비 저축계좌',
+      bankName: '신한 SOL Bank',
+    },
+    {
+      id: '2',
+      accountNumber: '000-000-0000-001',
+      balance: 450000,
+      accountAlias: '맥북 저축계좌',
+      bankName: '신한은행',
+    },
+    {
+      id: '3',
+      accountNumber: '000-000-0000-002',
+      balance: 120000,
+      accountAlias: '비상금 저축계좌',
+      bankName: '신한은행',
+    },
+  ];
+
+  // 계좌 목록 가져오기
   const fetchAccounts = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      // TODO: 실제 API 엔드포인트로 변경
-      const response = await fetch('YOUR_API_ENDPOINT/accounts');
+      // TODO: 실제 API 호출로 교체
+      // const response = await fetch('/api/accounts');
+      // const data = await response.json();
+      // setAccounts(data);
       
-      if (!response.ok) {
-        throw new Error('계좌 정보를 가져오는데 실패했습니다.');
-      }
-      
-      const data = await response.json();
-      setAccounts(data);
+      // 임시로 mock 데이터 사용
+      setTimeout(() => {
+        setAccounts(mockAccounts);
+        setLoading(false);
+      }, 500);
     } catch (error) {
-      console.error('계좌 정보 조회 오류:', error);
-      // 임시 데이터로 대체 (개발용)
-      setAccounts([
-        {
-          id: '1',
-          accountNumber: '000-000-0000-000',
-          balance: 189000,
-          accountAlias: '학비 저축계좌',
-          bankName: '신한 SOL Bank',
-        },
-        {
-          id: '2',
-          accountNumber: '000-000-0000-001',
-          balance: 100000,
-          accountAlias: '맥북 저축계좌',
-          bankName: '신한 SOL Bank',
-        },
-        {
-          id: '3',
-          accountNumber: '000-000-0000-002',
-          balance: 30000,
-          accountAlias: '비상금 저축계좌',
-          bankName: '신한 SOL Bank',
-        },
-      ]);
-    } finally {
+      console.error('계좌 목록을 가져오는데 실패했습니다:', error);
+      Alert.alert('오류', '계좌 목록을 불러오는데 실패했습니다.');
       setLoading(false);
     }
   };
@@ -76,34 +84,28 @@ export default function AccountScreen() {
 
   // 새로운 계좌 추가하기
   const handleAddAccount = () => {
-    Alert.alert(
-      '새로운 계좌 추가',
-      '새로운 계좌를 추가하시겠습니까?',
-      [
-        {
-          text: '취소',
-          style: 'cancel',
-        },
-        {
-          text: '추가',
-          onPress: () => {
-            // TODO: 새로운 계좌 추가 로직 구현
-            console.log('새로운 계좌 추가');
-          },
-        },
-      ]
-    );
+    setShowAddAccount(true);
+  };
+
+  // 상품 선택 처리
+  const handleProductSelect = (product: any) => {
+    // 상품 선택 완료 후 AddAccountScreen 닫기
+    setShowAddAccount(false);
+    
+    // 계좌 목록 새로고침 (새로 생성된 계좌 반영)
+    fetchAccounts();
   };
 
   useEffect(() => {
     fetchAccounts();
   }, []);
 
-  if (loading) {
+  // 새로운 계좌 추가 화면이 표시되는 경우
+  if (showAddAccount) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>계좌 정보를 불러오는 중...</Text>
-      </View>
+      <AddAccountScreen
+        onProductSelect={handleProductSelect}
+      />
     );
   }
 
@@ -115,19 +117,33 @@ export default function AccountScreen() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        showsVerticalScrollIndicator={false}
       >
-        {/* 계좌 목록 */}
-        {accounts.map((account) => (
-          <AccountCard
-            key={account.id}
-            accountNumber={account.accountNumber}
-            balance={account.balance}
-            accountAlias={account.accountAlias}
-            bankName={account.bankName}
-          />
-        ))}
-        
-        {/* 새로운 계좌 추가하기 버튼 */}
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>계좌 목록을 불러오는 중...</Text>
+          </View>
+        ) : accounts.length > 0 ? (
+          accounts.map((account) => (
+            <TouchableOpacity
+              key={account.id}
+              onPress={() => onAccountPress(account)}
+              activeOpacity={0.7}
+            >
+              <AccountCard
+                accountNumber={account.accountNumber}
+                balance={account.balance}
+                accountAlias={account.accountAlias}
+                bankName={account.bankName}
+              />
+            </TouchableOpacity>
+          ))
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>등록된 계좌가 없습니다.</Text>
+          </View>
+        )}
+
         <TouchableOpacity
           style={styles.addAccountButton}
           onPress={handleAddAccount}
@@ -187,5 +203,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFFFFF',
     fontWeight: '600',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#6B7280',
   },
 });
