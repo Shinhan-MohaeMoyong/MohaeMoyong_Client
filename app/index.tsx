@@ -1,4 +1,3 @@
-import LoadingScreen from '@/screens/LoadingScreen';
 import ScheduleCalendarScreen from '@/screens/ScheduleCalendarScreen';
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
@@ -22,9 +21,9 @@ export default function Index() {
   };
 
   // // 로딩 중이거나 로그인이 안 된 경우 로딩 화면 표시
-   if (isLoading || !isLoggedIn) {
-     return <LoadingScreen onLoadingComplete={handleLoadingComplete} />;
-   }
+  //  if (isLoading || !isLoggedIn) {
+  //    return <LoadingScreen onLoadingComplete={handleLoadingComplete} />;
+  //  }
 
   return (
     <SafeAreaView style={styles.container}>

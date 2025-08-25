@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import AccountCard from '../components/AccountCard';
+import { AccountMapper } from '../mappers/AccountMapper';
 import AddAccountScreen from './AddAccountScreen';
 
 interface Account {
@@ -125,18 +126,11 @@ export default function AccountScreen({ onAccountPress }: AccountScreenProps) {
           </View>
         ) : accounts.length > 0 ? (
           accounts.map((account) => (
-            <TouchableOpacity
+            <AccountCard
               key={account.id}
+              account={AccountMapper.fromLegacyAccount(account)}
               onPress={() => onAccountPress(account)}
-              activeOpacity={0.7}
-            >
-              <AccountCard
-                accountNumber={account.accountNumber}
-                balance={account.balance}
-                accountAlias={account.accountAlias}
-                bankName={account.bankName}
-              />
-            </TouchableOpacity>
+            />
           ))
         ) : (
           <View style={styles.emptyContainer}>
