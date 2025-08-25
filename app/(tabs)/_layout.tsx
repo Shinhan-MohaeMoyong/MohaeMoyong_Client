@@ -10,15 +10,15 @@ export default function TabLayout() {
       tabBar={(props) => <CustomTabBar {...props} />}
     >
       <Tabs.Screen
-        name="index"
+        name="Moayoung"
         options={{
-          title: '모해영',
+          title: '모아영',
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="index"
         options={{
-          title: '탐색',
+          title: '뭐해영',
         }}
       />
       <Tabs.Screen
