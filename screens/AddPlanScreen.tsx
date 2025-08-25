@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useRouter } from 'expo-router';
+import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AddButton from '../components/addPlan/AddButton';
@@ -6,89 +7,77 @@ import AddPlanHeader from '../components/addPlan/AddPlanHeader';
 import DateTimeSelector from '../components/addPlan/DateTimeSelector';
 import EventTypeSelector from '../components/addPlan/EventTypeSelector';
 import PlanInputFields from '../components/addPlan/PlanInputFields';
-import RepeatOption, { RepeatConfig } from '../components/addPlan/RepeatOption';
+import RepeatOption from '../components/addPlan/RepeatOption';
 import SaveOption from '../components/addPlan/SaveOption';
+import { useAddPlanScreen } from '../hooks/useAddPlanScreen';
 
 export default function AddPlanScreen() {
   const insets = useSafeAreaInsets();
-  const [eventType, setEventType] = useState<'group' | 'personal'>('personal');
-  const [isPublic, setIsPublic] = useState(false);
-  const [title, setTitle] = useState('');
-  const [location, setLocation] = useState('');
-  const [content, setContent] = useState('');
-  const [selectedDate, setSelectedDate] = useState('23');
-  const [startTime, setStartTime] = useState('12:00');
-  const [endTime, setEndTime] = useState('14:00');
-  const [repeatOption, setRepeatOption] = useState('안함');
-  const [repeatConfig, setRepeatConfig] = useState<RepeatConfig>({
-    enabled: false,
-    freq: 'WEEKLY',
-    interval: 1,
-    byDays: [],
-    until: null,
-    count: null,
-    exceptions: null
-  });
-  const [isSaveEnabled, setIsSaveEnabled] = useState(false);
+  const router = useRouter();
+  const { 
+    formData, 
+    updateFormData, 
+    handleWithdrawalAccountSelect,
+    handleDepositAccountSelect,
+    handleSavingAmountChange,
+    handleAddPlan 
+  } = useAddPlanScreen();
 
-  const handleAddPlan = () => {
-    // TODO: 일정 추가 로직 구현
-    console.log('일정 추가:', {
-      eventType,
-      isPublic,
-      title,
-      location,
-      content,
-      selectedDate,
-      startTime,
-      endTime,
-      repeatOption,
-      repeatConfig,
-      isSaveEnabled
-    });
+  const handleWithdrawalAccountPress = () => {
+    // 출금계좌 선택 화면으로 이동
+    router.push('/account-select?type=withdrawal');
+  };
+
+  const handleDepositAccountPress = () => {
+    // 입금계좌 선택 화면으로 이동
+    router.push('/account-select?type=deposit');
   };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <AddPlanHeader 
-        isPublic={isPublic} 
-        onTogglePublic={() => setIsPublic(!isPublic)} 
+        isPublic={formData.isPublic} 
+        onTogglePublic={() => updateFormData({ isPublic: !formData.isPublic })} 
       />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <EventTypeSelector 
-          selectedType={eventType} 
-          onSelectType={setEventType} 
+          selectedType={formData.eventType} 
+          onSelectType={(type) => updateFormData({ eventType: type })} 
         />
         
         <PlanInputFields
-          title={title}
-          location={location}
-          content={content}
-          onTitleChange={setTitle}
-          onLocationChange={setLocation}
-          onContentChange={setContent}
+          title={formData.title}
+          location={formData.place}
+          content={formData.content}
+          onTitleChange={(title) => updateFormData({ title })}
+          onLocationChange={(place) => updateFormData({ place })}
+          onContentChange={(content) => updateFormData({ content })}
         />
         
         <DateTimeSelector
-          selectedDate={selectedDate}
-          startTime={startTime}
-          endTime={endTime}
-          onDateSelect={setSelectedDate}
-          onStartTimeChange={setStartTime}
-          onEndTimeChange={setEndTime}
+          selectedDate={formData.selectedDate}
+          startTime={formData.startTime}
+          endTime={formData.endTime}
+          onDateSelect={(selectedDate) => updateFormData({ selectedDate })}
+          onStartTimeChange={(startTime) => updateFormData({ startTime })}
+          onEndTimeChange={(endTime) => updateFormData({ endTime })}
         />
         
         <RepeatOption
-          selectedOption={repeatOption}
-          onOptionChange={setRepeatOption}
-          repeatConfig={repeatConfig}
-          onRepeatConfigChange={setRepeatConfig}
+          repeatConfig={formData.repeatConfig}
+          onRepeatConfigChange={(repeatConfig) => updateFormData({ repeatConfig })}
         />
         
         <SaveOption
-          isEnabled={isSaveEnabled}
-          onToggle={() => setIsSaveEnabled(!isSaveEnabled)}
+          isEnabled={formData.saveOption}
+          onToggle={() => updateFormData({ saveOption: !formData.saveOption })}
+          withdrawalAccount={formData.withdrawalAccount}
+          depositAccount={formData.depositAccount}
+          savingAmount={formData.savingAmount}
+          onWithdrawalAccountSelect={handleWithdrawalAccountPress}
+          onDepositAccountSelect={handleDepositAccountPress}
+          onSavingAmountChange={handleSavingAmountChange}
         />
       </ScrollView>
       

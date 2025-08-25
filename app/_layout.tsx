@@ -12,6 +12,7 @@ export default function RootLayout() {
             <Stack.Screen name="index" />
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="add-plan" />
+            <Stack.Screen name="account-select" />
           </Stack>
         </BottomSheetModalProvider>
       </GestureHandlerRootView>
