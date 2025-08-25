@@ -10,15 +10,21 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import EventDetail from "../components/EventDetail";
 import MonthlyCalendar from "../components/MonthlyCalendar";
 import TopTabs, { TopTabKey } from "../components/TopTabs";
+import WeekSelector from "../components/WeekSelector";
 import { useUser } from "../contexts/UserContext";
 import { useMohaeyoung } from "../hooks/useMohaeyoungScreen";
 import type { PlanEntity } from "../types";
 
 const { height: screenHeight } = Dimensions.get('window');
-const BOTTOM_SHEET_HEIGHT = screenHeight * 0.6;
-const DRAG_THRESHOLD = 100;
+const BOTTOM_SHEET_HEIGHT = screenHeight * 0.6;        // 60% - 초기상태
+const MIDDLE_SNAP_HEIGHT = screenHeight * 0.3;          // 30% - 중간 snap
+const FULL_SCREEN_HEIGHT = screenHeight * 0.95;         // 95% - 전체화면
+const DRAG_THRESHOLD = 50;  // 드래그 임계값을 낮춰 더 민감하게
+const EXPAND_THRESHOLD = -80; // 확장 임계값도 낮춰 더 쉽게 확장되도록
+const MIDDLE_THRESHOLD = -30; // 중간 snap 임계값
 
 export default function ScheduleCalendarScreen() {
   const { loggedUser } = useUser();
@@ -41,9 +47,12 @@ export default function ScheduleCalendarScreen() {
   
   // 바텀시트 관련 상태
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [snapPosition, setSnapPosition] = useState<'bottom' | 'middle' | 'full'>('bottom');
   
   // 바텀시트 애니메이션
   const pan = useRef(new Animated.ValueXY()).current;
+  const currentPosition = useRef(0);
 
   React.useEffect(() => {
     if (loggedUser && setCurrentUserTo) {
@@ -89,84 +98,125 @@ export default function ScheduleCalendarScreen() {
   // 날짜 선택 시 바텀시트 열기
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
-    setMonthDate(date);
-    
-    // 바텀시트 열기 전에 초기 위치 설정
-    pan.setValue({ x: 0, y: BOTTOM_SHEET_HEIGHT });
-    
-    // 선택된 날짜에 관계없이 바텀시트 열기
+    setSnapPosition('bottom');
+    setIsExpanded(false);
     setIsBottomSheetVisible(true);
-    
-    // 약간의 지연 후 애니메이션 시작
-    setTimeout(() => {
-      Animated.spring(pan.y, {
-        toValue: 0,
-        useNativeDriver: true,
-        tension: 100,
-        friction: 8,
-      }).start((result) => {
-        // 애니메이션이 성공적으로 완료된 경우에만 상태 유지
-        if (result.finished) {
-          // 애니메이션 완료 후 추가 작업이 필요한 경우 여기에 작성
-        }
-      });
-    }, 100);
+    currentPosition.current = 0;
   };
 
   // 바텀시트 닫기
   const handleCloseBottomSheet = () => {
-    // 바텀시트가 이미 닫혀있는 경우 중복 실행 방지
-    if (!isBottomSheetVisible) return;
+    setIsBottomSheetVisible(false);
+    setIsExpanded(false);
+    setSnapPosition('bottom');
+    pan.setValue({ x: 0, y: 0 });
+    currentPosition.current = 0;
+  };
+
+  // snap 위치 계산 함수
+  const getSnapPosition = (gestureState: any) => {
+    const { dy } = gestureState;
     
-    Animated.timing(pan.y, {
-      toValue: BOTTOM_SHEET_HEIGHT,
-      duration: 300,
+    if (dy < EXPAND_THRESHOLD) {
+      return 'full';      // 위로 충분히 드래그 → 전체화면
+    } else if (dy < MIDDLE_THRESHOLD) {
+      return 'middle';    // 위로 적당히 드래그 → 중간
+    } else if (dy > DRAG_THRESHOLD) {
+      return 'bottom';    // 아래로 충분히 드래그 → 닫기
+    } else {
+      return snapPosition; // 현재 위치 유지
+    }
+  };
+
+  // snap 애니메이션 함수
+  const snapToPosition = (position: 'bottom' | 'middle' | 'full') => {
+    let targetY: number;
+    
+    switch (position) {
+      case 'bottom':
+        targetY = 0;
+        setSnapPosition('bottom');
+        setIsExpanded(false);
+        break;
+      case 'middle':
+        targetY = -(MIDDLE_SNAP_HEIGHT - BOTTOM_SHEET_HEIGHT);
+        setSnapPosition('middle');
+        setIsExpanded(false);
+        break;
+      case 'full':
+        targetY = -(FULL_SCREEN_HEIGHT - BOTTOM_SHEET_HEIGHT);
+        setSnapPosition('full');
+        setIsExpanded(true);
+        break;
+    }
+    
+    Animated.spring(pan.y, {
+      toValue: targetY,
       useNativeDriver: true,
-    }).start((result) => {
-      if (result.finished) {
-        setIsBottomSheetVisible(false);
-        pan.setValue({ x: 0, y: BOTTOM_SHEET_HEIGHT });
-      }
-    });
+      tension: 120,
+      friction: 6,
+    }).start();
   };
 
   // 바텀시트 팬 제스처 핸들러
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: () => {
-        pan.setOffset({
-          x: 0,
-          y: 0,
-        });
-      },
-      onPanResponderMove: (_, gestureState) => {
-        // 위로 드래그는 제한
-        if (gestureState.dy < 0) {
-          pan.y.setValue(0);
-        } else {
-          pan.y.setValue(gestureState.dy);
-        }
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        pan.flattenOffset();
-        
-        // 드래그 거리가 임계값을 넘으면 닫기
-        if (gestureState.dy > DRAG_THRESHOLD) {
-          handleCloseBottomSheet();
-        } else {
-          // 원래 위치로 돌아가기
-          Animated.spring(pan.y, {
-            toValue: 0,
-            useNativeDriver: true,
-            tension: 100,
-            friction: 8,
-          }).start();
-        }
-      },
-    })
-  ).current;
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onPanResponderGrant: () => {
+          pan.setOffset({ x: 0, y: 0 });
+        },
+        onPanResponderMove: (_, gestureState) => {
+          // 현재 바텀시트의 위치를 기준으로 드래그 거리를 계산
+          const newY = currentPosition.current + gestureState.dy;
+          
+          // 드래그 제한 설정
+          const maxUpDrag = isExpanded ? 0 : -FULL_SCREEN_HEIGHT + BOTTOM_SHEET_HEIGHT;
+          
+          if (newY < maxUpDrag) {
+            pan.y.setValue(maxUpDrag);
+          } else if (newY > 0) {
+            pan.y.setValue(0);
+          } else {
+            pan.y.setValue(newY);
+          }
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          if (gestureState.dy < -EXPAND_THRESHOLD && !isExpanded) {
+            // 위로 드래그하여 확장
+            setIsExpanded(true);
+            setSnapPosition('full');
+            const targetY = -FULL_SCREEN_HEIGHT + BOTTOM_SHEET_HEIGHT;
+            pan.setValue({ x: 0, y: targetY });
+            currentPosition.current = targetY;
+          } else if (gestureState.dy > DRAG_THRESHOLD) {
+            // 아래로 드래그하여 닫기
+            handleCloseBottomSheet();
+          } else if (isExpanded && gestureState.dy > MIDDLE_THRESHOLD) {
+            // 확장된 상태에서 중간으로 축소
+            setIsExpanded(false);
+            setSnapPosition('middle');
+            const targetY = -MIDDLE_SNAP_HEIGHT + BOTTOM_SHEET_HEIGHT;
+            pan.setValue({ x: 0, y: targetY });
+            currentPosition.current = targetY;
+          } else {
+            // 원래 위치로 복귀
+            if (isExpanded) {
+              const targetY = -FULL_SCREEN_HEIGHT + BOTTOM_SHEET_HEIGHT;
+              pan.setValue({ x: 0, y: targetY });
+              currentPosition.current = targetY;
+            } else if (snapPosition === 'middle') {
+              const targetY = -MIDDLE_SNAP_HEIGHT + BOTTOM_SHEET_HEIGHT;
+              pan.setValue({ x: 0, y: targetY });
+              currentPosition.current = targetY;
+            } else {
+              pan.setValue({ x: 0, y: 0 });
+              currentPosition.current = 0;
+            }
+          }
+        },
+      }),
+    [isExpanded, snapPosition]
+  );
 
   // 바텀시트가 열릴 때 초기 위치 설정 - 제거
   // React.useEffect(() => {
@@ -249,6 +299,9 @@ export default function ScheduleCalendarScreen() {
                 transform: [
                   { translateY: pan.y },
                 ],
+                maxHeight: snapPosition === 'full' ? FULL_SCREEN_HEIGHT : 
+                          snapPosition === 'middle' ? MIDDLE_SNAP_HEIGHT : 
+                          BOTTOM_SHEET_HEIGHT,
               },
             ]}
           >
@@ -260,75 +313,29 @@ export default function ScheduleCalendarScreen() {
               <View style={styles.handleBar} />
             </View>
             
-            {/* 닫기 버튼 */}
-            <View style={styles.closeButtonContainer}>
-              <TouchableOpacity onPress={handleCloseBottomSheet} style={styles.closeButton}>
-                <Text style={styles.closeIcon}>✕</Text>
-              </TouchableOpacity>
-            </View>
+            {/* 주간 날짜 선택기 */}
+            <WeekSelector
+              selectedDate={selectedDate}
+              onSelectDate={(d) => {
+                handleDateSelect(d);
+              }}
+            />
             
-            {/* 일정 상세 정보 */}
-            <View style={styles.planDetailContainer}>
-              <Text style={styles.planDetailTitle}>{selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일 일정</Text>
-              <Text style={styles.planDetailTime}>
-                {selectedDate.toLocaleString('ko-KR', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  weekday: 'long'
-                })}
-              </Text>
-              
-              {/* 일정 목록 */}
-              {selectedDatePlans.length > 0 ? (
-                <>
-                  <View style={styles.bottomSheetPlansList}>
-                    {selectedDatePlans.map((plan, index) => (
-                      <View key={plan.planId || index} style={styles.bottomSheetPlanItem}>
-                        <View style={styles.bottomSheetPlanTime}>
-                          <Text style={styles.bottomSheetPlanTimeText}>
-                            {new Date(plan.startTime).toLocaleTimeString('ko-KR', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              hour12: false
-                            })}
-                          </Text>
-                        </View>
-                        <View style={styles.bottomSheetPlanContent}>
-                          <Text style={styles.bottomSheetPlanTitle} numberOfLines={1}>
-                            {plan.title}
-                          </Text>
-                          <Text style={styles.bottomSheetPlanPlace} numberOfLines={1}>
-                            📍 {plan.place || '장소 없음'}
-                          </Text>
-                        </View>
-                      </View>
-                    ))}
-                  </View>
-                  
-                  <View style={styles.planDetailMeta}>
-                    <Text style={styles.planDetailMetaLabel}>총 일정:</Text>
-                    <Text style={styles.planDetailMetaValue}>{selectedDatePlans.length}개</Text>
-                  </View>
-                </>
-              ) : (
-                <>
-                  <View style={styles.emptyPlansContainer}>
-                    <Text style={styles.emptyPlansIcon}>📅</Text>
-                    <Text style={styles.emptyPlansTitle}>일정이 없습니다</Text>
-                    <Text style={styles.emptyPlansDescription}>
-                      이 날에는 예정된 일정이 없습니다.{'\n'}
-                      새로운 일정을 추가해보세요!
-                    </Text>
-                  </View>
-                  
-                  <View style={styles.planDetailMeta}>
-                    <Text style={styles.planDetailMetaLabel}>총 일정:</Text>
-                    <Text style={styles.planDetailMetaValue}>0개</Text>
-                  </View>
-                </>
-              )}
-            </View>
+            {/* 일정 상세 정보 컴포넌트 */}
+            <EventDetail
+              startTime="15:00"
+              endTime="19:00"
+              title="개인 공부"
+              location="집"
+              onDelete={() => {
+                console.log('일정 삭제');
+                // TODO: 일정 삭제 로직 구현
+              }}
+              onComplete={() => {
+                console.log('일정 완료');
+                // TODO: 일정 완료 로직 구현
+              }}
+            />
           </Animated.View>
         </View>
       )}
@@ -421,7 +428,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     paddingHorizontal: 20,
     paddingBottom: 30,
-    maxHeight: BOTTOM_SHEET_HEIGHT,
+    // maxHeight: BOTTOM_SHEET_HEIGHT, // This will be overridden by inline style
   },
   handle: {
     alignItems: 'center',
@@ -432,18 +439,6 @@ const styles = StyleSheet.create({
     height: 4,
     backgroundColor: '#E5E7EB',
     borderRadius: 2,
-  },
-  closeButtonContainer: {
-    alignItems: 'flex-end',
-    marginBottom: 10,
-  },
-  closeButton: {
-    padding: 4,
-  },
-  closeIcon: {
-    fontSize: 20,
-    color: '#666',
-    fontWeight: '600',
   },
   
   // 일정 상세 정보 스타일
