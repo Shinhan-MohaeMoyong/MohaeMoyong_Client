@@ -13,37 +13,23 @@ interface SavingViewModelProps {
 }
 
 export default function SavingViewModel({ onAccountPress }: SavingViewModelProps) {
-  console.log('🎯 [SavingViewModel] 컴포넌트 렌더링');
-  
   const [currentIndex, setCurrentIndex] = useState(0);
   
   // Model에서 Entity 데이터 가져오기
   const { savingStates: savingStateEntities, loading, error, fetchSavingStates } = useSavingModel();
 
-  console.log('📊 [SavingViewModel] Entity 데이터:', {
-    count: savingStateEntities.length,
-    entities: savingStateEntities,
-    loading,
-    error
-  });
-
   // Entity를 DTO로 변환 (매퍼 사용)
   const savingStateDTOs = useMemo(() => {
-    console.log('🔄 [SavingViewModel] Entity → DTO 변환 시작');
-    const dtos = SavingMapper.toDTOList(savingStateEntities);
-    console.log('✅ [SavingViewModel] DTO 변환 완료:', dtos);
-    return dtos;
+    return SavingMapper.toDTOList(savingStateEntities);
   }, [savingStateEntities]);
 
   // 초기 로딩
   useEffect(() => {
-    console.log('🚀 [SavingViewModel] 초기 로딩 시작');
     fetchSavingStates();
   }, [fetchSavingStates]);
 
   // 새로고침 처리
   const handleRefresh = () => {
-    console.log('🔄 [SavingViewModel] 새로고침 시작');
     fetchSavingStates();
   };
 
@@ -63,7 +49,6 @@ export default function SavingViewModel({ onAccountPress }: SavingViewModelProps
 
   // 로딩 상태
   if (loading && savingStateDTOs.length === 0) {
-    console.log('⏳ [SavingViewModel] 로딩 상태 렌더링');
     return (
       <View style={styles.loadingContainer}>
         <Text style={styles.loadingText}>저축 정보를 불러오는 중...</Text>
@@ -73,7 +58,6 @@ export default function SavingViewModel({ onAccountPress }: SavingViewModelProps
 
   // 에러 상태
   if (error) {
-    console.log('❌ [SavingViewModel] 에러 상태 렌더링:', error);
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>{error}</Text>
@@ -94,7 +78,6 @@ export default function SavingViewModel({ onAccountPress }: SavingViewModelProps
   }
 
   const currentAccount = savingStateDTOs[currentIndex];
-  console.log('📱 [SavingViewModel] 메인 화면 렌더링, 현재 계좌:', currentAccount.accountAlias);
 
   return (
     <View style={styles.container}>
@@ -116,7 +99,6 @@ export default function SavingViewModel({ onAccountPress }: SavingViewModelProps
           achievementRate={currentAccount.achievementRate}
           encouragementMessage={currentAccount.encouragementMessage}
           onPress={() => {
-            console.log('👆 [SavingViewModel] 계좌 클릭:', currentAccount.accountAlias);
             onAccountPress?.(currentAccount);
           }}
         />

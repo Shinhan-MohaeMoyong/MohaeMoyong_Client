@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { fetchJson, HttpError } from '../services/api';
 import { SavingStateEntity } from '../types/entity/SavingEntity';
 
 // Mock 데이터
@@ -41,65 +42,37 @@ export const useSavingModel = () => {
 
   // API 요청 함수
   const fetchSavingStates = useCallback(async () => {
-    console.log('🔄 [SavingModel] API 요청 시작');
     setLoading(true);
     setError(null);
 
     try {
-      // 배포된 서버 URL로 변경
-      const apiUrl = 'https://mohaemoyong.store/api/v1/account/savingState';
-      console.log('📡 [SavingModel] API URL:', apiUrl);
-      
-      // 실제 API 호출 시도
-      console.log('🌐 [SavingModel] fetch 요청 시작...');
-      const response = await fetch(apiUrl);
-      
-      console.log('📊 [SavingModel] 응답 상태:', response.status);
-      console.log('📋 [SavingModel] 응답 헤더:', Object.fromEntries(response.headers.entries()));
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ [SavingModel] HTTP 에러:', response.status, errorText);
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-      }
+      const endpoint = '/api/v1/account/savingState';
+      const data = await fetchJson<any[]>(endpoint);
 
-      console.log('✅ [SavingModel] 응답 성공, JSON 파싱 시작...');
-      const data = await response.json();
-      console.log('📦 [SavingModel] 파싱된 데이터:', JSON.stringify(data, null, 2));
-      
-      // API 응답을 Entity로 변환
-      console.log('🔄 [SavingModel] Entity 변환 시작...');
-      const savingStateEntities: SavingStateEntity[] = data.map((item: any, index: number) => {
-        console.log(`📝 [SavingModel] 아이템 ${index + 1} 변환:`, item);
-        return {
-          accountNumber: item.accountNumber,
-          balance: item.balance,
-          accountAlias: item.accountAlias,
-          monthlySavings: item.monthlySavings || [],
-          achievementRate: item.achievementRate,
-        };
-      });
+      const savingStateEntities: SavingStateEntity[] = data.map((item: any) => ({
+        accountNumber: item.accountNumber,
+        balance: item.balance,
+        accountAlias: item.accountAlias,
+        monthlySavings: item.monthlySavings || [],
+        achievementRate: item.achievementRate,
+      }));
 
-      console.log('✅ [SavingModel] Entity 변환 완료:', savingStateEntities);
       setSavingStates(savingStateEntities);
-      console.log('💾 [SavingModel] 상태 업데이트 완료');
-      
     } catch (err) {
-      console.error('💥 [SavingModel] 에러 발생:', err);
-      
-      // 백엔드 서버가 없을 때 Mock 데이터 사용
-      if (err instanceof Error && err.message.includes('Failed to fetch')) {
-        console.log('🔄 [SavingModel] 백엔드 서버 연결 실패, Mock 데이터 사용');
-        console.log('📦 [SavingModel] Mock 데이터:', mockSavingStates);
+      // 네트워크 실패 또는 서버 5xx → Mock 폴백
+      if (
+        (err instanceof Error && err.message.includes('Failed to fetch')) ||
+        (err instanceof HttpError && err.status >= 500)
+      ) {
         setSavingStates(mockSavingStates);
-        console.log('💾 [SavingModel] Mock 데이터로 상태 업데이트 완료');
       } else {
-        const errorMessage = err instanceof Error ? err.message : '저축 정보를 불러오는데 실패했습니다.';
-        console.error('💥 [SavingModel] 에러 메시지:', errorMessage);
+        let errorMessage = err instanceof Error ? err.message : '저축 정보를 불러오는데 실패했습니다.';
+        if (err instanceof HttpError && err.status === 401) {
+          errorMessage = '인증이 필요합니다. 다시 로그인해 주세요.';
+        }
         setError(errorMessage);
       }
     } finally {
-      console.log('🏁 [SavingModel] API 요청 완료');
       setLoading(false);
     }
   }, []);
