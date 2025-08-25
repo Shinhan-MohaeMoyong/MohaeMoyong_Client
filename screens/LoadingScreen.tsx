@@ -3,8 +3,8 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SERVER_URL } from '../constants/server';
 import { TokenManager } from '../contexts/tokenManager';
 import { useUser } from '../contexts/UserContext';
+import LoginScreen2 from '../screens/LoginScreen2';
 import { UserEntity } from '../types/entity/UserEntity';
-import LoginScreen from './LoginScreen';
 
 interface LoadingScreenProps {
   onLoadingComplete?: () => void;
@@ -39,6 +39,8 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadingComplete }) => {
       
       // localStorage에서 토큰 확인
       const { isValid, token } = await TokenManager.checkAuthStatus();
+      console.log('isValid', isValid);
+      console.log('token', token);
       
       if (isValid && token) {
         // 토큰이 유효하면 사용자 정보 가져오기
@@ -101,6 +103,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadingComplete }) => {
       
       setShowLogin(false);
       setError(null);
+      initializeApp();
       
       // 로그인 성공 후 바로 로딩 완료 콜백 호출
       setTimeout(() => {
@@ -116,7 +119,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadingComplete }) => {
 
   // 로그인 화면 표시
   if (showLogin) {
-    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+    return <LoginScreen2 onLoginSuccess={handleLoginSuccess}/>;
   }
 
   // 초기화가 완료되면 로딩스크린 숨김

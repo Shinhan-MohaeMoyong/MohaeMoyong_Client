@@ -1,6 +1,6 @@
 // src/hooks/useMohaeyoung.ts
 import { SERVER_URL } from "@/constants/server";
-import { getToken } from "@/contexts/tokenManager";
+import { getToken, removeToken } from "@/contexts/tokenManager";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { dataFetchFriends } from "../constants/localData/friendsListData";
 import { dataFetchPlans } from "../constants/localData/PlanData";
@@ -32,7 +32,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
       setAuthToken(token);
     };
     initToken();
-
+    removeToken();
   }, []);
 
   // currentUser가 변경될 때마다 해당 사용자의 일정을 가져오기
