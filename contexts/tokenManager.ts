@@ -3,11 +3,41 @@ import { SERVER_URL } from '../constants/server';
 
 const TOKEN_KEY = 'auth_token';
 
+// 웹 환경 감지
+const isWeb = typeof window !== 'undefined' && typeof localStorage !== 'undefined';
+
+// 플랫폼별 저장소 관리
+class StorageManager {
+  static async setItem(key: string, value: string): Promise<void> {
+    if (isWeb) {
+      localStorage.setItem(key, value);
+    } else {
+      await AsyncStorage.setItem(key, value);
+    }
+  }
+
+  static async getItem(key: string): Promise<string | null> {
+    if (isWeb) {
+      return localStorage.getItem(key);
+    } else {
+      return await AsyncStorage.getItem(key);
+    }
+  }
+
+  static async removeItem(key: string): Promise<void> {
+    if (isWeb) {
+      localStorage.removeItem(key);
+    } else {
+      await AsyncStorage.removeItem(key);
+    }
+  }
+}
+
 export class TokenManager {
   // 토큰 저장
   static async saveToken(token: string): Promise<void> {
     try {
-      await AsyncStorage.setItem(TOKEN_KEY, token);
+      await StorageManager.setItem(TOKEN_KEY, token);
       console.log('토큰 저장 완료');
     } catch (error) {
       console.error('토큰 저장 실패:', error);
@@ -17,7 +47,7 @@ export class TokenManager {
   // 토큰 가져오기
   static async getToken(): Promise<string | null> {
     try {
-      const token = await AsyncStorage.getItem(TOKEN_KEY);
+      const token = await StorageManager.getItem(TOKEN_KEY);
       return token;
     } catch (error) {
       console.error('토큰 가져오기 실패:', error);
@@ -28,7 +58,7 @@ export class TokenManager {
   // 토큰 삭제
   static async removeToken(): Promise<void> {
     try {
-      await AsyncStorage.removeItem(TOKEN_KEY);
+      await StorageManager.removeItem(TOKEN_KEY);
       console.log('토큰 삭제 완료');
     } catch (error) {
       console.error('토큰 삭제 실패:', error);
