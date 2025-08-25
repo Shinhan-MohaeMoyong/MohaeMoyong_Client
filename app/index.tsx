@@ -20,7 +20,7 @@ export default function Index() {
     setIsLoading(false);
   };
 
-  // // 로딩 중이거나 로그인이 안 된 경우 로딩 화면 표시
+  // 로딩 중이거나 로그인이 안 된 경우 로딩 화면 표시
   //  if (isLoading || !isLoggedIn) {
   //    return <LoadingScreen onLoadingComplete={handleLoadingComplete} />;
   //  }

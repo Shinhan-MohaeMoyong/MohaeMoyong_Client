@@ -46,7 +46,8 @@ export const useSavingModel = () => {
     setError(null);
 
     try {
-      const apiUrl = 'http://localhost:8080/api/v1/account/savingState';
+      // 배포된 서버 URL로 변경
+      const apiUrl = 'https://mohaemoyong.store/api/v1/account/savingState';
       console.log('📡 [SavingModel] API URL:', apiUrl);
       
       // 실제 API 호출 시도
