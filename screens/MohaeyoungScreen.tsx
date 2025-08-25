@@ -1,24 +1,17 @@
 // src/screens/MohaeyoungScreen.tsx
 import MohaeyoungHeader from "@/components/MohaeyoungHeader";
 import PostBottomSheet from "@/components/post/PostBottomSheet";
-import React, { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
+import React, { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import FriendsList from "../components/FriendsList";
-import TopTabs, { TopTabKey } from "../components/TopTabs";
 import WeekGrid from "../components/WeekGrid";
 import { useUser } from "../contexts/UserContext";
 import { useMohaeyoung } from "../hooks/useMohaeyoungScreen";
 import { usePostBottomSheet } from "../hooks/usePostBottomSheet";
 import type { PlanEntity } from "../types";
-import AccountDetailScreen from "./AccountDetailScreen";
-import AccountScreen from "./AccountScreen";
-import SavingScreen from "./SavingScreen";
 
 export default function MohaeyoungScreen() {
-    const [activeTab, setActiveTab] = useState<TopTabKey>("계좌");
-    const [selectedAccount, setSelectedAccount] = useState<any>(null);
-    const [showAccountDetail, setShowAccountDetail] = useState(false);
     const router = useRouter();
     const { loggedUser } = useUser();
     const { currentUser, friends, plans, loading, error, getCurrentWeekRange, refetch, onItemPress, setCurrentUserTo } = useMohaeyoung({
@@ -50,22 +43,6 @@ export default function MohaeyoungScreen() {
         // TODO: 주 변경 시 startDay, endDay 업데이트 로직 추가
     };
 
-    const handleTabChange = (tab: TopTabKey) => {
-        setActiveTab(tab);
-        setShowAccountDetail(false);
-        setSelectedAccount(null);
-    };
-
-    const handleAccountPress = (account: any) => {
-        setSelectedAccount(account);
-        setShowAccountDetail(true);
-    };
-
-    const handleBackToAccounts = () => {
-        setShowAccountDetail(false);
-        setSelectedAccount(null);
-    };
-  
     const handleAddPlan = () => {
         router.push('/add-plan');
     };
@@ -84,38 +61,6 @@ export default function MohaeyoungScreen() {
         }
     }, [loggedUser]);
 
-    const renderContent = () => {
-        switch (activeTab) {
-            case "계좌":
-                if (showAccountDetail && selectedAccount) {
-                    return <AccountDetailScreen account={selectedAccount} />;
-                }
-                return <AccountScreen onAccountPress={handleAccountPress} />;
-            case "일정":
-                return (
-                    <View style={styles.weekGridContainer}>
-                        {currentUser && (
-                            <WeekGrid
-                                plans={plans[currentUser.id] || []}
-                                startDay={startDay}
-                                endDay={endDay}
-                                startHour={5}
-                                endHour={21}
-                                hourHeight={60}
-                                visibleDays={5}
-                                onChangeWeek={handleWeekChange}
-                                onPressPlan={handlePlanPress}
-                            />
-                        )}
-                    </View>
-                );
-            case "저축":
-                return <SavingScreen />;
-            default:
-                return null;
-        }
-    };
-
     return (
         <View style={styles.container}>
             <MohaeyoungHeader onPressAdd={handleAddPlan}/>
@@ -130,12 +75,21 @@ export default function MohaeyoungScreen() {
                     setCurrentUserTo={setCurrentUserTo}
                 />
             </View>
-            
-            {/* TopTabs 추가 */}
-            <TopTabs active={activeTab} onChange={handleTabChange} style={styles.topTabs} />
-            
-            {/* 탭에 따른 콘텐츠 렌더링 */}
-            {renderContent()}
+            {currentUser && (
+                <View style={styles.weekGridContainer}>
+                    <WeekGrid
+                        plans={plans[currentUser.id] || []}
+                        startDay={startDay}
+                        endDay={endDay}
+                        startHour={5}
+                        endHour={21}
+                        hourHeight={60}
+                        visibleDays={5}
+                        onChangeWeek={handleWeekChange}
+                        onPressPlan={handlePlanPress}
+                    />
+                </View>
+            )}
             
             {
                 selectedPlan && (
@@ -154,12 +108,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
     padding: 16,
-  },
-  topTabs: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
   },
   weekGridContainer: {
     marginBottom: 60,
