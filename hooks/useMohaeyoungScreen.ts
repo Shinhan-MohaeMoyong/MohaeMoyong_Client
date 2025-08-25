@@ -1,6 +1,6 @@
 // src/hooks/useMohaeyoung.ts
 import { SERVER_URL } from "@/constants/server";
-import { getToken } from "@/contexts/tokenManager";
+import { getToken, removeToken } from "@/contexts/tokenManager";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { dataFetchFriends } from "../constants/localData/friendsListData";
 import { dataFetchPlans } from "../constants/localData/PlanData";
@@ -32,6 +32,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
       setAuthToken(token);
     };
     initToken();
+    removeToken();
   }, []);
 
   // currentUser가 변경될 때마다 해당 사용자의 일정을 가져오기
@@ -77,7 +78,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            ...(authToken ? { 'Authorization': `Bearer ${await getToken()}` } : {}),
+            'Authorization': `Bearer ${await getToken()}`,
           },
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -116,7 +117,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            ...(authToken ? { 'Authorization': `Bearer ${await getToken()}` } : {}),
+            'Authorization': `Bearer ${await getToken()}`,
           },
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -132,7 +133,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              ...(authToken ? { 'Authorization': `Bearer ${await getToken()}` } : {}),
+              'Authorization': `Bearer ${await getToken()}`,
             },
           });
           const isNew  = true;// await res.json(); // true/false 응답
@@ -161,7 +162,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
                   method: "GET",
                   headers: {
                     "Content-Type": "application/json",
-                    ...(authToken ? { 'Authorization': `Bearer ${await getToken()}` } : {}),
+                    'Authorization': `Bearer ${await getToken()}`,
                   },
                 });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -189,7 +190,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
     } finally {
       setLoading(false);
     }
-  }, [endpointFriends, serverUrl, authToken, useMock]);
+  }, [endpointFriends, serverUrl, useMock]);
 
   useEffect(() => {
     fetchDatas();
