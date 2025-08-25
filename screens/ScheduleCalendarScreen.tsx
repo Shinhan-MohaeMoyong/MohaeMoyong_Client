@@ -10,13 +10,14 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import EventDetail from "../components/EventDetail";
 import MonthlyCalendar from "../components/MonthlyCalendar";
 import TopTabs, { TopTabKey } from "../components/TopTabs";
 import WeekSelector from "../components/WeekSelector";
 import { useUser } from "../contexts/UserContext";
 import { useMohaeyoung } from "../hooks/useMohaeyoungScreen";
 import type { PlanEntity } from "../types";
+import AccountScreen from './AccountScreen';
+import SavingScreen from './SavingScreen';
 
 const { height: screenHeight } = Dimensions.get('window');
 const BOTTOM_SHEET_HEIGHT = screenHeight * 0.6;        // 60% - 초기상태
@@ -225,21 +226,18 @@ export default function ScheduleCalendarScreen() {
   //   }
   // }, [isBottomSheetVisible]);
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.sideBox}>
-          <Pressable onPress={() => { /* 뒤로가기 연결 예정 */ }} hitSlop={8}>
-            <Text style={styles.backIcon}>{"<"}</Text>
-          </Pressable>
-        </View>
-        <TopTabs active={activeTab} onChange={setActiveTab} style={styles.tabsRow} />
-        <View style={styles.sideBox} />
-      </View>
+  const handleTabChange = (tab: TopTabKey) => {
+    setActiveTab(tab);
+  };
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
-        {activeTab === "일정" ? (
-          <>
+  const renderContent = () => {
+    switch (activeTab) {
+      case "계좌":
+        return <AccountScreen />;
+      case "일정":
+        return (
+          <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+            {/* 월간 달력 */}
             <MonthlyCalendar
               monthDate={monthDate}
               selectedDate={selectedDate}
@@ -282,11 +280,38 @@ export default function ScheduleCalendarScreen() {
                 ))}
               </View>
             )}
-          </>
-        ) : (
-          <View />
-        )}
-      </ScrollView>
+            
+            {/* 주간 선택기 */}
+            <WeekSelector
+              selectedDate={selectedDate}
+              onSelectDate={(d) => {
+                handleDateSelect(d);
+              }}
+            />
+          </ScrollView>
+        );
+      case "저축":
+        return <SavingScreen />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <View style={styles.sideBox}>
+          <Pressable onPress={() => { /* 뒤로가기 연결 예정 */ }} hitSlop={8}>
+            <Text style={styles.backIcon}>{"<"}</Text>
+          </Pressable>
+        </View>
+        {/* TopTabs 추가 */}
+        <TopTabs active={activeTab} onChange={handleTabChange} style={styles.tabsRow} />
+        <View style={styles.sideBox} />
+      </View>
+
+      {/* 탭에 따른 콘텐츠 렌더링 */}
+      {renderContent()}
 
       {/* 새로운 바텀시트 */}
       {isBottomSheetVisible && (
@@ -300,8 +325,8 @@ export default function ScheduleCalendarScreen() {
                   { translateY: pan.y },
                 ],
                 maxHeight: snapPosition === 'full' ? FULL_SCREEN_HEIGHT : 
-                          snapPosition === 'middle' ? MIDDLE_SNAP_HEIGHT : 
-                          BOTTOM_SHEET_HEIGHT,
+                           snapPosition === 'middle' ? MIDDLE_SNAP_HEIGHT : 
+                           BOTTOM_SHEET_HEIGHT,
               },
             ]}
           >
@@ -322,20 +347,13 @@ export default function ScheduleCalendarScreen() {
             />
             
             {/* 일정 상세 정보 컴포넌트 */}
-            <EventDetail
-              startTime="15:00"
-              endTime="19:00"
-              title="개인 공부"
-              location="집"
-              onDelete={() => {
-                console.log('일정 삭제');
-                // TODO: 일정 삭제 로직 구현
-              }}
-              onComplete={() => {
-                console.log('일정 완료');
-                // TODO: 일정 완료 로직 구현
-              }}
-            />
+            <View style={styles.eventDetail}>
+              <Text style={styles.eventDetailText}>일정 상세 정보</Text>
+              <Text style={styles.eventDetailText}>시작: 15:00</Text>
+              <Text style={styles.eventDetailText}>종료: 19:00</Text>
+              <Text style={styles.eventDetailText}>제목: 개인 공부</Text>
+              <Text style={styles.eventDetailText}>장소: 집</Text>
+            </View>
           </Animated.View>
         </View>
       )}
@@ -536,5 +554,14 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  eventDetail: {
+    marginTop: 20,
+    paddingHorizontal: 20,
+  },
+  eventDetailText: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 8,
   },
 });

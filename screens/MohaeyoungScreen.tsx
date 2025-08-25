@@ -1,15 +1,19 @@
 // src/screens/MohaeyoungScreen.tsx
 import PostBottomSheet from "@/components/post/PostBottomSheet";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import FriendsList from "../components/FriendsList";
+import TopTabs, { TopTabKey } from "../components/TopTabs";
 import WeekGrid from "../components/WeekGrid";
 import { useUser } from "../contexts/UserContext";
 import { useMohaeyoung } from "../hooks/useMohaeyoungScreen";
 import { usePostBottomSheet } from "../hooks/usePostBottomSheet";
 import type { PlanEntity } from "../types";
+import AccountScreen from "./AccountScreen";
+import SavingScreen from "./SavingScreen";
 
 export default function MohaeyoungScreen() {
+    const [activeTab, setActiveTab] = useState<TopTabKey>("계좌");
     const { loggedUser } = useUser();
     const { currentUser, friends, plans, loading, error, getCurrentWeekRange, refetch, onItemPress, setCurrentUserTo } = useMohaeyoung({
         currentUser: loggedUser ? {
@@ -40,6 +44,10 @@ export default function MohaeyoungScreen() {
         // TODO: 주 변경 시 startDay, endDay 업데이트 로직 추가
     };
 
+    const handleTabChange = (tab: TopTabKey) => {
+        setActiveTab(tab);
+    };
+
     // loggedUser가 변경될 때마다 currentUser 업데이트
     useEffect(() => {
         if (loggedUser && setCurrentUserTo) {
@@ -54,6 +62,35 @@ export default function MohaeyoungScreen() {
         }
     }, [loggedUser, setCurrentUserTo]);
 
+    const renderContent = () => {
+        switch (activeTab) {
+            case "계좌":
+                return <AccountScreen />;
+            case "일정":
+                return (
+                    <View style={styles.weekGridContainer}>
+                        {currentUser && (
+                            <WeekGrid
+                                plans={plans[currentUser.id] || []}
+                                startDay={startDay}
+                                endDay={endDay}
+                                startHour={5}
+                                endHour={21}
+                                hourHeight={60}
+                                visibleDays={5}
+                                onChangeWeek={handleWeekChange}
+                                onPressPlan={handlePlanPress}
+                            />
+                        )}
+                    </View>
+                );
+            case "저축":
+                return <SavingScreen />;
+            default:
+                return null;
+        }
+    };
+
     return (
         <View style={styles.container}>
             <View>
@@ -67,21 +104,12 @@ export default function MohaeyoungScreen() {
                     setCurrentUserTo={setCurrentUserTo}
                 />
             </View>
-            {currentUser && (
-                <View style={styles.weekGridContainer}>
-                    <WeekGrid
-                        plans={plans[currentUser.id] || []}
-                        startDay={startDay}
-                        endDay={endDay}
-                        startHour={5}
-                        endHour={21}
-                        hourHeight={60}
-                        visibleDays={5}
-                        onChangeWeek={handleWeekChange}
-                        onPressPlan={handlePlanPress}
-                    />
-                </View>
-            )}
+            
+            {/* TopTabs 추가 */}
+            <TopTabs active={activeTab} onChange={handleTabChange} style={styles.topTabs} />
+            
+            {/* 탭에 따른 콘텐츠 렌더링 */}
+            {renderContent()}
             
             {
                 selectedPlan && (
@@ -99,6 +127,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  topTabs: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
   },
   weekGridContainer: {
     marginBottom: 60,
