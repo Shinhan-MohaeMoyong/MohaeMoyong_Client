@@ -157,7 +157,11 @@ export default function WeekGrid({
       const height = (durationMin / 60) * hourHeight;
       const left = dayIdx * (colWidth + COL_GAP);
       const width = colWidth+COL_GAP;
-      return { plan: p, rect: { top, left, width, height } };
+      
+      // isNew 속성 추가 (PlanEntity의 new 필드 사용)
+      const isNew = p.new || false;
+      
+      return { plan: p, rect: { top, left, width, height }, isNew };
     });
   }, [plans, startDay, endDay, colWidth, hourHeight, startHour]);
 
@@ -248,8 +252,8 @@ export default function WeekGrid({
             </View>
 
             {/* 이벤트 블록들 */}
-            {rects.map(({ plan, rect }) => (
-              <EventBlock key={plan.planId} plan={plan} rect={rect} onPress={() => onPressPlan?.(plan)} />
+            {rects.map(({ plan, rect, isNew }) => (
+              <EventBlock key={plan.planId} plan={plan} rect={rect} isNew={isNew} onPress={() => onPressPlan?.(plan)} />
             ))}
           </ScrollView>
         </View>

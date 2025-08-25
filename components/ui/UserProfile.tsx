@@ -104,8 +104,7 @@ const styles = StyleSheet.create({
   },
   name: {
     marginTop: 8,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "500",
-    color: "#ff0000"
   },
 });

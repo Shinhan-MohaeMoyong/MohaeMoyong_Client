@@ -1,5 +1,6 @@
 // src/hooks/useMohaeyoung.ts
-import { SERVER_URL, TOKEN } from "@/constants/server";
+import { SERVER_URL } from "@/constants/server";
+import { getToken } from "@/contexts/tokenManager";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { dataFetchFriends } from "../constants/localData/friendsListData";
 import { dataFetchPlans } from "../constants/localData/PlanData";
@@ -15,13 +16,23 @@ type Options = {
   currentUser?: UserDTO;
 };
 
-export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token = TOKEN, currentUser: initialCurrentUser }: Options = {}) {
+export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, currentUser: initialCurrentUser }: Options = {}) {
   const [friends, setFriends] = useState<UserDTO[]>([]);
   const [plans, setPlans] = useState<Record<number, PlanEntity[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
   const [currentUser, setCurrentUser] = useState<UserDTO | null>(initialCurrentUser || null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
   const { loggedUser } = useUser();
+
+  // 토큰 초기화
+  useEffect(() => {
+    const initToken = async () => {
+      const token = await getToken();
+      setAuthToken(token);
+    };
+    initToken();
+  }, []);
 
   // currentUser가 변경될 때마다 해당 사용자의 일정을 가져오기
   useEffect(() => {
@@ -61,15 +72,19 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token =
         data = await dataFetchPlans();
       } else {
         // 2) 실 서버 통신
-        const apiUrl = (friendId === loggedUser?.userId) ? `${serverUrl}/api/v1/home/plans/week/myPlans` : `${serverUrl}/api/v1/friends/${friendId}/plans`;
+        const apiUrl = (friendId === loggedUser?.userId) ? `${serverUrl}/api/v1/home/plans/week/myPlans` : `${serverUrl}/api/v1/friends/${friendId}/plans/week`;
         const res = await fetch(apiUrl, {
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...(authToken ? { 'Authorization': `Bearer ${await getToken()}` } : {}),
           },
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         data = (await res.json()) as PlanEntity[];
+        data.forEach(plan => {
+          plan.new = true;
+        });
         console.log('fetchPlans data:', data);
       }
 
@@ -78,7 +93,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token =
       console.error('Failed to fetch plans:', e);
       setError(e);
     }
-  }, [serverUrl, token, useMock]);
+  }, [serverUrl, authToken, useMock, loggedUser]);
 
   const fetchDatas = useCallback(async () => {
     setFriends([]);
@@ -98,9 +113,10 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token =
         }
         
         const res = await fetch(endpointFriends, {
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...(authToken ? { 'Authorization': `Bearer ${await getToken()}` } : {}),
           },
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -116,10 +132,10 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token =
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${TOKEN}`,
-            }
+              ...(authToken ? { 'Authorization': `Bearer ${await getToken()}` } : {}),
+            },
           });
-          const { isNew } = await res.json(); // true/false 응답
+          const isNew  = true;// await res.json(); // true/false 응답
           console.log("isNew:", isNew);
           return { ...u, isNew };
         })
@@ -142,13 +158,17 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token =
               } else {
                 // 실제 서버 통신
                 const res = await fetch(`${serverUrl}/api/v1/friends/${friend.id}/plans`, {
+                  method: "GET",
                   headers: {
                     "Content-Type": "application/json",
-                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    ...(authToken ? { 'Authorization': `Bearer ${await getToken()}` } : {}),
                   },
                 });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 friendPlans = (await res.json()) as PlanEntity[];
+                friendPlans.forEach(plan => {
+                  plan.new = true;
+                });
               }
 
               // 친구 ID를 키로 해서 일정 저장
@@ -169,20 +189,12 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token =
     } finally {
       setLoading(false);
     }
-  }, [endpointFriends, serverUrl, token, useMock, loggedUser]);
+  }, [endpointFriends, serverUrl, authToken, useMock]);
 
   useEffect(() => {
     fetchDatas();
     console.log('useEffect currentPlan:', plans[currentUser?.id || 0]);
   }, [fetchDatas]);
-
-  useEffect(() => {
-    console.log('useEffect currentUser:', currentUser);
-  }, [currentUser]);
-
-  useEffect(() => {
-    console.log('useEffect plan:', plans);
-  }, [plans]);
 
   const onItemPress = useCallback((u: UserDTO) => {
     console.log("clicked:", u.id, u.name);

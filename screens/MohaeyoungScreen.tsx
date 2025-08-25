@@ -1,6 +1,8 @@
 // src/screens/MohaeyoungScreen.tsx
+import MohaeyoungHeader from "@/components/MohaeyoungHeader";
 import PostBottomSheet from "@/components/post/PostBottomSheet";
 import React, { useEffect, useState } from "react";
+import { useRouter } from "expo-router";
 import { StyleSheet, View } from "react-native";
 import FriendsList from "../components/FriendsList";
 import TopTabs, { TopTabKey } from "../components/TopTabs";
@@ -17,7 +19,7 @@ export default function MohaeyoungScreen() {
     const [activeTab, setActiveTab] = useState<TopTabKey>("계좌");
     const [selectedAccount, setSelectedAccount] = useState<any>(null);
     const [showAccountDetail, setShowAccountDetail] = useState(false);
-    
+    const router = useRouter();
     const { loggedUser } = useUser();
     const { currentUser, friends, plans, loading, error, getCurrentWeekRange, refetch, onItemPress, setCurrentUserTo } = useMohaeyoung({
         currentUser: loggedUser ? {
@@ -25,7 +27,7 @@ export default function MohaeyoungScreen() {
             name: loggedUser.username,
             email: loggedUser.email,
             imageUrl: loggedUser.imageUrl,
-            isNew: false
+            isNew: false,
         } : undefined
     });
     const { 
@@ -63,6 +65,10 @@ export default function MohaeyoungScreen() {
         setShowAccountDetail(false);
         setSelectedAccount(null);
     };
+  
+    const handleAddPlan = () => {
+        router.push('/add-plan');
+    };
 
     // loggedUser가 변경될 때마다 currentUser 업데이트
     useEffect(() => {
@@ -76,7 +82,7 @@ export default function MohaeyoungScreen() {
             };
             setCurrentUserTo(userDTO);
         }
-    }, [loggedUser, setCurrentUserTo]);
+    }, [loggedUser]);
 
     const renderContent = () => {
         switch (activeTab) {
@@ -112,6 +118,7 @@ export default function MohaeyoungScreen() {
 
     return (
         <View style={styles.container}>
+            <MohaeyoungHeader onPressAdd={handleAddPlan}/>
             <View>
                 <FriendsList
                     friends={friends}
@@ -146,6 +153,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+    padding: 16,
   },
   topTabs: {
     paddingHorizontal: 20,
