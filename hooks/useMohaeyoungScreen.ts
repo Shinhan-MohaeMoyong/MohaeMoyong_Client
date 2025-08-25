@@ -133,7 +133,8 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
         data = await dataFetchPlans();
       } else {
         // 2) 실 서버 통신
-        const apiUrl = (friendId === loggedUser?.userId) ? `${serverUrl}/api/v1/home/plans/week/myPlans` : `${serverUrl}/api/v1/friends/${friendId}/plans/week`;
+        const apiUrl = (friendId === loggedUser?.userId) ? `${serverUrl}/api/v1/home/plans/my` : `${serverUrl}/api/v1/friends/${friendId}/plans`;
+        console.log('apiUrl:', apiUrl);
         const res = await fetch(apiUrl, {
           method: "GET",
           headers: {
