@@ -9,8 +9,9 @@ export default function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <BottomSheetModalProvider>
           <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index"></Stack.Screen>
-            <Stack.Screen name="add-plan"></Stack.Screen>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="add-plan" />
           </Stack>
         </BottomSheetModalProvider>
       </GestureHandlerRootView>

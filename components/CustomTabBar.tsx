@@ -12,11 +12,11 @@ const icons = {
     selected: require('@/assets/images/calendar_selected.png'),
     unselected: require('@/assets/images/calendar_unselected.png'),
   },
-  explore: {
+  profile: {
     selected: require('@/assets/images/profile_selected.png'),
     unselected: require('@/assets/images/profile_unselected.png'),
   },
-  profile: {
+  Moayoung: {
     selected: require('@/assets/images/moayoung_selected.png'),
     unselected: require('@/assets/images/moayoung_unselected.png'),
   },
@@ -80,6 +80,14 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 8,
   },
   svg: {
     position: 'absolute',

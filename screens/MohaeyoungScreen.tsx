@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   weekGridContainer: {
-    marginBottom: 60,
+    marginBottom: 10,
     flex: 1,
     padding: 16,
   },
