@@ -14,7 +14,18 @@ import type { PlanEntity } from "../types";
 export default function MohaeyoungScreen() {
     const router = useRouter();
     const { loggedUser } = useUser();
-    const { currentUser, friends, plans, loading, error, getCurrentWeekRange, refetch, onItemPress, setCurrentUserTo } = useMohaeyoung({
+    const { 
+        currentUser, 
+        friends, 
+        plans, 
+        loading, 
+        error, 
+        getCurrentWeekInfo, 
+        changeWeek,
+        refetch, 
+        onItemPress, 
+        setCurrentUserTo 
+    } = useMohaeyoung({
         currentUser: loggedUser ? {
             id: loggedUser.userId,
             name: loggedUser.username,
@@ -30,9 +41,8 @@ export default function MohaeyoungScreen() {
         closeBottomSheet 
     } = usePostBottomSheet();
 
-    const { startDay, endDay } = getCurrentWeekRange();
-    console.log('startDay:', startDay);
-    console.log('endDay:', endDay);
+    const weekInfo = getCurrentWeekInfo();
+    console.log('weekInfo:', weekInfo);
 
     const handlePlanPress = (plan: PlanEntity) => {
         openBottomSheet(plan);
@@ -40,7 +50,7 @@ export default function MohaeyoungScreen() {
 
     const handleWeekChange = (delta: -1 | 1) => {
         console.log("주 변경:", delta === 1 ? "다음 주" : "이전 주");
-        // TODO: 주 변경 시 startDay, endDay 업데이트 로직 추가
+        changeWeek(delta === 1 ? 'next' : 'prev');
     };
 
     const handleAddPlan = () => {
@@ -63,7 +73,11 @@ export default function MohaeyoungScreen() {
 
     return (
         <View style={styles.container}>
-            <MohaeyoungHeader onPressAdd={handleAddPlan}/>
+            <MohaeyoungHeader 
+                onPressAdd={handleAddPlan}
+                name={currentUser?.name}
+                weekLabel={`${weekInfo.weekLabel} (${weekInfo.dateRange})`}
+            />
             <View>
                 <FriendsList
                     friends={friends}
@@ -79,8 +93,8 @@ export default function MohaeyoungScreen() {
                 <View style={styles.weekGridContainer}>
                     <WeekGrid
                         plans={plans[currentUser.id] || []}
-                        startDay={startDay}
-                        endDay={endDay}
+                        startDay={weekInfo.startDay}
+                        endDay={weekInfo.endDay}
                         startHour={5}
                         endHour={21}
                         hourHeight={60}

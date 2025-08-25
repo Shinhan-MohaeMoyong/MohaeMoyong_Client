@@ -23,6 +23,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
   const [error, setError] = useState<unknown>(null);
   const [currentUser, setCurrentUser] = useState<UserDTO | null>(initialCurrentUser || null);
   const [authToken, setAuthToken] = useState<string | null>(null);
+  const [currentWeekOffset, setCurrentWeekOffset] = useState(0); // 현재 주에서의 오프셋 (0=현재주, -1=이전주, 1=다음주)
   const { loggedUser } = useUser();
 
   // 토큰 초기화
@@ -61,6 +62,66 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
     return { startDay: monday, endDay: sunday };
   }, []);
 
+  // 주차 오프셋을 적용한 주의 시작일과 끝일 계산
+  const getWeekRangeWithOffset = useCallback((offset: number = 0) => {
+    const { startDay, endDay } = getCurrentWeekRange();
+    
+    const adjustedStartDay = new Date(startDay);
+    adjustedStartDay.setDate(startDay.getDate() + (offset * 7));
+    
+    const adjustedEndDay = new Date(endDay);
+    adjustedEndDay.setDate(endDay.getDate() + (offset * 7));
+    
+    return { startDay: adjustedStartDay, endDay: adjustedEndDay };
+  }, [getCurrentWeekRange]);
+
+  // 현재 주차 정보 계산 (몇 번째 주, 날짜 범위)
+  const getCurrentWeekInfo = useCallback(() => {
+    const { startDay, endDay } = getWeekRangeWithOffset(currentWeekOffset);
+    
+    // 년도와 월 정보
+    const year = startDay.getFullYear();
+    const month = startDay.getMonth() + 1;
+    
+    // 해당 월의 첫 번째 날
+    const firstDayOfMonth = new Date(year, startDay.getMonth(), 1);
+    const firstDayWeekday = firstDayOfMonth.getDay(); // 0=일요일, 1=월요일, ..., 6=토요일
+    
+    // 월요일을 주의 시작으로 하므로 조정
+    const adjustedFirstDayWeekday = firstDayWeekday === 0 ? 6 : firstDayWeekday - 1;
+    
+    // 해당 주가 그 달의 몇 번째 주인지 계산
+    const weekOfMonth = Math.ceil((startDay.getDate() + adjustedFirstDayWeekday) / 7);
+    
+    // 날짜 포맷팅
+    const formatDate = (date: Date) => {
+      return `${date.getMonth() + 1}월 ${date.getDate()}일`;
+    };
+    
+    return {
+      weekLabel: `${month}월 ${weekOfMonth}째 주`,
+      dateRange: `${formatDate(startDay)} ~ ${formatDate(endDay)}`,
+      startDay,
+      endDay
+    };
+  }, [currentWeekOffset, getWeekRangeWithOffset]);
+
+  // 주 변경 함수
+  const changeWeek = useCallback((direction: 'prev' | 'next') => {
+    setCurrentWeekOffset(prev => {
+      if (direction === 'prev') {
+        return prev - 1;
+      } else {
+        return prev + 1;
+      }
+    });
+  }, []);
+
+  // currentUser가 변경될 때 주차를 오늘 기준으로 리셋
+  const resetWeekToToday = useCallback(() => {
+    setCurrentWeekOffset(0);
+  }, []);
+
   const endpointFriends = useMemo(() => `${serverUrl}/api/v1/friends`, [serverUrl]);
 
   const fetchPlans = useCallback(async (friendId: number) => {
@@ -72,7 +133,8 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
         data = await dataFetchPlans();
       } else {
         // 2) 실 서버 통신
-        const apiUrl = (friendId === loggedUser?.userId) ? `${serverUrl}/api/v1/home/plans/week/myPlans` : `${serverUrl}/api/v1/friends/${friendId}/plans/week`;
+        const apiUrl = (friendId === loggedUser?.userId) ? `${serverUrl}/api/v1/home/plans/my` : `${serverUrl}/api/v1/friends/${friendId}/plans`;
+        console.log('apiUrl:', apiUrl);
         const res = await fetch(apiUrl, {
           method: "GET",
           headers: {
@@ -204,7 +266,8 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
   const setCurrentUserTo = useCallback((user: UserDTO) => {
     console.log("|||||Setting current user to:", user.name);
     setCurrentUser(user);
-  }, []);
+    resetWeekToToday(); // 사용자가 변경되면 오늘 기준으로 주차 리셋
+  }, [resetWeekToToday]);
 
   return {
     currentUser,
@@ -213,6 +276,9 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
     loading,
     error,
     getCurrentWeekRange,
+    getCurrentWeekInfo,
+    changeWeek,
+    resetWeekToToday,
     refetch: fetchDatas,
     fetchPlans,
     onItemPress,

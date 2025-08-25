@@ -51,6 +51,7 @@ export default function WeekGrid({
   const horizRef = useRef<ScrollView>(null);  // 본문 가로 스크롤
   const pullProgress = useRef(new Animated.Value(0)).current;
   const pullSide = useRef<"left" | "right" | null>(null);
+  const isWeekChanging = useRef(false); // 주 변경 중인지 확인하는 플래그
 
 
   const hours = useMemo(() => {
@@ -81,10 +82,17 @@ export default function WeekGrid({
   };
 
   const triggerWeekChange = (dir: -1 | 1) => {
+    isWeekChanging.current = true; // 주 변경 시작
     onChangeWeek?.(dir);
     requestAnimationFrame(() => {
-      horizRef.current?.scrollTo({ x: 0, animated: false });
-      headerRef.current?.scrollTo({ x: 0, animated: false }); // 👈 추가
+      // 스크롤을 중앙으로 조정 (2번째 컬럼부터 보이도록)
+      const centerX = colWidth + COL_GAP;
+      horizRef.current?.scrollTo({ x: centerX, animated: false });
+      headerRef.current?.scrollTo({ x: centerX, animated: false });
+      // 주 변경 후 1초 동안 드래그 제스처 비활성화
+      setTimeout(() => {
+        isWeekChanging.current = false;
+      }, 1000);
     });
   };
 
@@ -93,6 +101,9 @@ export default function WeekGrid({
     () =>
       PanResponder.create({
         onMoveShouldSetPanResponder: (_, g) => {
+          // 주 변경 중이면 제스처 비활성화
+          if (isWeekChanging.current) return false;
+          
           const horiz = Math.abs(g.dx) > Math.abs(g.dy);
           if (!horiz) return false;
           if (atLeftEdge && g.dx > 0) {
@@ -119,12 +130,14 @@ export default function WeekGrid({
           const side = pullSide.current;
           Animated.timing(pullProgress, { toValue: 0, duration: 150, useNativeDriver: true }).start();
           pullSide.current = null;
-          if (should) triggerWeekChange(side === "left" ? -1 : 1);
+          if (should && !isWeekChanging.current) {
+            triggerWeekChange(side === "left" ? -1 : 1);
+          }
         },
         onPanResponderTerminate: () => {
-        // 제스처 중단 시에도 리셋
-        Animated.timing(pullProgress, { toValue: 0, duration: 150, useNativeDriver: true }).start();
-        pullSide.current = null;
+          // 제스처 중단 시에도 리셋
+          Animated.timing(pullProgress, { toValue: 0, duration: 150, useNativeDriver: true }).start();
+          pullSide.current = null;
         },
       }),
     [atLeftEdge, atRightEdge, onChangeWeek, pullProgress]
@@ -160,6 +173,8 @@ export default function WeekGrid({
       
       // isNew 속성 추가 (PlanEntity의 new 필드 사용)
       const isNew = p.new || false;
+
+      console.log('p:', p);
       
       return { plan: p, rect: { top, left, width, height }, isNew };
     });
