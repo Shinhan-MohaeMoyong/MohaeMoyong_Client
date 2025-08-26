@@ -101,7 +101,7 @@ export class TokenManager {
 }
 
 // 기본 토큰 (fallback)
-export const DEFAULT_TOKEN = 'your_default_token_here';
+export const DEFAULT_TOKEN = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxIiwiaWF0IjoxNzU2MTkwMjc1LCJleHAiOjE3NTYyMTE4NzV9.LQOeOy786XhlNeSqCFO1vxy08Ud2-VbvexELbGAyy5S_6RnzEXVzv0vlZrps49zsPq2Bfw5_plND9bXkb3mMTA';
 
 // 편의를 위한 함수들 export
 export const getToken = TokenManager.getToken;
@@ -109,3 +109,6 @@ export const saveToken = TokenManager.saveToken;
 export const removeToken = TokenManager.removeToken;
 export const isTokenValid = TokenManager.isTokenValid;
 export const checkAuthStatus = TokenManager.checkAuthStatus;
+
+//송성현 토큰
+//eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxIiwiaWF0IjoxNzU2MTkwMjc1LCJleHAiOjE3NTYyMTE4NzV9.LQOeOy786XhlNeSqCFO1vxy08Ud2-VbvexELbGAyy5S_6RnzEXVzv0vlZrps49zsPq2Bfw5_plND9bXkb3mMTA

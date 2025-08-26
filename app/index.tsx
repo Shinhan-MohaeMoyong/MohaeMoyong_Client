@@ -1,5 +1,6 @@
-import LoadingScreen from '../screens/LoadingScreen';
+import FriendsScreen from "@/screens/FriendsScreen";
 
 export default function Index() {
-  return <LoadingScreen />;
+  // return <LoadingScreen />;
+  return <FriendsScreen />;
 }
