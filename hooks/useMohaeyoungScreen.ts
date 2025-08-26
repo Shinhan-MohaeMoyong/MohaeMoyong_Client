@@ -197,7 +197,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
               'Authorization': `Bearer ${await getToken()}`,
             },
           });
-          const isNew  = true;// await res.json(); // true/false 응답
+          const isNew  = await res.json(); // true/false 응답
           console.log("isNew:", isNew);
           return { ...u, isNew };
         })
@@ -228,9 +228,6 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
                 });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 friendPlans = (await res.json()) as PlanEntity[];
-                friendPlans.forEach(plan => {
-                  plan.new = true;
-                });
               }
 
               // 친구 ID를 키로 해서 일정 저장

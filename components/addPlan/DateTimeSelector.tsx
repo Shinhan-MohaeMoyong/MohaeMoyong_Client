@@ -23,6 +23,7 @@ export default function DateTimeSelector({
 }: Props) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState<'start' | 'end' | null>(null);
+  const [tempTime, setTempTime] = useState<Date>(new Date());
 
   // 현재 날짜 기준으로 오늘, 내일만 버튼으로 표시
   const quickDates = useMemo(() => {
@@ -81,12 +82,23 @@ export default function DateTimeSelector({
   };
 
   const handleTimeSelect = (type: 'start' | 'end') => {
+    // 현재 선택된 시간을 기준으로 tempTime 설정
+    if (type === 'start') {
+      const [hours, minutes] = startTime.split(':').map(Number);
+      const newTime = new Date();
+      newTime.setHours(hours, minutes, 0, 0);
+      setTempTime(newTime);
+    } else {
+      const [hours, minutes] = endTime.split(':').map(Number);
+      const newTime = new Date();
+      newTime.setHours(hours, minutes, 0, 0);
+      setTempTime(newTime);
+    }
     setShowTimePicker(type);
   };
 
   const handleTimePickerChange = (event: any, selectedTime?: Date) => {
-    setShowTimePicker(null);
-    if (selectedTime) {
+    if (event.type === 'set' && selectedTime) {
       const formattedTime = selectedTime.toTimeString().slice(0, 5);
       if (showTimePicker === 'start') {
         onStartTimeChange(formattedTime);
@@ -94,6 +106,7 @@ export default function DateTimeSelector({
         onEndTimeChange(formattedTime);
       }
     }
+    setShowTimePicker(null);
   };
   return (
     <View style={styles.container}>
@@ -209,7 +222,7 @@ export default function DateTimeSelector({
        {/* 시간 선택기 */}
        {showTimePicker && (
          <DateTimePicker
-           value={new Date()}
+           value={tempTime}
            mode="time"
            display="default"
            onChange={handleTimePickerChange}

@@ -17,12 +17,15 @@ export default function AddPlanScreen() {
   const router = useRouter();
   const { 
     formData, 
+    isLoading,
     updateFormData, 
     handleWithdrawalAccountSelect,
     handleDepositAccountSelect,
     handleSavingAmountChange,
     handlePhotoUpload,
     handlePhotoRemove,
+    handleStartTimeChange,
+    handleEndTimeChange,
     handleAddPlan 
   } = useAddPlanScreen();
 
@@ -59,7 +62,7 @@ export default function AddPlanScreen() {
         />
         
         <PhotoUpload
-          uploadedPhoto={formData.photo}
+          selectedFiles={formData.files}
           onPhotoUpload={handlePhotoUpload}
           onPhotoRemove={handlePhotoRemove}
         />
@@ -69,8 +72,8 @@ export default function AddPlanScreen() {
           startTime={formData.startTime}
           endTime={formData.endTime}
           onDateSelect={(selectedDate) => updateFormData({ selectedDate })}
-          onStartTimeChange={(startTime) => updateFormData({ startTime })}
-          onEndTimeChange={(endTime) => updateFormData({ endTime })}
+          onStartTimeChange={handleStartTimeChange}
+          onEndTimeChange={handleEndTimeChange}
         />
         
         <RepeatOption
@@ -90,7 +93,16 @@ export default function AddPlanScreen() {
         />
       </ScrollView>
       
-      <AddButton onPress={handleAddPlan} />
+             <AddButton 
+         onPress={async () => {
+           const result = await handleAddPlan();
+           if (result?.success) {
+             // 성공 시 스택을 완전히 초기화하고 메인 화면으로 이동
+             router.push('/(tabs)');
+           }
+         }} 
+         disabled={isLoading}
+       />
     </View>
   );
 }
