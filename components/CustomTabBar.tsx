@@ -1,5 +1,6 @@
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Image } from 'expo-image';
+import { router } from 'expo-router';
 import React, { useCallback } from 'react';
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -8,7 +9,7 @@ const { width, height } = Dimensions.get('window');
 
 // 아이콘 미리 캐싱 (로컬 PNG 이미지)
 const icons = {
-  index: {
+  Mohaeyoung: {
     selected: require('@/assets/images/calendar_selected.png'),
     unselected: require('@/assets/images/calendar_unselected.png'),
   },
@@ -25,7 +26,15 @@ const icons = {
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const handlePress = useCallback(
     (routeName: string) => {
-      navigation.navigate(routeName);
+      if (routeName === 'Mohaeyoung') {
+        router.replace('/Mohaeyoung');
+      }
+      else if (routeName === 'profile') {
+        router.replace('/profile');
+      }
+      else if (routeName === 'Moayoung') {
+        router.replace('/Moayoung');
+      }
     },
     [navigation]
   );

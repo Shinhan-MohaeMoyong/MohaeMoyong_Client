@@ -7,6 +7,7 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
       }}
+      initialRouteName="Mohaeyoung"
       tabBar={(props) => <CustomTabBar {...props} />}
     >
       <Tabs.Screen
@@ -16,7 +17,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="index"
+        name="Mohaeyoung"
         options={{
           title: '뭐해영',
         }}

@@ -31,12 +31,12 @@ export default function AddPlanScreen() {
 
   const handleWithdrawalAccountPress = () => {
     // 출금계좌 선택 화면으로 이동
-    router.push('/account-select?type=withdrawal');
+    //router.push('/account-select?type=withdrawal');
   };
 
   const handleDepositAccountPress = () => {
     // 입금계좌 선택 화면으로 이동
-    router.push('/account-select?type=deposit');
+    //router.push('/account-select?type=deposit');
   };
 
   return (
