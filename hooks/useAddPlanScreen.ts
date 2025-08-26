@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { RepeatConfig } from '../components/addPlan/RepeatOption';
+import type { PhotoUploadEntity } from '../types/entity/PhotoUploadEntity';
 
 export type AccountInfo = {
   id: string;
@@ -14,6 +15,9 @@ export type AddPlanFormData = {
   title: string;
   place: string;
   content: string;
+  
+  // 사진
+  photo: PhotoUploadEntity | null;
   
   // 날짜/시간
   selectedDate: string;
@@ -41,6 +45,7 @@ export function useAddPlanScreen() {
     title: '',
     place: '',
     content: '',
+    photo: null,
     selectedDate: new Date().getDate().toString(), // 오늘 날짜를 기본값으로
     startTime: '09:00',
     endTime: '10:00',
@@ -79,11 +84,20 @@ export function useAddPlanScreen() {
     updateFormData({ savingAmount: numericAmount });
   };
 
+  const handlePhotoUpload = (photo: PhotoUploadEntity) => {
+    updateFormData({ photo });
+  };
+
+  const handlePhotoRemove = () => {
+    updateFormData({ photo: null });
+  };
+
   const handleAddPlan = () => {
     console.log('=== 일정 추가 정보 ===');
     console.log('제목:', formData.title);
     console.log('장소:', formData.place);
     console.log('내용:', formData.content);
+    console.log('사진:', formData.photo ? '업로드됨' : '없음');
     console.log('날짜:', formData.selectedDate);
     console.log('시작 시간:', formData.startTime);
     console.log('종료 시간:', formData.endTime);
@@ -122,6 +136,8 @@ export function useAddPlanScreen() {
     handleWithdrawalAccountSelect,
     handleDepositAccountSelect,
     handleSavingAmountChange,
+    handlePhotoUpload,
+    handlePhotoRemove,
     handleAddPlan
   };
 }

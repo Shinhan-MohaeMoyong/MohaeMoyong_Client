@@ -6,6 +6,7 @@ import AddButton from '../components/addPlan/AddButton';
 import AddPlanHeader from '../components/addPlan/AddPlanHeader';
 import DateTimeSelector from '../components/addPlan/DateTimeSelector';
 import EventTypeSelector from '../components/addPlan/EventTypeSelector';
+import PhotoUpload from '../components/addPlan/PhotoUpload';
 import PlanInputFields from '../components/addPlan/PlanInputFields';
 import RepeatOption from '../components/addPlan/RepeatOption';
 import SaveOption from '../components/addPlan/SaveOption';
@@ -20,6 +21,8 @@ export default function AddPlanScreen() {
     handleWithdrawalAccountSelect,
     handleDepositAccountSelect,
     handleSavingAmountChange,
+    handlePhotoUpload,
+    handlePhotoRemove,
     handleAddPlan 
   } = useAddPlanScreen();
 
@@ -53,6 +56,12 @@ export default function AddPlanScreen() {
           onTitleChange={(title) => updateFormData({ title })}
           onLocationChange={(place) => updateFormData({ place })}
           onContentChange={(content) => updateFormData({ content })}
+        />
+        
+        <PhotoUpload
+          uploadedPhoto={formData.photo}
+          onPhotoUpload={handlePhotoUpload}
+          onPhotoRemove={handlePhotoRemove}
         />
         
         <DateTimeSelector
