@@ -1,14 +1,14 @@
 import React, { useMemo, useRef, useState } from "react";
 import {
-  Animated,
-  Dimensions,
-  PanResponder,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    Animated,
+    Dimensions,
+    PanResponder,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from "react-native";
 import MonthlyCalendar from "../components/MonthlyCalendar";
 import TopTabs, { TopTabKey } from "../components/TopTabs";
@@ -246,7 +246,11 @@ export default function ScheduleCalendarScreen() {
         if (showAccountDetail && selectedAccount) {
           return <AccountDetailScreen account={selectedAccount} />;
         }
-        return <AccountScreen onAccountPress={handleAccountPress} />;
+        return (
+          <View style={{ flex: 1, width: '100%' }}>
+            <AccountScreen onAccountPress={handleAccountPress} />
+          </View>
+        );
       case "일정":
         return (
           <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
@@ -384,7 +388,11 @@ function toKey(d: Date) {
 // 바텀시트 관련 유틸 제거
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { 
+    flex: 1, 
+    backgroundColor: "#fff",
+    width: '100%',
+  },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "center", paddingHorizontal: 12, paddingTop: 8, paddingBottom: 4 },
   backIcon: { fontSize: 20, color: "#222", fontWeight: "900" },
   sideBox: { width: 28, alignItems: "flex-start" },
