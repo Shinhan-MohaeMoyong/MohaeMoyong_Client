@@ -123,15 +123,12 @@ const CommentInput: React.FC<Props> = ({ onFocusExpand, planId, onCommentSent })
       console.log('💬 === 댓글 전송 요청 ===');
       console.log('일정 ID:', planId);
       console.log('댓글 데이터:', JSON.stringify(commentRequest, null, 2));
-
-      // 토큰 가져오기
-      const token = await getToken();
       
       // API 요청
       const response = await fetch(`${SERVER_URL}/api/v1/plans/${planId}/comments`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${await getToken()}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(commentRequest),

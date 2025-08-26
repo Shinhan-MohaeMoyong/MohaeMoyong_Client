@@ -1,10 +1,9 @@
 import { usePostBottomSheet } from '@/hooks/usePostBottomSheet';
-import { CommentDTO } from '@/types/dto/CommentDTO';
 import type { PostBottomSheetDTO } from "@/types/dto/PostBottomSheetDTO";
 import type { UserDTO } from "@/types/dto/UserDTO";
 import type { PlanEntity } from "@/types/entity/PlanEntity";
 import { BottomSheetBackdrop, BottomSheetFooter, BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CommentInput from './CommentInput';
@@ -17,14 +16,12 @@ type Props = {
     plan?: PlanEntity,
     postData?: PostBottomSheetDTO,
     friends?: UserDTO[],
-    comments?: CommentDTO[],
     onClose: () => void;
 };
 
 export default function PostBottomSheet({
     plan,
     postData,
-    comments,
     friends = [],
     onClose
 }: Props) {
@@ -35,7 +32,14 @@ export default function PostBottomSheet({
   const footerHeightRef = useRef(0);
   
   // usePostBottomSheet 훅 사용
-  const { planDetail, postBottomSheetData, isLoadingDetail, isLoadingComments, fetchComments } = usePostBottomSheet();
+  const { comments, postBottomSheetData, isLoadingDetail, isLoadingComments, fetchComments } = usePostBottomSheet();
+
+  // 컴포넌트 마운트 시 댓글 가져오기
+  useEffect(() => {
+    if (plan?.planId) {
+      fetchComments(plan.planId);
+    }
+  }, [plan?.planId]);
 
   // 디버깅을 위한 로그
   useEffect(() => {
