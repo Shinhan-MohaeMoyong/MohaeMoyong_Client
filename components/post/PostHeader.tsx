@@ -1,24 +1,36 @@
+import { useUser } from '@/contexts/UserContext';
 import type { UserDTO } from '@/types/dto';
-import type { PlanDetailEntity } from '@/types/entity/PlanDetailEntity';
-import type { PlanEntity } from '@/types/entity/PlanEntity';
+import type { PostBottomSheetDTO } from '@/types/dto/PostBottomSheetDTO';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FlatList, Image, StyleSheet, Text, View } from 'react-native';
 import UserProfile from '../ui/UserProfile';
 
 type Props = {
-  plan: PlanEntity;
-  planDetail?: PlanDetailEntity | null;
-  isLoadingDetail?: boolean;
-  images?: string[];
-  description?: string;
-  user?: UserDTO;
-  loggedUser?: UserDTO;
+  postData: PostBottomSheetDTO;
 };
 
-export default function PostHeader({ plan, planDetail, isLoadingDetail, images = [], description, user, loggedUser }: Props) {
+export default function PostHeader({ postData }: Props) {
   const [current, setCurrent] = useState(0);
   const [imageWidth, setImageWidth] = useState(0);
+  const {loggedUser} = useUser();
+  
+  // imageUrl을 첫 번째로, photos를 그 다음에 추가
+  const images = useMemo(() => {
+    const imageArray = [];
+    if (postData.imageUrl) {
+      imageArray.push(postData.imageUrl);
+    }
+    if (postData.photos && postData.photos.length > 0) {
+      imageArray.push(...postData.photos.map(photo => photo.url));
+    }
+    return imageArray;
+  }, [postData.imageUrl, postData.photos]);
+
+  useEffect(() => {
+    console.log('[PostHeader] postData : ', postData);
+  }, [postData]);
+  
   const hasImages = images.length > 0;
   const imagesWithFallback = useMemo(() => {
     if (hasImages) return images;
@@ -31,22 +43,22 @@ export default function PostHeader({ plan, planDetail, isLoadingDetail, images =
       {/* 작성자 영역 */}
       <View style={styles.headerRow}>
         <View style={styles.writerRow}>
-          <UserProfile user={user || defaultUser} size={40} showName={false} />
+          <UserProfile user={postData.authorDTO || defaultUser} size={40} showName={false} />
           <View>
-            <Text style={styles.name}>{(user || defaultUser).name}</Text>
+            <Text style={styles.name}>{(postData.authorDTO || defaultUser).name}</Text>
             <Text style={styles.time}>5시간 전</Text>
           </View>
         </View>
-        {loggedUser && planDetail?.authorId?.includes(loggedUser.id) && (
+        {postData.authorDTO.id === loggedUser?.userId && (
           <Ionicons name="ellipsis-horizontal" size={22} color="#333" />
         )}
       </View>
 
-      {/* 본문 2열 레이아웃 */}
-      <View style={styles.contentRow}>
-        {/* 좌측: 이미지 캐러셀 */}
-        <View style={styles.leftCol}>
-          {hasImages ? (
+      {/* 본문 레이아웃 */}
+      <View style={[styles.contentRow, !hasImages && styles.contentRowNoImage]}>
+        {/* 좌측: 이미지 캐러셀 (이미지가 있을 때만) */}
+        {hasImages && (
+          <View style={styles.leftCol}>
             <View
               style={styles.imageBox}
               onLayout={(e) => setImageWidth(e.nativeEvent.layout.width)}
@@ -76,19 +88,17 @@ export default function PostHeader({ plan, planDetail, isLoadingDetail, images =
                 ))}
               </View>
             </View>
-          ) : (
-            <View style={[styles.imageBox, styles.imagePlaceholder]} />
-          )}
-        </View>
+          </View>
+        )}
 
         {/* 우측: 일정 정보 카드 + 상세 카드 */}
-        <View style={styles.rightCol}>
+        <View style={[styles.rightCol, !hasImages && styles.rightColNoImage]}>
           <View style={[
             styles.card, 
-            planDetail?.completed ? styles.completedInfoCard : styles.infoCard
+            postData.isCompleted ? styles.completedInfoCard : styles.infoCard
           ]}>
             {/* 완료된 일정 표시 배지 */}
-            {planDetail?.completed && (
+            {postData.isCompleted && (
               <View style={styles.completedBadge}>
                 <Text style={styles.completedBadgeText}>종료된 일정</Text>
               </View>
@@ -96,28 +106,28 @@ export default function PostHeader({ plan, planDetail, isLoadingDetail, images =
             
             <Text style={[
               styles.cardTitle,
-              planDetail?.completed && styles.completedCardTitle
+              postData.isCompleted && styles.completedCardTitle
             ]}>
-              {plan.title}
+              {postData.title}
             </Text>
             <View style={styles.placeRow}>
               <Ionicons 
                 name="location-outline" 
                 size={16} 
-                color={planDetail?.completed ? "#999" : "#3B3B3B"} 
+                color={postData.isCompleted ? "#999" : "#3B3B3B"} 
               />
               <Text style={[
                 styles.placeText,
-                planDetail?.completed && styles.completedPlaceText
+                postData.isCompleted && styles.completedPlaceText
               ]}>
-                {plan.place}
+                {postData.place}
               </Text>
             </View>
           </View>
 
           <View style={[styles.card, styles.descCard]}>
             <Text style={styles.descText} numberOfLines={5}>
-              {description || '설명 없음'}
+              {postData.content || '설명 없음'}
             </Text>
           </View>
         </View>
@@ -128,7 +138,7 @@ export default function PostHeader({ plan, planDetail, isLoadingDetail, images =
         <View style={styles.separator} />
         <View style={styles.commentCountRow}>
           <Ionicons name="chatbubble-outline" size={16} color="#666" />
-          <Text style={styles.commentCountText}>2</Text>
+          <Text style={styles.commentCountText}>{postData.commentCount}</Text>
         </View>
       </View>
     </View>
@@ -158,10 +168,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
   },
+  contentRowNoImage: {
+    flexDirection: 'column',
+    gap: 12,
+  },
   leftCol: {
     flex: 1.4,
   },
   rightCol: {
+    flex: 1,
+    gap: 12,
+  },
+  rightColNoImage: {
     flex: 1,
     gap: 12,
   },

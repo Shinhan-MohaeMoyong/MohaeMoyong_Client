@@ -5,18 +5,24 @@ import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Image, Platform, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { SERVER_URL, getToken } from '../../constants/server';
 import { useUser } from '../../contexts/UserContext';
+import type { CommentRequestEntity } from '../../types/entity/CommentRequestEntity';
 import type { PhotoUploadEntity } from '../../types/entity/PhotoUploadEntity';
 
 type Props = {
   onFocusExpand?: () => void;
+  planId?: number;
+  onCommentSent?: () => void;
 };
 
-const CommentInput: React.FC<Props> = ({ onFocusExpand }) => {
+const CommentInput: React.FC<Props> = ({ onFocusExpand, planId, onCommentSent }) => {
   const { loggedUser } = useUser();
   const BSInput = Platform.OS === 'web' ? TextInput : BottomSheetTextInput;
+  const [commentText, setCommentText] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [uploadedPhoto, setUploadedPhoto] = useState<PhotoUploadEntity | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  
 
   const pickImage = async () => {
     try {
@@ -60,7 +66,7 @@ const CommentInput: React.FC<Props> = ({ onFocusExpand }) => {
       } as any);
 
       // 토큰 가져오기
-      const token = getToken();
+      const token = await getToken();
       
       // API 요청
       const response = await fetch(`${SERVER_URL}/api/v1/uploads/media/direct`, {
@@ -76,8 +82,6 @@ const CommentInput: React.FC<Props> = ({ onFocusExpand }) => {
         const result: PhotoUploadEntity = await response.json();
         console.log('이미지 업로드 성공:', result);
         setUploadedPhoto(result); // 업로드된 사진 정보 저장
-        Alert.alert('성공', '이미지가 업로드되었습니다.');
-        // setSelectedImage(null); // 업로드 완료 후에도 선택된 이미지 유지
       } else {
         const errorData = await response.json();
         console.error('이미지 업로드 실패:', errorData);
@@ -91,12 +95,83 @@ const CommentInput: React.FC<Props> = ({ onFocusExpand }) => {
     }
   };
 
+  const sendComment = async () => {
+    if (!planId) {
+      Alert.alert('오류', '일정 ID가 없습니다.');
+      return;
+    }
+
+    if (!commentText.trim()) {
+      Alert.alert('오류', '댓글 내용을 입력해주세요.');
+      return;
+    }
+
+    try {
+      setIsSending(true);
+      
+      // CommentRequestEntity 생성
+      const commentRequest: CommentRequestEntity = {
+        content: commentText.trim(),
+        photos: uploadedPhoto ? [
+          {
+            url: uploadedPhoto.url,
+            orderNo: 0
+          }
+        ] : []
+      };
+
+      console.log('💬 === 댓글 전송 요청 ===');
+      console.log('일정 ID:', planId);
+      console.log('댓글 데이터:', JSON.stringify(commentRequest, null, 2));
+
+      // 토큰 가져오기
+      const token = await getToken();
+      
+      // API 요청
+      const response = await fetch(`${SERVER_URL}/api/v1/plans/${planId}/comments`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(commentRequest),
+      });
+
+      if (response.ok) {
+        console.log('💬 === 댓글 전송 성공 ===');
+        Alert.alert('성공', '댓글이 등록되었습니다.');
+        
+        // 입력 필드 초기화
+        setCommentText('');
+        setSelectedImage(null);
+        setUploadedPhoto(null);
+        
+        // 부모 컴포넌트에 댓글 전송 완료 알림
+        onCommentSent?.();
+      } else {
+        const errorData = await response.json();
+        console.error('댓글 전송 실패:', errorData);
+        Alert.alert('전송 실패', '댓글 전송에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('댓글 전송 오류:', error);
+      Alert.alert('오류', '댓글 전송 중 오류가 발생했습니다.');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   return (
     <View style={styles.wrapper}>
       <BSInput
         placeholder="댓글 작성"
         style={styles.input}
+        value={commentText}
+        onChangeText={setCommentText}
         onFocus={onFocusExpand}
+        multiline={true}
+        maxLength={500}
+        textAlignVertical="center"
       />
       
       {/* 선택된 이미지 미리보기 */}
@@ -126,8 +201,16 @@ const CommentInput: React.FC<Props> = ({ onFocusExpand }) => {
           <Ionicons name="image-outline" size={20} color="#666" />
         )}
       </TouchableOpacity>
-      <TouchableOpacity style={styles.btn}>
-        <Ionicons name="send" size={20} color="#fff" />
+      <TouchableOpacity 
+        style={[styles.btn, isSending && styles.btnDisabled]} 
+        onPress={sendComment}
+        disabled={isSending}
+      >
+        {isSending ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Ionicons name="send" size={20} color="#fff" />
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -154,7 +237,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
     borderRadius: 20,
     paddingHorizontal: 14,
-    height: 40,
+    paddingVertical: 10,
+    minHeight: 40,
+    maxHeight: 100,
   },
   imageBtn: {
     width: 40,
@@ -197,5 +282,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  btnDisabled: {
+    opacity: 0.5,
+    backgroundColor: '#999',
   }
 });

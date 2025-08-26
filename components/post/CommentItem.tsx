@@ -1,3 +1,4 @@
+import { useUser } from '@/contexts/UserContext';
 import type { UserDTO } from '@/types/dto';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
@@ -6,23 +7,22 @@ import UserProfile from '../ui/UserProfile';
 
 type Props = {
   id: string;
-  user: string | UserDTO;
+  userDTO: UserDTO;
   time: string;
   text: string;
-  loggedUser?: UserDTO;
   isAfterPlanEnd?: boolean;
 };
 
-export default function CommentItem({ id, user, time, text, loggedUser, isAfterPlanEnd }: Props) {
-  const userDto: UserDTO = typeof user === 'string' ? { id: 0, name: user, email: 'unknown@example.com', imageUrl: null } : user;
-  const isOwnComment = loggedUser && userDto.id === loggedUser.id;
+export default function CommentItem({ id, userDTO, time, text, isAfterPlanEnd }: Props) {
+  const { loggedUser } = useUser();
+  const isOwnComment = loggedUser && userDTO.id === loggedUser.userId;
   
   return (
     <>
       <View style={styles.row}>
-        <UserProfile user={userDto} size={32} showName={false} />
+        <UserProfile user={userDTO} size={32} showName={false} />
         <View style={{ flex: 1 }}>
-          <Text style={styles.user}>{userDto.name} <Text style={styles.time}>{time}</Text></Text>
+          <Text style={styles.user}>{userDTO.name} <Text style={styles.time}>{time}</Text></Text>
           <Text>{text}</Text>
         </View>
         {isOwnComment && (

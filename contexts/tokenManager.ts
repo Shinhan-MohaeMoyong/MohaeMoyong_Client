@@ -48,6 +48,7 @@ export class TokenManager {
   static async getToken(): Promise<string | null> {
     try {
       const token = await StorageManager.getItem(TOKEN_KEY);
+      console.log('토큰 가져오기 완료:', token);
       return token;
     } catch (error) {
       console.error('토큰 가져오기 실패:', error);

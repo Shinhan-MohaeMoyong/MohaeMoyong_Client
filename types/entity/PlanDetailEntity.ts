@@ -1,24 +1,25 @@
-export type PlanDetailEntity = {
-  planId: number;
-  authorId: number[];
-  authorName: string[];
-  title: string;
-  content: string;
-  photos: PhotoPostEntity[];
-  place: string;
-  startTime: string;
-  endTime: string;
-  completed: boolean;
-  hasSavingsGoal: boolean;
-  savingsAmount: number;
-  privacyLevel: 'PUBLIC' | 'PRIVATE' | 'FRIENDS_ONLY';
-  commentCount: number;
-};
-
-export type PhotoPostEntity = {
+export interface PlanPhoto {
   photoId: number;
   url: string;
   orderNo: number;
   width: number;
   height: number;
-};
+}
+
+export interface PlanDetailEntity {
+  planId: number;
+  authorId: number;
+  authorName: string;
+  title: string;
+  content: string;
+  imageUrl?: string;
+  place: string;
+  startTime: string;
+  endTime: string;
+  isCompleted: boolean;
+  hasSavingsGoal: boolean;
+  savingsAmount?: number;
+  privacyLevel: string;
+  commentCount: number;
+  photos: PlanPhoto[];
+}

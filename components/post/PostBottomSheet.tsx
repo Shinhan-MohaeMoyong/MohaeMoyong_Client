@@ -1,60 +1,54 @@
 import { usePostBottomSheet } from '@/hooks/usePostBottomSheet';
+import { CommentDTO } from '@/types/dto/CommentDTO';
+import type { PostBottomSheetDTO } from "@/types/dto/PostBottomSheetDTO";
+import type { UserDTO } from "@/types/dto/UserDTO";
 import type { PlanEntity } from "@/types/entity/PlanEntity";
 import { BottomSheetBackdrop, BottomSheetFooter, BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CommentInput from './CommentInput';
 import CommentItem from './CommentItem';
 import PostHeader from './PostHeader';
 
-const dummyComments = [
-  { id: '1', user: '송성현', time: '3시간 전', text: '오 벌써 운동운동하는 날이야?' },
-  { id: '2', user: '정원석', time: '2시간 전', text: '이번엔 작심삼일 아니지? ㅋㅋ' },
-  { id: '3', user: '김철수', time: '1시간 전', text: '운동 화이팅!' },
-  { id: '4', user: '이영희', time: '30분 전', text: '저도 같이 할까요?' },
-  { id: '5', user: '박민수', time: '20분 전', text: '오늘 날씨가 좋네요' },
-  { id: '6', user: '최지영', time: '15분 전', text: '건강한 하루 되세요' },
-  { id: '7', user: '강동원', time: '10분 전', text: '운동은 꾸준함이 최고' },
-  { id: '8', user: '윤서연', time: '5분 전', text: '저도 운동하고 싶어요' },
-  { id: '9', user: '한지민', time: '방금 전', text: '오늘도 파이팅!' },
-  { id: '10', user: '송혜교', time: '방금 전', text: '건강한 모습 멋져요' },
-  { id: '11', user: '김태희', time: '방금 전', text: '운동 루틴 공유해주세요' },
-  { id: '12', user: '전지현', time: '방금 전', text: '오늘도 힘내세요!' },
-  { id: '13', user: '손예진', time: '방금 전', text: '건강한 하루 되세요' },
-  { id: '14', user: '김혜수', time: '방금 전', text: '운동은 꾸준함이 최고예요' },
-  { id: '15', user: '한가인', time: '방금 전', text: '오늘도 파이팅!' },
-  { id: '16', user: '이효리', time: '방금 전', text: '건강한 모습 멋져요' },
-  { id: '17', user: '보아', time: '방금 전', text: '운동 루틴 공유해주세요' },
-  { id: '18', user: '아이유', time: '방금 전', text: '오늘도 힘내세요!' },
-  { id: '19', user: '태연', time: '방금 전', text: '건강한 하루 되세요' },
-  { id: '20', user: '윤아', time: '방금 전', text: '운동은 꾸준함이 최고예요' },
-  { id: '21', user: '수영', time: '방금 전', text: '오늘도 파이팅!' },
-  { id: '22', user: '효연', time: '방금 전', text: '건강한 모습 멋져요' },
-  { id: '23', user: '서현', time: '방금 전', text: '운동 루틴 공유해주세요' },
-  { id: '24', user: '티파니', time: '방금 전', text: '오늘도 힘내세요!' },
-];
+
 
 type Props = {
-    plan: PlanEntity,
+    plan?: PlanEntity,
+    postData?: PostBottomSheetDTO,
+    friends?: UserDTO[],
+    comments?: CommentDTO[],
     onClose: () => void;
 };
 
 export default function PostBottomSheet({
     plan,
+    postData,
+    comments,
+    friends = [],
     onClose
 }: Props) {
   const sheetRef = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ['35%', '70%', '95%'], []);
+  const snapPoints = useMemo(() => ['40%', '75%', '95%'], []);
   const insets = useSafeAreaInsets();
   const [footerHeight, setFooterHeight] = useState(0);
   const footerHeightRef = useRef(0);
   
   // usePostBottomSheet 훅 사용
-  const { planDetail, isLoadingDetail } = usePostBottomSheet();
+  const { planDetail, postBottomSheetData, isLoadingDetail, isLoadingComments, fetchComments } = usePostBottomSheet();
+
+  // 디버깅을 위한 로그
+  useEffect(() => {
+    console.log('[PostBottomSheet] === 댓글 정보 ===');
+    console.log('comments length:', comments?.length || 0);
+    console.log('comments:', JSON.stringify(comments, null, 2));
+  }, [comments]);
+
 
   useEffect(() => {
     sheetRef.current?.present();
+    console.log('[In Postbottmsheet] === 댓글 정보 변환 결과 ===');
+    console.log(JSON.stringify(comments, null, 2));
   }, []);
 
   return (
@@ -64,9 +58,10 @@ export default function PostBottomSheet({
       snapPoints={snapPoints}
       enablePanDownToClose={true}
       onDismiss={onClose}
-      // 입력창은 항상 표시
-      keyboardBehavior="extend"
+      // 키보드 관련 설정 개선
+      keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
+      android_keyboardInputMode="adjustResize"
       backdropComponent={(props) => {
         return (
             <BottomSheetBackdrop
@@ -91,38 +86,56 @@ export default function PostBottomSheet({
                 }
               }}
             >
-              <CommentInput onFocusExpand={() => sheetRef.current?.snapToIndex(1)} />
+                             <CommentInput 
+                 onFocusExpand={() => {
+                   // 키보드가 올라올 때 BottomSheet를 더 높게 확장
+                   sheetRef.current?.snapToIndex(2);
+                 }}
+                 planId={postData?.planId}
+                 onCommentSent={() => {
+                   // 댓글 전송 후 댓글 목록 새로고침
+                   if (postData?.planId) {
+                     fetchComments(postData.planId);
+                   }
+                 }}
+               />
             </View>
           </BottomSheetFooter>
         )}
       >
-        <BottomSheetScrollView
-          style={styles.listContainer}
-          contentContainerStyle={{ paddingBottom: footerHeight }}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={true}
-          indicatorStyle="black"
-          scrollIndicatorInsets={{ bottom: footerHeight}}
-          bounces={true}
-        >
-          <PostHeader 
-            plan={plan} 
-            planDetail={planDetail}
-            isLoadingDetail={isLoadingDetail}
-            images={planDetail?.photos?.map(photo => photo.url) || []} 
-            description={planDetail?.content || '설명 없음'} 
-            user={{ id: 1, name: '조현우', email: 'me@example.com', imageUrl: null }} 
-            loggedUser={{ id: 1, name: '조현우', email: 'me@example.com', imageUrl: null }}
-          />
+                 <BottomSheetScrollView
+           style={styles.listContainer}
+           contentContainerStyle={{ paddingBottom: footerHeight }}
+           keyboardShouldPersistTaps="handled"
+           showsVerticalScrollIndicator={true}
+           indicatorStyle="black"
+           scrollIndicatorInsets={{ bottom: footerHeight}}
+           bounces={true}
+           keyboardDismissMode="interactive"
+         >
+                                           {postData && (
+                            <PostHeader 
+                 
+                            postData={postData}
+                            />
+            )}
           
-                     {dummyComments.map((item) => (
-             <CommentItem 
-               key={item.id} 
-               {...item} 
-               loggedUser={{ id: 1, name: '조현우', email: 'me@example.com', imageUrl: null }}
-               isAfterPlanEnd={planDetail?.completed}
-             />
-           ))}
+                                                                                     {isLoadingComments ? (
+               <View style={styles.loadingContainer}>
+                 <Text style={styles.loadingText}>댓글을 불러오는 중...</Text>
+               </View>
+             ) : comments && comments.length > 0 && (
+               comments.map((item) => (
+                 <CommentItem 
+                   key={item.id} 
+                   id={item.id}
+                   userDTO={item.userDTO}
+                   time={item.time}
+                   text={item.text}
+                   isAfterPlanEnd={postData?.isCompleted}
+                 />
+               ))
+             )}
         </BottomSheetScrollView>
     </BottomSheetModal>
   );
@@ -152,5 +165,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: '#eee',
+  },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  emptyContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#999',
+    marginBottom: 8,
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: '#ccc',
   },
 });

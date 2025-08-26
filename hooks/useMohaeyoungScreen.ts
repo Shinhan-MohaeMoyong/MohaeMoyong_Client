@@ -219,7 +219,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
                 friendPlans = await dataFetchPlans();
               } else {
                 // 실제 서버 통신
-                const res = await fetch(`${serverUrl}/api/v1/friends/${friend.id}/plans`, {
+                const res = await fetch(`${serverUrl}/api/v1/friends/${friend.id}/plans/week`, {
                   method: "GET",
                   headers: {
                     "Content-Type": "application/json",
