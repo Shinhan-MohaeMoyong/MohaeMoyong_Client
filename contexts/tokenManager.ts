@@ -101,7 +101,7 @@ export class TokenManager {
 }
 
 // 기본 토큰 (fallback)
-export const DEFAULT_TOKEN = 'your_default_token_here';
+export const DEFAULT_TOKEN = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI0IiwiaWF0IjoxNzU2MTY3MzIyLCJleHAiOjE3NTYxODg5MjJ9.c4ftJ96HMPhFHCYi9KjnRNPlxTwDUAyORvdKWuYRqx3evZDcVTFWI6YW7MR435d5VRRYfAqFXXqkjPO_j6omug';
 
 // 편의를 위한 함수들 export
 export const getToken = TokenManager.getToken;

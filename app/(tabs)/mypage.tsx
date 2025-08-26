@@ -1,5 +1,5 @@
 import MyPage from '@/screens/MyPageScreen';
 
-export default function Index() {
+export default function mypage() {
   return <MyPage />;
 }
