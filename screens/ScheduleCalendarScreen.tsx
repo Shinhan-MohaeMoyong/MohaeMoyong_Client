@@ -3,7 +3,6 @@ import {
   Animated,
   Dimensions,
   PanResponder,
-  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
