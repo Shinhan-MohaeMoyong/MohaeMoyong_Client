@@ -9,6 +9,8 @@ import {
     View,
 } from 'react-native';
 import AccountCard from '../components/AccountCard';
+import { AccountMapper } from '../mappers/AccountMapper';
+import { fetchJson } from '../services/api';
 import AddAccountScreen from './AddAccountScreen';
 
 interface Account {
@@ -29,48 +31,33 @@ export default function AccountScreen({ onAccountPress }: AccountScreenProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [showAddAccount, setShowAddAccount] = useState(false);
 
-  // 임시 데이터 (나중에 백엔드 API로 교체)
-  const mockAccounts: Account[] = [
-    {
-      id: '1',
-      accountNumber: '000-000-0000-000',
-      balance: 189000,
-      accountAlias: '학비 저축계좌',
-      bankName: '신한 SOL Bank',
-    },
-    {
-      id: '2',
-      accountNumber: '000-000-0000-001',
-      balance: 450000,
-      accountAlias: '맥북 저축계좌',
-      bankName: '신한은행',
-    },
-    {
-      id: '3',
-      accountNumber: '000-000-0000-002',
-      balance: 120000,
-      accountAlias: '비상금 저축계좌',
-      bankName: '신한은행',
-    },
-  ];
+  // 백엔드 응답 DTO
+  interface SimpleAccountDTO {
+    accountNo: string;
+    accountBalance: number;
+    accountName: string;
+  }
 
   // 계좌 목록 가져오기
   const fetchAccounts = async () => {
     setLoading(true);
     try {
-      // TODO: 실제 API 호출로 교체
-      // const response = await fetch('/api/accounts');
-      // const data = await response.json();
-      // setAccounts(data);
-      
-      // 임시로 mock 데이터 사용
-      setTimeout(() => {
-        setAccounts(mockAccounts);
-        setLoading(false);
-      }, 500);
+      const endpoint = '/api/v1/account/simpleList';
+      const data = await fetchJson<SimpleAccountDTO[]>(endpoint);
+
+      // DTO → 화면에서 쓰는 Legacy Account로 매핑 (기존 뷰 로직 유지)
+      const mapped: Account[] = data.map((item) => ({
+        id: item.accountNo,
+        accountNumber: item.accountNo,
+        balance: item.accountBalance,
+        accountAlias: item.accountName,
+        bankName: '신한은행', // 응답에 없으므로 기본값
+      }));
+
+      setAccounts(mapped);
     } catch (error) {
-      console.error('계좌 목록을 가져오는데 실패했습니다:', error);
       Alert.alert('오류', '계좌 목록을 불러오는데 실패했습니다.');
+    } finally {
       setLoading(false);
     }
   };
@@ -125,18 +112,11 @@ export default function AccountScreen({ onAccountPress }: AccountScreenProps) {
           </View>
         ) : accounts.length > 0 ? (
           accounts.map((account) => (
-            <TouchableOpacity
+            <AccountCard
               key={account.id}
+              account={AccountMapper.fromLegacyAccount(account)}
               onPress={() => onAccountPress(account)}
-              activeOpacity={0.7}
-            >
-              <AccountCard
-                accountNumber={account.accountNumber}
-                balance={account.balance}
-                accountAlias={account.accountAlias}
-                bankName={account.bankName}
-              />
-            </TouchableOpacity>
+            />
           ))
         ) : (
           <View style={styles.emptyContainer}>

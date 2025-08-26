@@ -47,8 +47,10 @@ export class TokenManager {
   // 토큰 가져오기
   static async getToken(): Promise<string | null> {
     try {
-      const token = await StorageManager.getItem(TOKEN_KEY);
-      return token;
+      // const token = await StorageManager.getItem(TOKEN_KEY);
+      // return token;
+
+      return 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI1IiwiaWF0IjoxNzU2MTIzODQyLCJleHAiOjE3NTYxNDU0NDJ9.GJ5BSHjTNqRYqI1vzBg3d1oYDrAwmVScHRAzs_bz--smjmgGztdPNT_AZ69MUqOBsQY9ydHmiBCfXj0VU7zavw';
     } catch (error) {
       console.error('토큰 가져오기 실패:', error);
       return null;

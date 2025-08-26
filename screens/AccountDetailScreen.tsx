@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import AccountCard from '../components/AccountCard';
 import TransactionItem from '../components/TransactionItem';
+import { AccountMapper } from '../mappers/AccountMapper';
+import { fetchJson } from '../services/api';
 
 interface Transaction {
   id: string;
@@ -39,58 +41,45 @@ interface AccountDetailScreenProps {
 export default function AccountDetailScreen({ account }: AccountDetailScreenProps) {
   const [filterType, setFilterType] = useState<'all' | 'deposit' | 'withdrawal'>('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [achievementRate, setAchievementRate] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // 임시 데이터 (나중에 백엔드 API로 교체)
-  const accountDetailData = {
-    achievementRate: 41,
-    transactions: [
-      {
-        id: '1',
-        message: '고깃집 알바 완료 후 자동 저축!',
-        amount: 10000,
-        type: 'deposit' as const,
-        date: '28일 월요일',
-      },
-      {
-        id: '2',
-        message: '편의점 알바 급여 입금',
-        amount: 15000,
-        type: 'deposit' as const,
-        date: '24일 금요일',
-      },
-      {
-        id: '3',
-        message: '체육관 스케줄 변경으로 인한 환불',
-        amount: 5000,
-        type: 'withdrawal' as const,
-        date: '25일 화요일',
-      },
-      {
-        id: '4',
-        message: '카페 알바 급여 입금',
-        amount: 12000,
-        type: 'deposit' as const,
-        date: '23일 목요일',
-      },
-      {
-        id: '5',
-        message: '학원 등록비 출금',
-        amount: 80000,
-        type: 'withdrawal' as const,
-        date: '20일 월요일',
-      },
-      {
-        id: '6',
-        message: '부모님 용돈 입금',
-        amount: 50000,
-        type: 'deposit' as const,
-        date: '15일 수요일',
-      },
-    ],
+  // 백엔드 응답 타입들
+  interface AchievementDTO {
+    achievementRate: number;
+  }
+
+  interface TransactionDTO {
+    id: string;
+    message: string;
+    amount: number;
+    type: 'deposit' | 'withdrawal';
+    date: string;
+  }
+
+  const fetchDetail = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const accountNo = account.accountNumber;
+      const achievementPromise = fetchJson<AchievementDTO>(`/api/v1/account/achievement?accountNo=${encodeURIComponent(accountNo)}`);
+      const transactionsPromise = fetchJson<TransactionDTO[]>(`/api/v1/account/transactions?accountNo=${encodeURIComponent(accountNo)}`);
+      const [achievementRes, transactionsRes] = await Promise.all([achievementPromise, transactionsPromise]);
+
+      setAchievementRate(achievementRes.achievementRate ?? 0);
+      // 서버 스키마와 동일하다고 가정. 필요 시 매핑 조정
+      setTransactions(transactionsRes);
+    } catch (e) {
+      setError('계좌 상세 정보를 불러오지 못했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 필터링된 거래내역
-  const filteredTransactions = accountDetailData.transactions.filter(transaction => {
+  const filteredTransactions = transactions.filter(transaction => {
     if (filterType === 'all') return true;
     return transaction.type === filterType;
   });
@@ -98,11 +87,13 @@ export default function AccountDetailScreen({ account }: AccountDetailScreenProp
   // 새로고침 처리
   const onRefresh = async () => {
     setRefreshing(true);
-    // TODO: 실제 API 호출로 교체
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
+    await fetchDetail();
+    setRefreshing(false);
   };
+
+  React.useEffect(() => {
+    fetchDetail();
+  }, []);
 
   // 필터 버튼 렌더링
   const renderFilterButton = (type: 'all' | 'deposit' | 'withdrawal', label: string) => {
@@ -131,10 +122,8 @@ export default function AccountDetailScreen({ account }: AccountDetailScreenProp
       >
         {/* 계좌 정보 카드 */}
         <AccountCard
-          accountNumber={account.accountNumber}
-          balance={account.balance}
-          accountAlias={account.accountAlias}
-          bankName={account.bankName}
+          account={AccountMapper.fromLegacyAccount(account)}
+          onPress={() => {}}
         />
 
         {/* 달성률 */}
@@ -145,11 +134,11 @@ export default function AccountDetailScreen({ account }: AccountDetailScreenProp
               <View
                 style={[
                   styles.progressFill,
-                  { width: `${accountDetailData.achievementRate}%` },
+                  { width: `${achievementRate}%` },
                 ]}
               />
             </View>
-            <Text style={styles.achievementRate}>{accountDetailData.achievementRate}%</Text>
+            <Text style={styles.achievementRate}>{achievementRate}%</Text>
           </View>
         </View>
 
