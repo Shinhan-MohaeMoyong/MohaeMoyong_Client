@@ -4,19 +4,15 @@ import {
   Dimensions,
   PanResponder,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View
 } from "react-native";
-import MonthlyCalendar from "../components/MonthlyCalendar";
-import TopTabs, { TopTabKey } from "../components/TopTabs";
-import WeekSelector from "../components/WeekSelector";
+import { AccountDetailView, MonthlyCalendar, TopTabKey, TopTabs } from "../components/moayong";
 import { useUser } from "../contexts/UserContext";
 import { useMohaeyoung } from "../hooks/useMohaeyoungScreen";
 import type { PlanEntity } from "../types";
-import AccountDetailScreen from './AccountDetailScreen';
 import AccountScreen from './AccountScreen';
 import SavingScreen from './SavingScreen';
 
@@ -45,7 +41,7 @@ export default function ScheduleCalendarScreen() {
   const today = new Date();
   const [monthDate, setMonthDate] = useState<Date>(new Date(today));
   const [selectedDate, setSelectedDate] = useState<Date>(new Date(today));
-  const [activeTab, setActiveTab] = useState<TopTabKey>("일정");
+  const [activeTab, setActiveTab] = useState<TopTabKey>("저축");
   const [selectedAccount, setSelectedAccount] = useState<any>(null);
   const [showAccountDetail, setShowAccountDetail] = useState(false);
   
@@ -244,69 +240,28 @@ export default function ScheduleCalendarScreen() {
     switch (activeTab) {
       case "계좌":
         if (showAccountDetail && selectedAccount) {
-          return <AccountDetailScreen account={selectedAccount} />;
+          return <AccountDetailView account={selectedAccount} />;
         }
                  return (
            <View style={{ flex: 1, width: '100%', paddingTop: 8 }}>
              <AccountScreen onAccountPress={handleAccountPress} />
            </View>
          );
-             case "일정":
-         return (
-           <ScrollView contentContainerStyle={{ paddingBottom: 24, paddingTop: 8 }}>
-            {/* 월간 달력 */}
-            <MonthlyCalendar
-              monthDate={monthDate}
-              selectedDate={selectedDate}
-              onChangeMonth={setMonthDate}
-              onSelectDate={(d) => {
-                handleDateSelect(d);
-              }}
-              markedDates={marked}
-            />
-            
-            {/* 선택된 날짜의 일정 목록 */}
-            {selectedDatePlans.length > 0 && (
-              <View style={styles.plansContainer}>
-                <Text style={styles.plansTitle}>
-                  {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일 일정
-                </Text>
-                {selectedDatePlans.map((plan, index) => (
-                  <View
-                    key={plan.planId || index}
-                    style={styles.planItem}
-                  >
-                    <View style={styles.planTimeContainer}>
-                      <Text style={styles.planTime}>
-                        {new Date(plan.startTime).toLocaleTimeString('ko-KR', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: false
-                        })}
-                      </Text>
-                    </View>
-                    <View style={styles.planContent}>
-                      <Text style={styles.planTitle} numberOfLines={1}>
-                        {plan.title}
-                      </Text>
-                      <Text style={styles.planDescription} numberOfLines={2}>
-                        {plan.place || '장소 없음'}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            )}
-            
-            {/* 주간 선택기 */}
-            <WeekSelector
-              selectedDate={selectedDate}
-              onSelectDate={(d) => {
-                handleDateSelect(d);
-              }}
-            />
-          </ScrollView>
-        );
+                     case "일정":
+        return (
+          <View style={{ flex: 1, paddingTop: 4 }}>
+           {/* 월간 달력 */}
+           <MonthlyCalendar
+             monthDate={monthDate}
+             selectedDate={selectedDate}
+             onChangeMonth={setMonthDate}
+             onSelectDate={(d) => {
+               handleDateSelect(d);
+             }}
+             markedDates={marked}
+           />
+         </View>
+       );
              case "저축":
          return (
            <View style={{ flex: 1, width: '100%', paddingTop: 8 }}>
@@ -354,13 +309,7 @@ export default function ScheduleCalendarScreen() {
               <View style={styles.handleBar} />
             </View>
             
-            {/* 주간 날짜 선택기 */}
-            <WeekSelector
-              selectedDate={selectedDate}
-              onSelectDate={(d) => {
-                handleDateSelect(d);
-              }}
-            />
+
             
             {/* 일정 상세 정보 컴포넌트 */}
             <View style={styles.eventDetail}>
@@ -404,50 +353,7 @@ const styles = StyleSheet.create({
   },
   tabsRow: { flex: 1 },
   
-  // 일정 목록 스타일
-  plansContainer: {
-    paddingHorizontal: 20,
-    marginTop: 20,
-  },
-  plansTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 16,
-  },
-  planItem: {
-    flexDirection: 'row',
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#007AFF',
-  },
-  planTimeContainer: {
-    marginRight: 16,
-    justifyContent: 'center',
-  },
-  planTime: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#007AFF',
-  },
-  planContent: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  planTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  planDescription: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-  },
+
 
   // 바텀시트 스타일
   overlay: {

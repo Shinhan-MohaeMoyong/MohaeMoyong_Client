@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import {
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import AccountCard from '../components/AccountCard';
-import TransactionItem from '../components/TransactionItem';
-import { AccountMapper } from '../mappers/AccountMapper';
-import { fetchAccountDetail } from '../services/api';
-import { AccountDetailDTO, TransactionDetailDTO } from '../types/dto/AccountDetailDTO';
+import { SERVER_URL } from '../../constants/server';
+import { getToken } from '../../contexts/tokenManager';
+import { AccountMapper } from '../../mappers/AccountMapper';
+import { AccountDetailDTO, TransactionDetailDTO } from '../../types/dto/AccountDetailDTO';
+import AccountCard from '../AccountCard';
+import TransactionItem from '../TransactionItem';
 
 interface Transaction {
   id: string;
@@ -29,17 +30,12 @@ interface Account {
   bankName: string;
 }
 
-interface AccountDetailProps {
+interface AccountDetailViewProps {
   account: Account;
-  achievementRate: number;
-  transactions: Transaction[];
+  onBack?: () => void;
 }
 
-interface AccountDetailScreenProps {
-  account: Account;
-}
-
-export default function AccountDetailScreen({ account }: AccountDetailScreenProps) {
+export default function AccountDetailView({ account, onBack }: AccountDetailViewProps) {
   const [filterType, setFilterType] = useState<'all' | 'deposit' | 'withdrawal'>('all');
   const [refreshing, setRefreshing] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -77,7 +73,20 @@ export default function AccountDetailScreen({ account }: AccountDetailScreenProp
       const accountNo = account.accountNumber;
       
       // 새로운 API 엔드포인트 호출
-      const accountDetailResponse = await fetchAccountDetail(accountNo);
+      const endpoint = `${SERVER_URL}/api/v1/account/${encodeURIComponent(accountNo)}`;
+      const response = await fetch(endpoint, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${await getToken()}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const accountDetailResponse = await response.json();
       
       setAccountDetail(accountDetailResponse);
       

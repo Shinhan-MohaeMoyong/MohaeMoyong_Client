@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { fetchJson, HttpError } from '../services/api';
+import { SERVER_URL } from '../constants/server';
+import { getToken } from '../contexts/tokenManager';
 import { SavingStateEntity } from '../types/entity/SavingEntity';
 
 // Mock 데이터
@@ -46,8 +47,20 @@ export const useSavingModel = () => {
     setError(null);
 
     try {
-      const endpoint = '/api/v1/account/savingState';
-      const data = await fetchJson<any[]>(endpoint);
+      const endpoint = `${SERVER_URL}/api/v1/account/savingState`;
+      const res = await fetch(endpoint, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${await getToken()}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}, message: ${res.statusText}`);
+      }
+
+      const data = await res.json();
 
       const savingStateEntities: SavingStateEntity[] = data.map((item: any) => ({
         accountNumber: item.accountNumber,
@@ -62,12 +75,12 @@ export const useSavingModel = () => {
       // 네트워크 실패 또는 서버 5xx → Mock 폴백
       if (
         (err instanceof Error && err.message.includes('Failed to fetch')) ||
-        (err instanceof HttpError && err.status >= 500)
+        (err instanceof Error && err.message.includes('HTTP error! status: 5'))
       ) {
         setSavingStates(mockSavingStates);
       } else {
         let errorMessage = err instanceof Error ? err.message : '저축 정보를 불러오는데 실패했습니다.';
-        if (err instanceof HttpError && err.status === 401) {
+        if (err instanceof Error && err.message.includes('HTTP error! status: 401')) {
           errorMessage = '인증이 필요합니다. 다시 로그인해 주세요.';
         }
         setError(errorMessage);

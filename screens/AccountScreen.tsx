@@ -9,9 +9,11 @@ import {
   View,
 } from 'react-native';
 import AccountCard from '../components/AccountCard';
+import AddAccountView from '../components/AddAccountView';
+import { AccountDetailView } from '../components/moayong';
+import { SERVER_URL } from '../constants/server';
+import { getToken } from '../contexts/tokenManager';
 import { AccountMapper } from '../mappers/AccountMapper';
-import { fetchJson } from '../services/api';
-import AddAccountScreen from './AddAccountScreen';
 
 interface Account {
   id: string;
@@ -30,6 +32,8 @@ export default function AccountScreen({ onAccountPress }: AccountScreenProps) {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showAddAccount, setShowAddAccount] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const [showAccountDetail, setShowAccountDetail] = useState(false);
 
   // 백엔드 응답 DTO
   interface SimpleAccountDTO {
@@ -42,11 +46,23 @@ export default function AccountScreen({ onAccountPress }: AccountScreenProps) {
   const fetchAccounts = async () => {
     setLoading(true);
     try {
-      const endpoint = '/api/v1/account/simpleList';
-      const data = await fetchJson<SimpleAccountDTO[]>(endpoint);
+      const endpoint = `${SERVER_URL}/api/v1/account/simpleList`;
+      const response = await fetch(endpoint, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${await getToken()}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
 
       // DTO → 화면에서 쓰는 Legacy Account로 매핑 (기존 뷰 로직 유지)
-      const mapped: Account[] = data.map((item) => ({
+      const mapped: Account[] = data.map((item: SimpleAccountDTO) => ({
         id: item.accountNo,
         accountNumber: item.accountNo,
         balance: item.accountBalance,
@@ -74,24 +90,47 @@ export default function AccountScreen({ onAccountPress }: AccountScreenProps) {
     setShowAddAccount(true);
   };
 
+  // 계좌 클릭 처리
+  const handleAccountPress = (account: Account) => {
+    setSelectedAccount(account);
+    setShowAccountDetail(true);
+  };
+
   // 상품 선택 처리
   const handleProductSelect = (product: any) => {
-    // 상품 선택 완료 후 AddAccountScreen 닫기
+    // 상품 선택 완료 후 AddAccountView 닫기
     setShowAddAccount(false);
     
     // 계좌 목록 새로고침 (새로 생성된 계좌 반영)
     fetchAccounts();
   };
 
+  // 계좌 상세에서 뒤로가기
+  const handleBackFromDetail = () => {
+    setShowAccountDetail(false);
+    setSelectedAccount(null);
+  };
+
   useEffect(() => {
     fetchAccounts();
   }, []);
 
+  // 계좌 상세 화면이 표시되는 경우
+  if (showAccountDetail && selectedAccount) {
+    return (
+      <AccountDetailView
+        account={selectedAccount}
+        onBack={handleBackFromDetail}
+      />
+    );
+  }
+
   // 새로운 계좌 추가 화면이 표시되는 경우
   if (showAddAccount) {
     return (
-      <AddAccountScreen
+      <AddAccountView
         onProductSelect={handleProductSelect}
+        onBack={() => setShowAddAccount(false)}
       />
     );
   }
@@ -115,7 +154,7 @@ export default function AccountScreen({ onAccountPress }: AccountScreenProps) {
             <AccountCard
               key={account.id}
               account={AccountMapper.fromLegacyAccount(account)}
-              onPress={() => onAccountPress(account)}
+              onPress={() => handleAccountPress(account)}
             />
           ))
         ) : (
