@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import {
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
 } from 'react-native';
 import CustomAlert from '../components/CustomAlert';
 import ProductCard from '../components/ProductCard';
+import { fetchJson, HttpError } from '../services/api';
 
 interface Product {
   id: string;
@@ -24,6 +25,13 @@ interface AddAccountScreenProps {
   onProductSelect: (product: Product) => void;
 }
 
+// 백엔드 응답 DTO 타입
+interface ProductListItemDTO {
+  accountName: string; // 상품명
+  accountDescription: string; // 상품 설명
+  accountTypeUniqueNo: string; // 상품 고유 번호
+}
+
 export default function AddAccountScreen({ onProductSelect }: AddAccountScreenProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
@@ -32,52 +40,35 @@ export default function AddAccountScreen({ onProductSelect }: AddAccountScreenPr
   const [alertMessage, setAlertMessage] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  // 임시 데이터 (나중에 백엔드 API로 교체)
-  const mockProducts: Product[] = [
-    {
-      id: '1',
-      productName: '모아영!',
-      productDescription: '(헤이영 캠퍼스 전용 상품)',
-      bankName: '신한 SoL Bank',
-      bankLogo: '신한\nSoL\nBank',
-      isExclusive: true,
-      exclusiveNote: '헤이영 캠퍼스 전용 상품입니다.',
-      preferentialNote: '(일정 완료시 우대사항 적용)',
-    },
-    {
-      id: '2',
-      productName: '스마트 통장',
-      productDescription: '(일반 통장)',
-      bankName: '신한은행',
-      bankLogo: '신한\n은행',
-      isExclusive: false,
-    },
-    {
-      id: '3',
-      productName: '청년 우대 통장',
-      productDescription: '(20-30대 전용)',
-      bankName: '신한은행',
-      bankLogo: '신한\n은행',
-      isExclusive: false,
-    },
-  ];
-
   // 상품 목록 가져오기
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      // TODO: 실제 API 호출로 교체
-      // const response = await fetch('/api/products');
-      // const data = await response.json();
-      // setProducts(data);
-      
-      // 임시로 mock 데이터 사용
-      setTimeout(() => {
-        setProducts(mockProducts);
-        setLoading(false);
-      }, 500);
+      const endpoint = '/api/v1/product/list';
+      const data = await fetchJson<ProductListItemDTO[]>(endpoint);
+
+      // 백엔드 DTO → 화면용 Entity 매핑
+      const mapped: Product[] = data.map((item) => ({
+        id: item.accountTypeUniqueNo,
+        productName: item.accountName,
+        productDescription: item.accountDescription,
+        bankName: '신한은행', // 백엔드 응답에 없으므로 고정값/추후 확장
+        bankLogo: '신한\n은행', // 단순 표시용
+        isExclusive: false, // 응답에 없으므로 기본값
+      }));
+
+      setProducts(mapped);
     } catch (error) {
-      console.error('상품 목록을 가져오는데 실패했습니다:', error);
+      // 네트워크 실패나 서버 5xx면 빈 목록 유지
+      if (
+        (error instanceof Error && error.message.includes('Failed to fetch')) ||
+        (error instanceof HttpError && error.status >= 500)
+      ) {
+        setProducts([]);
+      } else {
+        setProducts([]);
+      }
+    } finally {
       setLoading(false);
     }
   };
@@ -92,30 +83,6 @@ export default function AddAccountScreen({ onProductSelect }: AddAccountScreenPr
   // 계좌 생성 API 호출 (임시로 주석 처리)
   const createAccount = async (product: Product) => {
     // TODO: 실제 계좌 생성 API 호출로 교체
-    // 
-    // const response = await fetch('/api/accounts/create', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //     'Authorization': `Bearer ${userToken}`, // 사용자 인증 토큰
-    //   },
-    //   body: JSON.stringify({
-    //     productId: product.id,
-    //     productName: product.productName,
-    //     bankName: product.bankName,
-    //     userId: userId, // 현재 로그인한 사용자 ID
-    //   }),
-    // });
-    // 
-    // if (!response.ok) {
-    //   const errorData = await response.json();
-    //   throw new Error(errorData.message || '계좌 생성에 실패했습니다.');
-    // }
-    // 
-    // const result = await response.json();
-    // return result;
-    
-    // 임시로 성공 응답 시뮬레이션
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({ success: true, accountId: `ACC_${Date.now()}` });
@@ -125,11 +92,8 @@ export default function AddAccountScreen({ onProductSelect }: AddAccountScreenPr
 
   // 상품 선택 처리
   const handleProductSelect = (product: Product) => {
-    console.log('상품 선택됨:', product.productName);
-    
     // 선택된 상품 저장
     setSelectedProduct(product);
-    
     // 커스텀 Alert 표시
     setAlertMessage(`정말로 ${product.productName}의 계좌를 생성하시겠습니까?`);
     setShowCustomAlert(true);
@@ -140,22 +104,13 @@ export default function AddAccountScreen({ onProductSelect }: AddAccountScreenPr
     if (!selectedProduct) return;
     
     try {
-      console.log('계좌 생성 시작:', selectedProduct.productName);
-      
-      // 계좌 생성 API 호출
       const result = await createAccount(selectedProduct);
-      console.log('계좌 생성 성공:', result);
-      
-      // 성공 메시지 표시
       setAlertMessage('계좌가 성공적으로 생성되었습니다!');
       setSelectedProduct(null); // 상품 정보 초기화
       setShowCustomAlert(true);
-      
       // 상품 선택 완료 처리
       onProductSelect(selectedProduct);
-      
     } catch (error) {
-      console.error('계좌 생성 오류:', error);
       setAlertMessage('계좌 생성에 실패했습니다. 다시 시도해주세요.');
       setSelectedProduct(null); // 상품 정보 초기화
       setShowCustomAlert(true);

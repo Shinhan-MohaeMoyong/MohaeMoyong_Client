@@ -1,11 +1,11 @@
-import { StyleSheet, Text, View } from 'react-native';
+import ScheduleCalendarScreen from '@/screens/ScheduleCalendarScreen';
+import { SafeAreaView, StyleSheet } from 'react-native';
 
 export default function ExploreScreen() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>탐색</Text>
-      <Text style={styles.subtitle}>이곳에서 새로운 친구들을 찾아보세요!</Text>
-    </View>
+    <SafeAreaView style={styles.container}>
+      <ScheduleCalendarScreen />
+    </SafeAreaView>
   );
 }
 
@@ -13,9 +13,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
   },
   title: {
     fontSize: 32,

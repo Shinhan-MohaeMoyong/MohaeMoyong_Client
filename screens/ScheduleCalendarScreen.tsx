@@ -3,7 +3,7 @@ import {
   Animated,
   Dimensions,
   PanResponder,
-  Pressable,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -246,10 +246,14 @@ export default function ScheduleCalendarScreen() {
         if (showAccountDetail && selectedAccount) {
           return <AccountDetailScreen account={selectedAccount} />;
         }
-        return <AccountScreen onAccountPress={handleAccountPress} />;
-      case "일정":
-        return (
-          <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+                 return (
+           <View style={{ flex: 1, width: '100%', paddingTop: 8 }}>
+             <AccountScreen onAccountPress={handleAccountPress} />
+           </View>
+         );
+             case "일정":
+         return (
+           <ScrollView contentContainerStyle={{ paddingBottom: 24, paddingTop: 8 }}>
             {/* 월간 달력 */}
             <MonthlyCalendar
               monthDate={monthDate}
@@ -303,46 +307,45 @@ export default function ScheduleCalendarScreen() {
             />
           </ScrollView>
         );
-      case "저축":
-        return <SavingScreen />;
+             case "저축":
+         return (
+           <View style={{ flex: 1, width: '100%', paddingTop: 8 }}>
+             <SavingScreen />
+           </View>
+         );
       default:
         return null;
     }
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.sideBox}>
-          <Pressable onPress={() => { /* 뒤로가기 연결 예정 */ }} hitSlop={8}>
-            <Text style={styles.backIcon}>{"<"}</Text>
-          </Pressable>
-        </View>
         {/* TopTabs 추가 */}
         <TopTabs active={activeTab} onChange={handleTabChange} style={styles.tabsRow} />
-        <View style={styles.sideBox} />
       </View>
 
       {/* 탭에 따른 콘텐츠 렌더링 */}
       {renderContent()}
 
-      {/* 새로운 바텀시트 */}
-      {isBottomSheetVisible && (
-        <View style={styles.overlay}>
-          <TouchableOpacity style={styles.backdrop} onPress={handleCloseBottomSheet} />
-          <Animated.View 
-            style={[
-              styles.bottomSheet,
-              {
-                transform: [
-                  { translateY: pan.y },
-                ],
-                maxHeight: snapPosition === 'full' ? FULL_SCREEN_HEIGHT : 
-                           snapPosition === 'middle' ? MIDDLE_SNAP_HEIGHT : 
-                           BOTTOM_SHEET_HEIGHT,
-              },
-            ]}
-          >
+             {/* 새로운 바텀시트 */}
+       {isBottomSheetVisible && (
+         <View style={styles.overlay}>
+           <TouchableOpacity style={styles.backdrop} onPress={handleCloseBottomSheet} />
+           <SafeAreaView>
+             <Animated.View 
+               style={[
+                 styles.bottomSheet,
+                 {
+                   transform: [
+                     { translateY: pan.y },
+                   ],
+                   maxHeight: snapPosition === 'full' ? FULL_SCREEN_HEIGHT : 
+                              snapPosition === 'middle' ? MIDDLE_SNAP_HEIGHT : 
+                              BOTTOM_SHEET_HEIGHT,
+                 },
+               ]}
+               >
             {/* 핸들 바 - 드래그 가능 */}
             <View 
               style={styles.handle}
@@ -366,11 +369,12 @@ export default function ScheduleCalendarScreen() {
               <Text style={styles.eventDetailText}>종료: 19:00</Text>
               <Text style={styles.eventDetailText}>제목: 개인 공부</Text>
               <Text style={styles.eventDetailText}>장소: 집</Text>
-            </View>
-          </Animated.View>
-        </View>
-      )}
-    </View>
+                                      </View>
+           </Animated.View>
+             </SafeAreaView>
+         </View>
+       )}
+     </SafeAreaView>
   );
 }
 
@@ -384,11 +388,21 @@ function toKey(d: Date) {
 // 바텀시트 관련 유틸 제거
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "center", paddingHorizontal: 12, paddingTop: 8, paddingBottom: 4 },
-  backIcon: { fontSize: 20, color: "#222", fontWeight: "900" },
-  sideBox: { width: 28, alignItems: "flex-start" },
-  tabsRow: { marginLeft: 0, flex: 1 },
+  container: { 
+    flex: 1, 
+    backgroundColor: "#fff",
+    width: '100%',
+  },
+  header: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    justifyContent: "center", 
+    paddingHorizontal: 12, 
+    paddingTop: 16, 
+    paddingBottom: 8,
+    backgroundColor: "#fff",
+  },
+  tabsRow: { flex: 1 },
   
   // 일정 목록 스타일
   plansContainer: {

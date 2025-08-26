@@ -1,58 +1,50 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { AccountDTO } from '../types/dto/AccountDTO';
 
 interface AccountCardProps {
-  accountNumber: string;
-  balance: number;
-  accountAlias: string;
-  bankName: string;
+  account: AccountDTO;
+  onPress: () => void;
 }
 
 export default function AccountCard({
-  accountNumber,
-  balance,
-  accountAlias,
-  bankName
+  account,
+  onPress
 }: AccountCardProps) {
-  // 잔액을 천 단위로 콤마 구분하여 포맷팅
-  const formatBalance = (amount: number) => {
-    return amount.toLocaleString('ko-KR');
-  };
-
-  // 계좌번호를 마스킹 처리 (뒤 4자리만 표시)
-  const maskAccountNumber = (accountNum: string) => {
-    if (accountNum.length <= 4) return accountNum;
-    return '*'.repeat(accountNum.length - 4) + accountNum.slice(-4);
-  };
-
   return (
-    <View style={styles.container}>
+    <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
       {/* 왼쪽: 은행 로고 */}
       <View style={styles.bankLogoContainer}>
         <View style={styles.bankLogo}>
-          <Text style={styles.bankLogoText}>{bankName.charAt(0)}</Text>
+          <Text style={styles.bankLogoText}>{account.bankName.charAt(0)}</Text>
         </View>
-        <Text style={styles.bankName}>{bankName}</Text>
+        <Text style={styles.bankName}>{account.bankName}</Text>
       </View>
       
       {/* 오른쪽: 계좌 정보 */}
       <View style={styles.accountInfo}>
         {/* 계좌번호 */}
         <Text style={styles.accountNumber}>
-          {maskAccountNumber(accountNumber)}
+          {account.maskedAccountNumber}
         </Text>
         
         {/* 잔액 */}
         <Text style={styles.balance}>
-          {formatBalance(balance)} 원
+          {account.balance}
         </Text>
         
         {/* 계좌 별칭 */}
         <Text style={styles.accountAlias}>
-          {accountAlias}
+          {account.accountAlias}
         </Text>
+        
+        {/* 새 계좌 표시 */}
+        {account.isNew && (
+          <View style={styles.newBadge}>
+            <Text style={styles.newBadgeText}>NEW</Text>
+          </View>
+        )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -60,7 +52,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 20,
+    padding: 16,
     marginBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -69,6 +61,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
+    width: '100%',
   },
   bankLogoContainer: {
     alignItems: 'center',
@@ -114,5 +107,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
     fontWeight: '500',
+  },
+  newBadge: {
+    backgroundColor: '#4F46E5',
+    borderRadius: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
+  newBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });
