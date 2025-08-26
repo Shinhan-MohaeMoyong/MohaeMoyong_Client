@@ -1,5 +1,6 @@
 import { SERVER_URL } from '../constants/server';
 import { TokenManager } from '../contexts/tokenManager';
+import { AccountDetailDTO } from '../types/dto/AccountDetailDTO';
 
 export class HttpError extends Error {
   status: number;
@@ -47,6 +48,11 @@ export const fetchJson = async <T>(pathOrUrl: string, init: RequestInit = {}): P
     throw new HttpError(response.status, errorText);
   }
   return response.json() as Promise<T>;
+};
+
+// 계좌 상세 정보 조회 함수
+export const fetchAccountDetail = async (accountNo: string): Promise<AccountDetailDTO> => {
+  return fetchJson<AccountDetailDTO>(`/api/v1/account/${encodeURIComponent(accountNo)}`);
 };
 
 

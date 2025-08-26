@@ -50,7 +50,7 @@ export class TokenManager {
       // const token = await StorageManager.getItem(TOKEN_KEY);
       // return token;
 
-      return 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI1IiwiaWF0IjoxNzU2MTIzODQyLCJleHAiOjE3NTYxNDU0NDJ9.GJ5BSHjTNqRYqI1vzBg3d1oYDrAwmVScHRAzs_bz--smjmgGztdPNT_AZ69MUqOBsQY9ydHmiBCfXj0VU7zavw';
+      return 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI1IiwiaWF0IjoxNzU2MTg1MjE4LCJleHAiOjE3NTYyMDY4MTh9.xQ292GTig3FZTFRQKIemLkIkGkfVVZAGje3V6cYOOjaIhG9sS122N9YjefLqOteKNPYuu7NAixY3x4mprbt-gQ';
     } catch (error) {
       console.error('토큰 가져오기 실패:', error);
       return null;

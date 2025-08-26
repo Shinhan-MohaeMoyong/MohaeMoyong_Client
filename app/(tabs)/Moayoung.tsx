@@ -1,11 +1,11 @@
 import ScheduleCalendarScreen from '@/screens/ScheduleCalendarScreen';
-import { StyleSheet, View } from 'react-native';
+import { SafeAreaView, StyleSheet } from 'react-native';
 
 export default function ExploreScreen() {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ScheduleCalendarScreen />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -13,9 +13,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
   },
   title: {
     fontSize: 32,

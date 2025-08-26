@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import {
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import AccountCard from '../components/AccountCard';
 import TransactionItem from '../components/TransactionItem';
 import { AccountMapper } from '../mappers/AccountMapper';
-import { fetchJson } from '../services/api';
+import { fetchAccountDetail } from '../services/api';
+import { AccountDetailDTO, TransactionDetailDTO } from '../types/dto/AccountDetailDTO';
 
 interface Transaction {
   id: string;
@@ -45,33 +46,54 @@ export default function AccountDetailScreen({ account }: AccountDetailScreenProp
   const [achievementRate, setAchievementRate] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [accountDetail, setAccountDetail] = useState<AccountDetailDTO | null>(null);
 
-  // 백엔드 응답 타입들
-  interface AchievementDTO {
-    achievementRate: number;
-  }
+  // API 응답을 내부 Transaction 타입으로 변환하는 함수
+  const mapTransactionDTOToTransaction = (dto: TransactionDetailDTO, index: number): Transaction => {
+    return {
+      id: `${dto.transactionDate}_${dto.transactionTime}_${index}`,
+      message: dto.transactionSummary,
+      amount: dto.transactionBalance,
+      type: dto.transactionType === '1' ? 'deposit' : 'withdrawal',
+      date: formatTransactionDate(dto.transactionDate, dto.transactionTime),
+    };
+  };
 
-  interface TransactionDTO {
-    id: string;
-    message: string;
-    amount: number;
-    type: 'deposit' | 'withdrawal';
-    date: string;
-  }
+  // 거래일자와 시간을 포맷팅하는 함수
+  const formatTransactionDate = (date: string, time: string): string => {
+    const year = date.substring(0, 4);
+    const month = date.substring(4, 6);
+    const day = date.substring(6, 8);
+    const hour = time.substring(0, 2);
+    const minute = time.substring(2, 4);
+    
+    return `${year}-${month}-${day} ${hour}:${minute}`;
+  };
 
   const fetchDetail = async () => {
     setLoading(true);
     setError(null);
     try {
       const accountNo = account.accountNumber;
-      const achievementPromise = fetchJson<AchievementDTO>(`/api/v1/account/achievement?accountNo=${encodeURIComponent(accountNo)}`);
-      const transactionsPromise = fetchJson<TransactionDTO[]>(`/api/v1/account/transactions?accountNo=${encodeURIComponent(accountNo)}`);
-      const [achievementRes, transactionsRes] = await Promise.all([achievementPromise, transactionsPromise]);
-
-      setAchievementRate(achievementRes.achievementRate ?? 0);
-      // 서버 스키마와 동일하다고 가정. 필요 시 매핑 조정
-      setTransactions(transactionsRes);
+      
+      // 새로운 API 엔드포인트 호출
+      const accountDetailResponse = await fetchAccountDetail(accountNo);
+      
+      setAccountDetail(accountDetailResponse);
+      
+      // 거래내역을 내부 타입으로 변환
+      const mappedTransactions = accountDetailResponse.list.map((transaction: TransactionDetailDTO, index: number) => 
+        mapTransactionDTOToTransaction(transaction, index)
+      );
+      
+      setTransactions(mappedTransactions);
+      
+      // 달성률은 별도 API에서 가져오거나 계산
+      // 현재는 임시로 0으로 설정
+      setAchievementRate(0);
+      
     } catch (e) {
+      console.error('계좌 상세 정보 조회 실패:', e);
       setError('계좌 상세 정보를 불러오지 못했습니다.');
     } finally {
       setLoading(false);
@@ -109,6 +131,31 @@ export default function AccountDetailScreen({ account }: AccountDetailScreenProp
       </TouchableOpacity>
     );
   };
+
+  // 로딩 상태 표시
+  if (loading && !accountDetail) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>계좌 정보를 불러오는 중...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  // 에러 상태 표시
+  if (error && !accountDetail) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchDetail}>
+            <Text style={styles.retryButtonText}>다시 시도</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -184,6 +231,38 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     paddingBottom: 40,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#6B7280',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#EF4444',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#A78BFA',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
   achievementContainer: {
     backgroundColor: '#FFFFFF',
