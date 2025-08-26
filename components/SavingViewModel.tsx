@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Dimensions, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSavingModel } from '../hooks/useSavingModel';
 import { SavingMapper } from '../mappers/SavingMapper';
@@ -172,6 +172,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    paddingTop: 8,
     paddingBottom: 40,
   },
   loadingContainer: {
