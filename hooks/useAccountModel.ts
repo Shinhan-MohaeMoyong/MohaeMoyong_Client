@@ -1,4 +1,6 @@
 import { useCallback, useState } from 'react';
+import { SERVER_URL } from '../constants/server';
+import { getToken } from '../contexts/tokenManager';
 import { AccountMapper } from '../mappers/AccountMapper';
 import { AccountEntity, CreateAccountRequestEntity, CreateAccountResponseEntity } from '../types/entity/AccountEntity';
 
@@ -14,8 +16,15 @@ export const useAccountModel = () => {
     setError(null);
 
     try {
-      // 실제 API 호출 (임시로 mock 데이터 사용)
-      const response = await fetch('http://localhost:8080/api/accounts');
+      // 실제 API 호출
+      const endpoint = `${SERVER_URL}/api/accounts`;
+      const response = await fetch(endpoint, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${await getToken()}`,
+        },
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -38,10 +47,12 @@ export const useAccountModel = () => {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:8080/api/accounts', {
+      const endpoint = `${SERVER_URL}/api/accounts`;
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await getToken()}`,
         },
         body: JSON.stringify(accountData),
       });

@@ -1,14 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View
 } from 'react-native';
-import CustomAlert from '../components/CustomAlert';
-import ProductCard from '../components/ProductCard';
-import { fetchJson, HttpError } from '../services/api';
+import { SERVER_URL } from '../constants/server';
+import { getToken } from '../contexts/tokenManager';
+import CustomAlert from './CustomAlert';
+import ProductCard from './ProductCard';
 
 interface Product {
   id: string;
@@ -21,8 +22,9 @@ interface Product {
   preferentialNote?: string;
 }
 
-interface AddAccountScreenProps {
+interface AddAccountViewProps {
   onProductSelect: (product: Product) => void;
+  onBack?: () => void;
 }
 
 // 백엔드 응답 DTO 타입
@@ -32,7 +34,7 @@ interface ProductListItemDTO {
   accountTypeUniqueNo: string; // 상품 고유 번호
 }
 
-export default function AddAccountScreen({ onProductSelect }: AddAccountScreenProps) {
+export default function AddAccountView({ onProductSelect, onBack }: AddAccountViewProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -44,11 +46,23 @@ export default function AddAccountScreen({ onProductSelect }: AddAccountScreenPr
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const endpoint = '/api/v1/product/list';
-      const data = await fetchJson<ProductListItemDTO[]>(endpoint);
+      const endpoint = `${SERVER_URL}/api/v1/product/list`;
+      const response = await fetch(endpoint, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${await getToken()}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
 
       // 백엔드 DTO → 화면용 Entity 매핑
-      const mapped: Product[] = data.map((item) => ({
+      const mapped: Product[] = data.map((item: ProductListItemDTO) => ({
         id: item.accountTypeUniqueNo,
         productName: item.accountName,
         productDescription: item.accountDescription,
@@ -62,7 +76,7 @@ export default function AddAccountScreen({ onProductSelect }: AddAccountScreenPr
       // 네트워크 실패나 서버 5xx면 빈 목록 유지
       if (
         (error instanceof Error && error.message.includes('Failed to fetch')) ||
-        (error instanceof HttpError && error.status >= 500)
+        (error instanceof Error && error.message.includes('HTTP error! status: 5'))
       ) {
         setProducts([]);
       } else {
