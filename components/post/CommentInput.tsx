@@ -3,8 +3,9 @@ import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Image, Platform, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
-import { SERVER_URL, getToken } from '../../constants/server';
+import { SERVER_URL } from '../../constants/server';
 import { useUser } from '../../contexts/UserContext';
+import { getToken } from '../../contexts/tokenManager';
 import type { CommentRequestEntity } from '../../types/entity/CommentRequestEntity';
 import type { PhotoUploadEntity } from '../../types/entity/PhotoUploadEntity';
 
@@ -111,7 +112,7 @@ const CommentInput: React.FC<Props> = ({ onFocusExpand, planId, onCommentSent })
       
       // CommentRequestEntity 생성
       const commentRequest: CommentRequestEntity = {
-        content: commentText.trim(),
+        content: commentText,
         photos: uploadedPhoto ? [
           {
             url: uploadedPhoto.url,
@@ -124,14 +125,17 @@ const CommentInput: React.FC<Props> = ({ onFocusExpand, planId, onCommentSent })
       console.log('일정 ID:', planId);
       console.log('댓글 데이터:', JSON.stringify(commentRequest, null, 2));
       
+      // 토큰 가져오기
+      const token = await getToken();
+      console.log('[comment input] token : ', token);
       // API 요청
       const response = await fetch(`${SERVER_URL}/api/v1/plans/${planId}/comments`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${await getToken()}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify(commentRequest),
+        body: JSON.stringify(commentRequest)
       });
 
       if (response.ok) {

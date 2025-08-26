@@ -30,6 +30,7 @@ export default function PostBottomSheet({
   const insets = useSafeAreaInsets();
   const [footerHeight, setFooterHeight] = useState(0);
   const footerHeightRef = useRef(0);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   
   // usePostBottomSheet 훅 사용
   const { comments, postBottomSheetData, isLoadingDetail, isLoadingComments, fetchComments } = usePostBottomSheet();
@@ -47,6 +48,8 @@ export default function PostBottomSheet({
     console.log('comments length:', comments?.length || 0);
     console.log('comments:', JSON.stringify(comments, null, 2));
   }, [comments]);
+
+
 
 
   useEffect(() => {
@@ -92,7 +95,7 @@ export default function PostBottomSheet({
             >
                              <CommentInput 
                  onFocusExpand={() => {
-                   // 키보드가 올라올 때 BottomSheet를 더 높게 확장
+                   // 키보드가 올라올 때 BottomSheet를 최대 높이로 확장하여 스크롤 가능하게 함
                    sheetRef.current?.snapToIndex(2);
                  }}
                  planId={postData?.planId}
@@ -116,6 +119,7 @@ export default function PostBottomSheet({
            scrollIndicatorInsets={{ bottom: footerHeight}}
            bounces={true}
            keyboardDismissMode="interactive"
+           nestedScrollEnabled={true}
          >
                                            {postData && (
                             <PostHeader 
@@ -129,7 +133,7 @@ export default function PostBottomSheet({
                  <Text style={styles.loadingText}>댓글을 불러오는 중...</Text>
                </View>
              ) : comments && comments.length > 0 && (
-               comments.map((item) => (
+               [...comments].reverse().map((item) => (
                  <CommentItem 
                    key={item.id} 
                    id={item.id}
