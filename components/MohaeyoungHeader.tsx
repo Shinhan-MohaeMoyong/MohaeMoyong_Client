@@ -12,7 +12,7 @@ type Props = {
 export default function MohaeyoungHeader({
   title = "시간표",
   weekLabel = "7월 셋째 주",
-  name = "장가은",
+  name,
   onPressWeek,
   onPressAdd,
 }: Props) {

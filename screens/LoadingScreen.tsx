@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SERVER_URL } from '../constants/server';
@@ -67,8 +68,9 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadingComplete }) => {
           // 초기화 완료 표시
           setIsInitialized(true);
           
-          // 잠시 후 로딩 완료 콜백 호출
+          // 잠시 후 탭 네비게이션으로 이동
           setTimeout(() => {
+            router.replace('/(tabs)' as any);
             if (onLoadingComplete) {
               onLoadingComplete();
             }
@@ -105,8 +107,9 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadingComplete }) => {
       setError(null);
       initializeApp();
       
-      // 로그인 성공 후 바로 로딩 완료 콜백 호출
+      // 로그인 성공 후 바로 탭 네비게이션으로 이동
       setTimeout(() => {
+        router.replace('/(tabs)' as any);
         if (onLoadingComplete) {
           onLoadingComplete();
         }
