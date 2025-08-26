@@ -37,6 +37,7 @@ export default function MohaeyoungScreen() {
     const { 
         isVisible, 
         selectedPlan, 
+        postBottomSheetData,
         openBottomSheet, 
         closeBottomSheet 
     } = usePostBottomSheet();
@@ -44,7 +45,8 @@ export default function MohaeyoungScreen() {
     const weekInfo = getCurrentWeekInfo();
     console.log('weekInfo:', weekInfo);
 
-    const handlePlanPress = (plan: PlanEntity) => {
+    const handlePlanPress = async (plan: PlanEntity) => {
+        // usePostBottomSheet 훅에서 모든 로직을 처리하므로 plan만 전달
         openBottomSheet(plan);
     };
 
@@ -105,13 +107,15 @@ export default function MohaeyoungScreen() {
                 </View>
             )}
             
-            {
-                selectedPlan && (
-                    <PostBottomSheet
-                        plan={selectedPlan}
-                        onClose={closeBottomSheet}/>
-                )
-            }
+                         {
+                 (postBottomSheetData) && (
+                     <PostBottomSheet
+                         plan={selectedPlan || undefined}
+                         postData={postBottomSheetData || undefined}
+                         friends={friends}
+                         onClose={closeBottomSheet}/>
+                 )
+             }
             
         </View>
     );

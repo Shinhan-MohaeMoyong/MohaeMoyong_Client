@@ -1,5 +1,4 @@
-import LoadingScreen from '../screens/LoadingScreen';
-
+import Start from './start';
 export default function Index() {
-  return <LoadingScreen />;
+  return <Start/>;
 }

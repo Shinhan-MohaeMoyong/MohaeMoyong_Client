@@ -3,12 +3,19 @@ import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 
 type Props = {
   onPress: () => void;
+  disabled?: boolean;
 };
 
-export default function AddButton({ onPress }: Props) {
+export default function AddButton({ onPress, disabled = false }: Props) {
   return (
-    <TouchableOpacity style={styles.button} onPress={onPress}>
-      <Text style={styles.buttonText}>추가하기</Text>
+    <TouchableOpacity 
+      style={[styles.button, disabled && styles.buttonDisabled]} 
+      onPress={onPress}
+      disabled={disabled}
+    >
+      <Text style={[styles.buttonText, disabled && styles.buttonTextDisabled]}>
+        {disabled ? '추가 중...' : '추가하기'}
+      </Text>
     </TouchableOpacity>
   );
 }
@@ -35,5 +42,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '700',
+  },
+  buttonDisabled: {
+    backgroundColor: '#ccc',
+    shadowOpacity: 0.05,
+  },
+  buttonTextDisabled: {
+    color: '#999',
   },
 });
