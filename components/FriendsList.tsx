@@ -1,5 +1,4 @@
 // src/components/FriendsList.tsx
-import React from "react";
 import { ActivityIndicator, FlatList, Text, View } from "react-native";
 import type { UserDTO } from "../types/dto/UserDTO";
 import UserProfile from "./ui/UserProfile";

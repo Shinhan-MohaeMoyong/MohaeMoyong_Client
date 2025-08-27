@@ -1,5 +1,5 @@
 import { useUserProfile } from "@/hooks/useUserProfile";
-import React, { memo } from "react";
+import { memo } from "react";
 import {
   ActivityIndicator,
   Image,
