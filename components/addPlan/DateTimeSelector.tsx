@@ -25,6 +25,10 @@ type Props = {
 
 const STEP_MIN = 15; // 15분 스냅
 const MIN_RANGE = 15; // 최소 15분 간격
+const HIT_SLOP = { top: 12, bottom: 12, left: 12, right: 12 };
+const MOVE_TH = 2; // 최소 수평 이동 임계치
+const isHorizontalMove = (dx: number, dy: number) =>
+  Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > MOVE_TH;
 
 const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
 const toISO = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
