@@ -64,9 +64,11 @@ export default function PostBottomSheet({
       enablePanDownToClose={true}
       onDismiss={onClose}
       // 키보드 관련 설정 개선
-      keyboardBehavior="interactive"
+      keyboardBehavior="extend"
       keyboardBlurBehavior="restore"
       android_keyboardInputMode="adjustResize"
+      enableContentPanningGesture={true}
+      enableHandlePanningGesture={true}
       backdropComponent={(props) => {
         return (
             <BottomSheetBackdrop
@@ -91,34 +93,38 @@ export default function PostBottomSheet({
                 }
               }}
             >
-                             <CommentInput 
-                 onFocusExpand={() => {
-                   // 키보드가 올라올 때 BottomSheet를 더 높게 확장
-                   sheetRef.current?.snapToIndex(2);
-                 }}
-                 planId={postData?.planId}
-                 onCommentSent={() => {
-                   // 댓글 전송 후 댓글 목록 새로고침
-                   if (postData?.planId) {
-                     fetchComments(postData.planId);
-                   }
-                 }}
-               />
+                                                           <CommentInput 
+                  onFocusExpand={() => {
+                    // 키보드가 올라올 때 BottomSheet를 최대 높이로 확장
+                    sheetRef.current?.snapToIndex(2);
+                    // 키보드가 올라온 후에도 BottomSheet가 유지되도록 설정
+                    setTimeout(() => {
+                      sheetRef.current?.snapToIndex(2);
+                    }, 100);
+                  }}
+                  planId={postData?.planId}
+                  onCommentSent={() => {
+                    // 댓글 전송 후 댓글 목록 새로고침
+                    if (postData?.planId) {
+                      fetchComments(postData.planId);
+                    }
+                  }}
+                />
             </View>
           </BottomSheetFooter>
         )}
       >
-                 <BottomSheetScrollView
-           style={styles.listContainer}
-           contentContainerStyle={{ paddingBottom: footerHeight }}
-           keyboardShouldPersistTaps="handled"
-           showsVerticalScrollIndicator={true}
-           indicatorStyle="black"
-           scrollIndicatorInsets={{ bottom: footerHeight}}
-           bounces={true}
-           keyboardDismissMode="interactive"
-           nestedScrollEnabled={true}
-         >
+                                   <BottomSheetScrollView
+            style={styles.listContainer}
+            contentContainerStyle={{ paddingBottom: footerHeight }}
+            keyboardShouldPersistTaps="always"
+            showsVerticalScrollIndicator={true}
+            indicatorStyle="black"
+            scrollIndicatorInsets={{ bottom: footerHeight}}
+            bounces={true}
+            keyboardDismissMode="none"
+            nestedScrollEnabled={true}
+          >
                                            {postData && (
                             <PostHeader 
                  
@@ -135,6 +141,7 @@ export default function PostBottomSheet({
                  <CommentItem 
                    key={item.id} 
                    id={item.id}
+                   comment={item}
                    userDTO={item.userDTO}
                    time={item.time}
                    text={item.text}
