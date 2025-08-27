@@ -1,9 +1,10 @@
+import { getToken } from '@/contexts/tokenManager';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Image, Platform, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
-import { SERVER_URL, getToken } from '../../constants/server';
+import { SERVER_URL } from '../../constants/server';
 import { useUser } from '../../contexts/UserContext';
 import type { CommentRequestEntity } from '../../types/entity/CommentRequestEntity';
 import type { PhotoUploadEntity } from '../../types/entity/PhotoUploadEntity';

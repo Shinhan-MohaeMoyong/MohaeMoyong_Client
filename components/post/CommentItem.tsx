@@ -1,28 +1,42 @@
 import { useUser } from '@/contexts/UserContext';
 import type { UserDTO } from '@/types/dto';
+import type { CommentDTO } from '@/types/dto/CommentDTO';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import UserProfile from '../ui/UserProfile';
 
 type Props = {
   id: string;
   userDTO: UserDTO;
+  comment: CommentDTO;
   time: string;
   text: string;
   isAfterPlanEnd?: boolean;
 };
 
-export default function CommentItem({ id, userDTO, time, text, isAfterPlanEnd }: Props) {
+export default function CommentItem({ id, userDTO, comment, time, text, isAfterPlanEnd }: Props) {
   const { loggedUser } = useUser();
   const isOwnComment = loggedUser && userDTO.id === loggedUser.userId;
-  
+
+  useEffect(() => {
+    console.log("[in CommentItem] comment : ", comment);
+  }, [comment]);
+
   return (
     <>
       <View style={styles.row}>
         <UserProfile user={userDTO} size={32} showName={false} />
         <View style={{ flex: 1 }}>
           <Text style={styles.user}>{userDTO.name} <Text style={styles.time}>{time}</Text></Text>
+          {
+            comment.photos && comment.photos.length > 0 && (
+              comment.photos.map((photo) => (
+                  <Image source={{uri: photo}} style={{ width: 100, height: 100 }} />
+                
+              ))
+            )
+          }
           <Text>{text}</Text>
         </View>
         {isOwnComment && (
