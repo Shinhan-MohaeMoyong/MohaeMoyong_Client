@@ -126,10 +126,29 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
     padding: 16,
-  },
+  },  
   weekGridContainer: {
-    marginBottom: 10,
     flex: 1,
-    padding: 16,
+    marginTop: 8,
+    marginBottom: 12,
+
+    // ✅ 카드 테두리/모서리
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#E6E9EF",
+    borderRadius: 16,
+    overflow: "hidden",
+
+    // ✅ 살짝 떠 보이는 그림자(옵션)
+    // iOS
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 10,
+    // Android
+    elevation: 2,
+
+    // ⚠ WeekGrid 내부 선과 겹치지 않게 패딩은 최소화/제거
+    padding: 10,
   },
 });

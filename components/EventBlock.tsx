@@ -1,6 +1,5 @@
 import { useEventBlock } from '@/hooks/useEventBlock';
 import type { PlanEntity } from '@/types/entity/PlanEntity';
-import React from 'react';
 import { GestureResponderEvent, Pressable, StyleSheet, Text, View } from 'react-native';
 
 type Props = {

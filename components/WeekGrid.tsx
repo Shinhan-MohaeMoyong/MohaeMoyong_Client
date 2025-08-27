@@ -1,6 +1,6 @@
 // src/components/schedule/WeekGrid.tsx
 import type { PlanEntity, PlanGridDTO } from "@/types";
-import React, { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Animated,
   LayoutChangeEvent,

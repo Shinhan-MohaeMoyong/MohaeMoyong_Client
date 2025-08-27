@@ -49,7 +49,7 @@ export class TokenManager {
     try {
       const token = await StorageManager.getItem(TOKEN_KEY);
       console.log('토큰 가져오기 완료:', token);
-      return "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI0IiwiaWF0IjoxNzU2Mjc1MTY1LCJleHAiOjE3NTYyOTY3NjV9.xZLQDBK7sRXoc7C-Sr0Qt247hCH3hC_zpg3-tOT6C86o-UEdG7p1qRBl58YSLt2-4c-YXXSf9nMTRnILMPUeag";
+      return "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI0IiwiaWF0IjoxNzU2MzE2NTY4LCJleHAiOjE3NTYzMzgxNjh9.CRrb8v5e8aAToEJ7hyyaIapfu8uZeD3U1D2h0dV59wWwz3MNE-gXeNc963D0cbyboBC6n7HKY1h2gRZkimrQ5g";
 
     } catch (error) {
       console.error('토큰 가져오기 실패:', error);
