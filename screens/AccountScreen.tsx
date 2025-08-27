@@ -1,5 +1,6 @@
 import { SERVER_URL } from '@/constants/server';
 import { getToken } from '@/contexts/tokenManager';
+import AddAccountScreen from '@/screens/AddAccountScreen';
 import { useEffect, useState } from 'react';
 import {
   Alert,
@@ -12,7 +13,6 @@ import {
 } from 'react-native';
 import AccountCard from '../components/AccountCard';
 import { AccountMapper } from '../mappers/AccountMapper';
-import AddAccountScreen from './AddAccountScreen';
 
 interface Account {
   id: string;
