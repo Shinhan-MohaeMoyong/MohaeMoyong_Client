@@ -97,7 +97,7 @@ export default function AddPlanScreen() {
            const result = await handleAddPlan();
            if (result?.success) {
              // 성공 시 스택을 완전히 초기화하고 메인 화면으로 이동
-             router.push('/(tabs)');
+             router.replace('/(tabs)/Mohaeyoung');
            }
          }} 
          disabled={isLoading}

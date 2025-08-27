@@ -138,9 +138,7 @@ export function useFriends() {
           setPrimaryLabel("요청 보내기");
         }
       } catch (e) {
-        if (mySeq === seqRef.current) {
-          //setData([]);
-        }
+        if (mySeq === seqRef.current) setData([]);
         console.error("사용자 검색 실패:", e);
       } finally {
         if (mySeq === seqRef.current) setLoading(false);
