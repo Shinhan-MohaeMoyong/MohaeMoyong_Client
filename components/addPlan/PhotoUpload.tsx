@@ -178,7 +178,7 @@ export default function PhotoUpload({ selectedFiles, onPhotoUpload }: Props) {
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.title}>사진</Text>
+      <Text style={styles.title}>*사진</Text>
 
       <View style={styles.actions}>
         <TouchableOpacity style={styles.actionBtn} onPress={pickFromLibrary}>

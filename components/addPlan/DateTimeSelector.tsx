@@ -130,7 +130,7 @@ export default function DateTimeSelector({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>날짜</Text>
+      <Text style={styles.label}>*날짜</Text>
 
       {/* 날짜 스트립 */}
       <FlatList
@@ -187,7 +187,7 @@ export default function DateTimeSelector({
       )}
 
       {/* 시간 */}
-      <Text style={[styles.label, { marginTop: 20 }]}>시간</Text>
+      <Text style={[styles.label, { marginTop: 20 }]}>*시간</Text>
 
       {/* ⬇️ 시작/종료 한 행, 동일 너비, 가운데 정렬 */}
       <View style={styles.timeRowOneLine}>
