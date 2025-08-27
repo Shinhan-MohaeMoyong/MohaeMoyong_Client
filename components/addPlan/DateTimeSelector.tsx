@@ -1,21 +1,12 @@
 // components/addPlan/DateTimeSelector.tsx
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  FlatList,
-  LayoutChangeEvent,
-  PanResponder,
-  Platform,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { FlatList, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 
 type Props = {
-  selectedDate: string; // "YYYY-MM-DD" 권장(일자만 와도 동작)
+  selectedDate: string; // "YYYY-MM-DD"
   startTime: string; // "HH:mm"
   endTime: string; // "HH:mm"
   onDateSelect: (iso: string) => void;
@@ -23,12 +14,8 @@ type Props = {
   onEndTimeChange: (hhmm: string) => void;
 };
 
-const STEP_MIN = 15; // 15분 스냅
-const MIN_RANGE = 15; // 최소 15분 간격
-const HIT_SLOP = { top: 12, bottom: 12, left: 12, right: 12 };
-const MOVE_TH = 2; // 최소 수평 이동 임계치
-const isHorizontalMove = (dx: number, dy: number) =>
-  Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > MOVE_TH;
+const STEP_MIN = 15;
+const MIN_RANGE = 15;
 
 const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
 const toISO = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -51,7 +38,7 @@ export default function DateTimeSelector({
   onStartTimeChange,
   onEndTimeChange,
 }: Props) {
-  // --- 날짜 ISO 정규화 ---
+  // 오늘/선택 날짜
   const today = useMemo(() => new Date(), []);
   const isoToday = useMemo(() => toISO(today), [today]);
   const normalizedDateISO = useMemo(() => {
@@ -66,7 +53,7 @@ export default function DateTimeSelector({
     return isoToday;
   }, [selectedDate, isoToday]);
 
-  // --- 날짜 스트립 데이터(21일) ---
+  // 날짜 스트립(21일)
   const dateStrip = useMemo(() => {
     const arr: { iso: string; labelTop: string; labelBottom: string; isToday: boolean }[] = [];
     for (let i = 0; i < 21; i++) {
@@ -83,118 +70,63 @@ export default function DateTimeSelector({
     return arr;
   }, [today, isoToday]);
 
-  // --- 트랙 상태 ---
-  const [trackWidth, setTrackWidth] = useState(0);
-  const trackLeftPadding = 16;
-  const trackRightPadding = 16;
-
-  // 시작/종료 시간 -> 분
+  // 시간 상태(분)
   const [startMin, setStartMin] = useState<number>(() => snap(parseHHmmToMin(startTime)));
   const [endMin, setEndMin] = useState<number>(() => snap(parseHHmmToMin(endTime)));
-
-  // 네이티브 피커(원하는 분만 유지)
-  const [pickerType, setPickerType] = useState<null | "start" | "end">(null);
-  const [pickerValue, setPickerValue] = useState<Date>(new Date());
-  const [calendarOpen, setCalendarOpen] = useState(false);
-
-  // 외부 값 변경 시 동기화
   useEffect(() => setStartMin(snap(parseHHmmToMin(startTime))), [startTime]);
   useEffect(() => setEndMin(snap(parseHHmmToMin(endTime))), [endTime]);
 
-  // 드래그용 PanResponder
-  const startRef = useRef({ x: 0 });
-  const endRef = useRef({ x: 0 });
-
-  const totalMins = 24 * 60;
-  const usableWidth = Math.max(0, trackWidth - trackLeftPadding - trackRightPadding);
-  const minToX = (mins: number) => trackLeftPadding + (mins / totalMins) * usableWidth;
-  const xToMin = (x: number) => {
-    const clamped = Math.min(trackWidth - trackRightPadding, Math.max(trackLeftPadding, x));
-    const ratio = (clamped - trackLeftPadding) / (usableWidth || 1);
-    return snap(Math.round(ratio * totalMins));
-  };
+  // 편집 모드
+  const [editing, setEditing] = useState<null | "start" | "end">(null);
+  const [tempMin, setTempMin] = useState<number>(0);
 
   const ensureOrder = (s: number, e: number) => {
-    // 최소 간격 보장
     if (e - s < MIN_RANGE) {
-      if (s + MIN_RANGE <= totalMins) return [s, s + MIN_RANGE] as const;
+      if (s + MIN_RANGE <= 24 * 60) return [s, s + MIN_RANGE] as const;
       return [e - MIN_RANGE, e] as const;
     }
     return [s, e] as const;
   };
 
-  const startPan = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onPanResponderGrant: (_, gesture) => {
-          startRef.current.x = minToX(startMin);
-        },
-        onPanResponderMove: (_, gesture) => {
-          const nextMin = xToMin(startRef.current.x + gesture.dx);
-          const [s, e] = ensureOrder(nextMin, endMin);
-          setStartMin(s);
-          onStartTimeChange(minToHHmm(s));
-        },
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [startMin, endMin, trackWidth]
-  );
-
-  const endPan = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onPanResponderGrant: () => {
-          endRef.current.x = minToX(endMin);
-        },
-        onPanResponderMove: (_, gesture) => {
-          const nextMin = xToMin(endRef.current.x + gesture.dx);
-          const [s, e] = ensureOrder(startMin, nextMin);
-          setEndMin(e);
-          onEndTimeChange(minToHHmm(e));
-        },
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [startMin, endMin, trackWidth]
-  );
-
-  const onTrackLayout = (e: LayoutChangeEvent) => {
-    setTrackWidth(e.nativeEvent.layout.width);
+  const beginEdit = (type: "start" | "end") => {
+    setEditing(type);
+    setTempMin(type === "start" ? startMin : endMin);
   };
 
+  const tempDate = useMemo(() => {
+    const d = new Date();
+    d.setHours(Math.floor(tempMin / 60), tempMin % 60, 0, 0);
+    return d;
+  }, [tempMin]);
+
+  const onPickerChange = (_: any, d?: Date) => {
+    if (!d) return;
+    setTempMin(snap(d.getHours() * 60 + d.getMinutes()));
+  };
+
+  const confirmEdit = () => {
+    if (!editing) return;
+    if (editing === "start") {
+      const [s] = ensureOrder(tempMin, endMin);
+      setStartMin(s);
+      onStartTimeChange(minToHHmm(s));
+    } else {
+      const [, e] = ensureOrder(startMin, tempMin);
+      setEndMin(e);
+      onEndTimeChange(minToHHmm(e));
+    }
+    setEditing(null);
+  };
+  const cancelEdit = () => setEditing(null);
+
+  // 소요시간
   const duration = Math.max(0, endMin - startMin);
   const durationLabel =
     duration >= 60
       ? `${Math.floor(duration / 60)}시간${duration % 60 ? ` ${duration % 60}분` : ""}`
       : `${duration}분`;
 
-  // 텍스트 탭 → 네이티브 시간 피커
-  const openNativePicker = (type: "start" | "end") => {
-    setPickerType(type);
-    const base = new Date();
-    const mins = type === "start" ? startMin : endMin;
-    base.setHours(Math.floor(mins / 60), mins % 60, 0, 0);
-    setPickerValue(base);
-  };
-  const onNativeTimeChange = (_: any, d?: Date) => {
-    if (!d) {
-      if (Platform.OS === "android") setPickerType(null);
-      return;
-    }
-    const mins = d.getHours() * 60 + d.getMinutes();
-    if (pickerType === "start") {
-      const [s, e] = ensureOrder(snap(mins), endMin);
-      setStartMin(s);
-      onStartTimeChange(minToHHmm(s));
-      if (Platform.OS === "android") setPickerType(null);
-    } else if (pickerType === "end") {
-      const [s, e] = ensureOrder(startMin, snap(mins));
-      setEndMin(e);
-      onEndTimeChange(minToHHmm(e));
-      if (Platform.OS === "android") setPickerType(null);
-    }
-  };
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   return (
     <View style={styles.container}>
@@ -234,7 +166,7 @@ export default function DateTimeSelector({
         </TouchableOpacity>
       </View>
 
-      {/* 월달력 (옵션) */}
+      {/* 달력 */}
       {calendarOpen && (
         <View style={styles.calendarBox}>
           <Calendar
@@ -257,73 +189,58 @@ export default function DateTimeSelector({
       {/* 시간 */}
       <Text style={[styles.label, { marginTop: 20 }]}>시간</Text>
 
-      {/* 현재 값 + 네이티브 피커로 수정 링크 */}
-      <View style={styles.timeRow}>
-        <TouchableOpacity onPress={() => openNativePicker("start")} style={styles.timeBadge}>
-          <Ionicons name="play-outline" size={16} color="#574BD6" />
-          <Text style={styles.timeBadgeText}>{minToHHmm(startMin)}</Text>
-          <Ionicons name="pencil" size={14} color="#A39CF0" />
+      {/* ⬇️ 시작/종료 한 행, 동일 너비, 가운데 정렬 */}
+      <View style={styles.timeRowOneLine}>
+        <TouchableOpacity
+          onPress={() => beginEdit("start")}
+          style={[styles.timeBadgeLarge, { marginRight: 8 }]}
+        >
+          <Ionicons name="play-outline" size={20} color="#574BD6" />
+          <Text style={styles.timeBadgeTextLarge}>{minToHHmm(startMin)}</Text>
+          <Ionicons name="pencil" size={18} color="#8E88F6" />
         </TouchableOpacity>
-        <Text style={styles.arrow}>→</Text>
-        <TouchableOpacity onPress={() => openNativePicker("end")} style={styles.timeBadge}>
-          <Ionicons name="stop-outline" size={16} color="#574BD6" />
-          <Text style={styles.timeBadgeText}>{minToHHmm(endMin)}</Text>
-          <Ionicons name="pencil" size={14} color="#A39CF0" />
+
+        <Text style={styles.arrowLarge}>→</Text>
+
+        <TouchableOpacity
+          onPress={() => beginEdit("end")}
+          style={[styles.timeBadgeLarge, { marginLeft: 8 }]}
+        >
+          <Ionicons name="stop-outline" size={20} color="#574BD6" />
+          <Text style={styles.timeBadgeTextLarge}>{minToHHmm(endMin)}</Text>
+          <Ionicons name="pencil" size={18} color="#8E88F6" />
         </TouchableOpacity>
       </View>
 
-      {/* 타임라인 트랙 */}
-      <View style={styles.trackWrap} onLayout={onTrackLayout}>
-        {/* 축 라벨 */}
-        <View style={styles.axis}>
-          {[0, 6, 12, 18, 24].map((h) => (
-            <View key={h} style={styles.axisTick}>
-              <View style={styles.tickDot} />
-              <Text style={styles.tickText}>{pad(h)}:00</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* 트랙 */}
-        <View style={styles.track}>
-          <View style={styles.trackBg} />
-          {/* 선택 영역 */}
-          <View
-            style={[
-              styles.selection,
-              {
-                left: minToX(startMin),
-                width: Math.max(0, minToX(endMin) - minToX(startMin)),
-              },
-            ]}
+      {/* 편집 패널: 같은 폭으로 중앙 */}
+      {editing && (
+        <View style={styles.editPanelCentered}>
+          <Text style={styles.editTitle}>
+            {editing === "start" ? "시작 시간 설정" : "종료 시간 설정"}
+          </Text>
+          <DateTimePicker
+            value={tempDate}
+            mode="time"
+            display={Platform.OS === "ios" ? "spinner" : "spinner"}
+            is24Hour
+            onChange={onPickerChange}
           />
-          {/* Start 핸들 */}
-          <View {...startPan.panHandlers} style={[styles.handle, { left: minToX(startMin) - 12 }]}>
-            <View style={styles.handleCore} />
-          </View>
-          {/* End 핸들 */}
-          <View {...endPan.panHandlers} style={[styles.handle, { left: minToX(endMin) - 12 }]}>
-            <View style={styles.handleCore} />
+          <View style={styles.editButtons}>
+            <TouchableOpacity style={[styles.btn, styles.btnGhost]} onPress={cancelEdit}>
+              <Text style={[styles.btnText, { color: "#6C5CE7" }]}>취소</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={confirmEdit}>
+              <Text style={[styles.btnText, { color: "#fff" }]}>확인</Text>
+            </TouchableOpacity>
           </View>
         </View>
-      </View>
+      )}
 
-      {/* 소요시간 */}
-      <View style={styles.durationBar}>
-        <Ionicons name="time-outline" size={18} color="#6C5CE7" />
+      {/* 소요시간: 위 한 행과 같은 폭으로 정렬 */}
+      <View style={styles.durationBarWide}>
+        <Ionicons name="time-outline" size={18} />
         <Text style={styles.durationText}>총 소요 {durationLabel}</Text>
       </View>
-
-      {/* 네이티브 시간 피커(iOS는 인라인 스피너, 안드로이드 모달) */}
-      {pickerType && (
-        <DateTimePicker
-          value={pickerValue}
-          mode="time"
-          display={Platform.OS === "ios" ? "spinner" : "default"}
-          is24Hour
-          onChange={onNativeTimeChange}
-        />
-      )}
     </View>
   );
 }
@@ -343,10 +260,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f7f7fb",
     alignItems: "center",
   },
-  dateItemActive: {
-    backgroundColor: "#6C5CE7",
-    borderColor: "#6C5CE7",
-  },
+  dateItemActive: { backgroundColor: "#6C5CE7", borderColor: "#6C5CE7" },
   dateTop: { fontSize: 12, color: "#666", marginBottom: 6, fontWeight: "600" },
   dateTopActive: { color: "#fff" },
   dateBottom: { fontSize: 14, color: "#333", fontWeight: "700" },
@@ -364,7 +278,6 @@ const styles = StyleSheet.create({
     borderColor: "#DDE2FF",
   },
   calendarBtnText: { color: "#6C5CE7", fontWeight: "700", fontSize: 12 },
-
   calendarBox: {
     marginTop: 10,
     borderRadius: 12,
@@ -373,89 +286,60 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
 
-  // 시간 표시
-  timeRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  timeBadge: {
+  // === 시간 한 줄 & 동일 폭 컨테이너 ===
+  timeRowOneLine: {
+    marginTop: 4,
+    marginBottom: 8,
+    width: "92%", // ⬅️ 기준 폭
+    alignSelf: "center", // 중앙 정렬
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    justifyContent: "space-between",
+  },
+
+  timeBadgeLarge: {
+    flex: 1, // ⬅️ 두 배지 동일 폭
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
     backgroundColor: "#F1F0FF",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "#E6E5FF",
   },
-  timeBadgeText: { fontSize: 16, fontWeight: "800", color: "#2a255e" },
-  arrow: { fontSize: 16, color: "#888" },
-
-  // 트랙
-  trackWrap: { marginTop: 12 },
-  axis: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 6,
-    marginBottom: 6,
+  timeBadgeTextLarge: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#2a255e",
   },
-  axisTick: { alignItems: "center" },
-  tickDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#C6C3FF",
-    marginBottom: 4,
-  },
-  tickText: { fontSize: 11, color: "#666" },
+  arrowLarge: { fontSize: 18, color: "#888" },
 
-  track: {
-    height: 44,
-    borderRadius: 12,
+  // 편집 패널: 상단 행과 동일 폭
+  editPanelCentered: {
+    marginTop: 12,
+    width: "92%", // ⬅️ 동일 폭
+    alignSelf: "center",
+    padding: 12,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "#E6E6F0",
     backgroundColor: "#F8F8FA",
-    justifyContent: "center",
   },
-  trackBg: {
-    position: "absolute",
-    left: 16,
-    right: 16,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#E9E9F3",
-  },
-  selection: {
-    position: "absolute",
-    top: 19,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#6C5CE7",
-  },
-  handle: {
-    position: "absolute",
-    top: 10,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#fff",
-    borderWidth: 2,
-    borderColor: "#6C5CE7",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  handleCore: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#6C5CE7",
-  },
+  editTitle: { fontSize: 14, fontWeight: "700", color: "#333", marginBottom: 6 },
+  editButtons: { flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 8 },
+  btn: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10 },
+  btnGhost: { backgroundColor: "#EEF1FF", borderWidth: 1, borderColor: "#DDE2FF" },
+  btnPrimary: { backgroundColor: "#6C5CE7" },
+  btnText: { fontWeight: "800" },
 
-  // 기간
-  durationBar: {
+  // 소요시간: 동일 폭
+  durationBarWide: {
     marginTop: 12,
+    width: "92%", // ⬅️ 위 행과 같은 폭
+    alignSelf: "center",
     flexDirection: "row",
     alignItems: "center",
     gap: 8,

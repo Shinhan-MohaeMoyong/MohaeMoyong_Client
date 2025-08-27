@@ -1,11 +1,11 @@
-import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
-import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Calendar } from 'react-native-calendars';
+import { Ionicons } from "@expo/vector-icons";
+import { useState } from "react";
+import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Calendar } from "react-native-calendars";
 
 export type RepeatConfig = {
   enabled: boolean;
-  freq: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
+  freq: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
   interval: number;
   byDays: string[];
   until: string | null;
@@ -18,17 +18,17 @@ type Props = {
   onRepeatConfigChange?: (config: RepeatConfig) => void;
 };
 
-export default function RepeatOption({ 
-  repeatConfig = { 
-    enabled: false, 
-    freq: 'WEEKLY', 
-    interval: 1, 
-    byDays: [], 
-    until: null, 
-    count: null, 
-    exceptions: null 
+export default function RepeatOption({
+  repeatConfig = {
+    enabled: false,
+    freq: "WEEKLY",
+    interval: 1,
+    byDays: [],
+    until: null,
+    count: null,
+    exceptions: null,
   },
-  onRepeatConfigChange 
+  onRepeatConfigChange,
 }: Props) {
   const [localConfig, setLocalConfig] = useState<RepeatConfig>(repeatConfig);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
@@ -38,7 +38,7 @@ export default function RepeatOption({
     const newEnabled = !localConfig.enabled;
     const newConfig = { ...localConfig, enabled: newEnabled };
     setLocalConfig(newConfig);
-    
+
     if (onRepeatConfigChange) {
       onRepeatConfigChange(newConfig);
     }
@@ -47,7 +47,7 @@ export default function RepeatOption({
   const updateConfig = (updates: Partial<RepeatConfig>) => {
     const newConfig = { ...localConfig, ...updates };
     setLocalConfig(newConfig);
-    
+
     if (onRepeatConfigChange) {
       onRepeatConfigChange(newConfig);
     }
@@ -63,7 +63,9 @@ export default function RepeatOption({
   const handleExceptionDatePickerChange = (day: any) => {
     setShowExceptionDatePicker(false);
     if (day && day.dateString) {
-      const newExceptions = localConfig.exceptions ? [...localConfig.exceptions, day.dateString] : [day.dateString];
+      const newExceptions = localConfig.exceptions
+        ? [...localConfig.exceptions, day.dateString]
+        : [day.dateString];
       updateConfig({ exceptions: newExceptions });
     }
   };
@@ -90,23 +92,25 @@ export default function RepeatOption({
             <Text style={styles.sectionTitle}>반복 주기</Text>
             <View style={styles.freqContainer}>
               {[
-                { key: 'DAILY', label: '매일' },
-                { key: 'WEEKLY', label: '매주' },
-                { key: 'MONTHLY', label: '매월' },
-                { key: 'YEARLY', label: '매년' }
+                { key: "DAILY", label: "매일" },
+                { key: "WEEKLY", label: "매주" },
+                { key: "MONTHLY", label: "매월" },
+                { key: "YEARLY", label: "매년" },
               ].map((freq) => (
                 <TouchableOpacity
                   key={freq.key}
                   style={[
                     styles.freqButton,
-                    localConfig.freq === freq.key && styles.freqButtonActive
+                    localConfig.freq === freq.key && styles.freqButtonActive,
                   ]}
                   onPress={() => updateConfig({ freq: freq.key as any })}
                 >
-                  <Text style={[
-                    styles.freqButtonText,
-                    localConfig.freq === freq.key && styles.freqButtonTextActive
-                  ]}>
+                  <Text
+                    style={[
+                      styles.freqButtonText,
+                      localConfig.freq === freq.key && styles.freqButtonTextActive,
+                    ]}
+                  >
                     {freq.label}
                   </Text>
                 </TouchableOpacity>
@@ -131,45 +135,51 @@ export default function RepeatOption({
                 placeholderTextColor="#999"
               />
               <Text style={styles.intervalLabel}>
-                {localConfig.freq === 'DAILY' ? '일' : 
-                 localConfig.freq === 'WEEKLY' ? '주' : 
-                 localConfig.freq === 'MONTHLY' ? '개월' : '년'}
+                {localConfig.freq === "DAILY"
+                  ? "일"
+                  : localConfig.freq === "WEEKLY"
+                  ? "주"
+                  : localConfig.freq === "MONTHLY"
+                  ? "개월"
+                  : "년"}
               </Text>
               <Text style={styles.intervalLabel}>마다</Text>
             </View>
           </View>
 
           {/* 요일 선택 (주 단위일 때만) */}
-          {localConfig.freq === 'WEEKLY' && (
+          {localConfig.freq === "WEEKLY" && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>반복 요일</Text>
               <View style={styles.daysContainer}>
                 {[
-                  { key: 'MO', label: '월' },
-                  { key: 'TU', label: '화' },
-                  { key: 'WE', label: '수' },
-                  { key: 'TH', label: '목' },
-                  { key: 'FR', label: '금' },
-                  { key: 'SA', label: '토' },
-                  { key: 'SU', label: '일' }
+                  { key: "MO", label: "월" },
+                  { key: "TU", label: "화" },
+                  { key: "WE", label: "수" },
+                  { key: "TH", label: "목" },
+                  { key: "FR", label: "금" },
+                  { key: "SA", label: "토" },
+                  { key: "SU", label: "일" },
                 ].map((day) => (
                   <TouchableOpacity
                     key={day.key}
                     style={[
                       styles.dayButton,
-                      localConfig.byDays.includes(day.key) && styles.dayButtonActive
+                      localConfig.byDays.includes(day.key) && styles.dayButtonActive,
                     ]}
                     onPress={() => {
                       const newByDays = localConfig.byDays.includes(day.key)
-                        ? localConfig.byDays.filter(d => d !== day.key)
+                        ? localConfig.byDays.filter((d) => d !== day.key)
                         : [...localConfig.byDays, day.key];
                       updateConfig({ byDays: newByDays });
                     }}
                   >
-                    <Text style={[
-                      styles.dayButtonText,
-                      localConfig.byDays.includes(day.key) && styles.dayButtonTextActive
-                    ]}>
+                    <Text
+                      style={[
+                        styles.dayButtonText,
+                        localConfig.byDays.includes(day.key) && styles.dayButtonTextActive,
+                      ]}
+                    >
                       {day.label}
                     </Text>
                   </TouchableOpacity>
@@ -185,44 +195,54 @@ export default function RepeatOption({
               <TouchableOpacity
                 style={[
                   styles.endConditionButton,
-                  localConfig.until === null && localConfig.count === null && styles.endConditionButtonActive
+                  localConfig.until === null &&
+                    localConfig.count === null &&
+                    styles.endConditionButtonActive,
                 ]}
                 onPress={() => updateConfig({ until: null, count: null })}
               >
-                <Text style={[
-                  styles.endConditionButtonText,
-                  localConfig.until === null && localConfig.count === null && styles.endConditionButtonTextActive
-                ]}>
+                <Text
+                  style={[
+                    styles.endConditionButtonText,
+                    localConfig.until === null &&
+                      localConfig.count === null &&
+                      styles.endConditionButtonTextActive,
+                  ]}
+                >
                   종료 없음
                 </Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={[
                   styles.endConditionButton,
-                  localConfig.until !== null && styles.endConditionButtonActive
+                  localConfig.until !== null && styles.endConditionButtonActive,
                 ]}
-                onPress={() => updateConfig({ until: '2025-12-31', count: null })}
+                onPress={() => updateConfig({ until: "2025-12-31", count: null })}
               >
-                <Text style={[
-                  styles.endConditionButtonText,
-                  localConfig.until !== null && styles.endConditionButtonTextActive
-                ]}>
+                <Text
+                  style={[
+                    styles.endConditionButtonText,
+                    localConfig.until !== null && styles.endConditionButtonTextActive,
+                  ]}
+                >
                   종료일 설정
                 </Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={[
                   styles.endConditionButton,
-                  localConfig.count !== null && styles.endConditionButtonActive
+                  localConfig.count !== null && styles.endConditionButtonActive,
                 ]}
                 onPress={() => updateConfig({ until: null, count: 3 })}
               >
-                <Text style={[
-                  styles.endConditionButtonText,
-                  localConfig.count !== null && styles.endConditionButtonTextActive
-                ]}>
+                <Text
+                  style={[
+                    styles.endConditionButtonText,
+                    localConfig.count !== null && styles.endConditionButtonTextActive,
+                  ]}
+                >
                   횟수 설정
                 </Text>
               </TouchableOpacity>
@@ -232,13 +252,11 @@ export default function RepeatOption({
             {localConfig.until !== null && (
               <View style={styles.dateInputContainer}>
                 <Text style={styles.dateInputLabel}>종료일:</Text>
-                                 <TouchableOpacity
-                   style={styles.dateButton}
-                   onPress={() => setShowEndDatePicker(true)}
-                 >
-                  <Text style={styles.dateButtonText}>
-                    {localConfig.until || '날짜 선택'}
-                  </Text>
+                <TouchableOpacity
+                  style={styles.dateButton}
+                  onPress={() => setShowEndDatePicker(true)}
+                >
+                  <Text style={styles.dateButtonText}>{localConfig.until || "날짜 선택"}</Text>
                   <Ionicons name="calendar-outline" size={20} color="#666" />
                 </TouchableOpacity>
               </View>
@@ -250,7 +268,7 @@ export default function RepeatOption({
                 <Text style={styles.countInputLabel}>반복 횟수:</Text>
                 <TextInput
                   style={styles.countTextInput}
-                  value={localConfig.count?.toString() || ''}
+                  value={localConfig.count?.toString() || ""}
                   onChangeText={(text) => {
                     const num = parseInt(text) || 1;
                     updateConfig({ count: Math.max(1, Math.min(10, num)) });
@@ -275,7 +293,8 @@ export default function RepeatOption({
                     <TouchableOpacity
                       style={styles.removeDateButton}
                       onPress={() => {
-                        const newExceptions = localConfig.exceptions?.filter((_, i) => i !== index) || [];
+                        const newExceptions =
+                          localConfig.exceptions?.filter((_, i) => i !== index) || [];
                         updateConfig({ exceptions: newExceptions });
                       }}
                     >
@@ -284,185 +303,195 @@ export default function RepeatOption({
                   </View>
                 ))}
               </View>
-                             <TouchableOpacity
-                 style={styles.addExceptionButton}
-                 onPress={() => setShowExceptionDatePicker(true)}
-               >
+              <TouchableOpacity
+                style={styles.addExceptionButton}
+                onPress={() => setShowExceptionDatePicker(true)}
+              >
                 <Ionicons name="add-circle-outline" size={20} color="#6C5CE7" />
                 <Text style={styles.addExceptionButtonText}>예외일 추가</Text>
               </TouchableOpacity>
             </View>
-                     </View>
-         </View>
-       )}
+          </View>
+        </View>
+      )}
 
-       {/* 종료일 날짜 선택 모달 */}
-       <Modal
-         visible={showEndDatePicker}
-         transparent={true}
-         animationType="fade"
-         onRequestClose={() => setShowEndDatePicker(false)}
-       >
-         <View style={styles.modalOverlay}>
-           <View style={styles.modalContent}>
-             <View style={styles.modalHeader}>
-               <Text style={styles.modalTitle}>종료일 선택</Text>
-               <TouchableOpacity
-                 style={styles.closeButton}
-                 onPress={() => setShowEndDatePicker(false)}
-               >
-                 <Ionicons name="close" size={24} color="#666" />
-               </TouchableOpacity>
-             </View>
-             <Calendar
-               onDayPress={handleEndDatePickerChange}
-               markedDates={{
-                 [localConfig.until || '']: {
-                   selected: true,
-                   selectedColor: '#6C5CE7',
-                 }
-               }}
-               theme={{
-                 selectedDayBackgroundColor: '#6C5CE7',
-                 selectedDayTextColor: '#ffffff',
-                 todayTextColor: '#6C5CE7',
-                 dayTextColor: '#2d4150',
-                 textDisabledColor: '#d9e1e8',
-                 arrowColor: '#6C5CE7',
-                 monthTextColor: '#6C5CE7',
-                 indicatorColor: '#6C5CE7',
-                 textDayFontWeight: '300',
-                 textMonthFontWeight: 'bold',
-                 textDayHeaderFontWeight: '300',
-                 textDayFontSize: 16,
-                 textMonthFontSize: 16,
-                 textDayHeaderFontSize: 13
-               }}
-             />
-           </View>
-         </View>
-       </Modal>
+      {/* 종료일 날짜 선택 모달 */}
+      <Modal
+        visible={showEndDatePicker}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowEndDatePicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>종료일 선택</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowEndDatePicker(false)}
+              >
+                <Ionicons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+            <Calendar
+              onDayPress={handleEndDatePickerChange}
+              markedDates={{
+                [localConfig.until || ""]: {
+                  selected: true,
+                  selectedColor: "#6C5CE7",
+                },
+              }}
+              theme={{
+                selectedDayBackgroundColor: "#6C5CE7",
+                selectedDayTextColor: "#ffffff",
+                todayTextColor: "#6C5CE7",
+                dayTextColor: "#2d4150",
+                textDisabledColor: "#d9e1e8",
+                arrowColor: "#6C5CE7",
+                monthTextColor: "#6C5CE7",
+                indicatorColor: "#6C5CE7",
+                textDayFontWeight: "300",
+                textMonthFontWeight: "bold",
+                textDayHeaderFontWeight: "300",
+                textDayFontSize: 16,
+                textMonthFontSize: 16,
+                textDayHeaderFontSize: 13,
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
 
-       {/* 예외일 날짜 선택 모달 */}
-       <Modal
-         visible={showExceptionDatePicker}
-         transparent={true}
-         animationType="fade"
-         onRequestClose={() => setShowExceptionDatePicker(false)}
-       >
-         <View style={styles.modalOverlay}>
-           <View style={styles.modalContent}>
-             <View style={styles.modalHeader}>
-               <Text style={styles.modalTitle}>예외일 선택</Text>
-               <TouchableOpacity
-                 style={styles.closeButton}
-                 onPress={() => setShowExceptionDatePicker(false)}
-               >
-                 <Ionicons name="close" size={24} color="#666" />
-               </TouchableOpacity>
-             </View>
-             <Calendar
-               onDayPress={handleExceptionDatePickerChange}
-               markedDates={{
-                 ...(localConfig.exceptions?.reduce((acc, date) => ({
-                   ...acc,
-                   [date]: {
-                     selected: true,
-                     selectedColor: '#FF3B30',
-                   }
-                 }), {}) || {})
-               }}
-               theme={{
-                 selectedDayBackgroundColor: '#FF3B30',
-                 selectedDayTextColor: '#ffffff',
-                 todayTextColor: '#6C5CE7',
-                 dayTextColor: '#2d4150',
-                 textDisabledColor: '#d9e1e8',
-                 arrowColor: '#6C5CE7',
-                 monthTextColor: '#6C5CE7',
-                 indicatorColor: '#6C5CE7',
-                 textDayFontWeight: '300',
-                 textMonthFontWeight: 'bold',
-                 textDayHeaderFontWeight: '300',
-                 textDayFontSize: 16,
-                 textMonthFontSize: 16,
-                 textDayHeaderFontSize: 13
-               }}
-             />
-           </View>
-         </View>
-       </Modal>
-     </View>
-   );
- }
+      {/* 예외일 날짜 선택 모달 */}
+      <Modal
+        visible={showExceptionDatePicker}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowExceptionDatePicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>예외일 선택</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowExceptionDatePicker(false)}
+              >
+                <Ionicons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+            <Calendar
+              onDayPress={handleExceptionDatePickerChange}
+              markedDates={{
+                ...(localConfig.exceptions?.reduce(
+                  (acc, date) => ({
+                    ...acc,
+                    [date]: {
+                      selected: true,
+                      selectedColor: "#FF3B30",
+                    },
+                  }),
+                  {}
+                ) || {}),
+              }}
+              theme={{
+                selectedDayBackgroundColor: "#FF3B30",
+                selectedDayTextColor: "#ffffff",
+                todayTextColor: "#6C5CE7",
+                dayTextColor: "#2d4150",
+                textDisabledColor: "#d9e1e8",
+                arrowColor: "#6C5CE7",
+                monthTextColor: "#6C5CE7",
+                indicatorColor: "#6C5CE7",
+                textDayFontWeight: "300",
+                textMonthFontWeight: "bold",
+                textDayHeaderFontWeight: "300",
+                textDayFontSize: 16,
+                textMonthFontSize: 16,
+                textDayHeaderFontSize: 13,
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
     marginBottom: 20,
+    backgroundColor: "#fff", // 흰색 배경
+    borderWidth: 1, // 테두리 두께
+    borderColor: "#6C5CE7", // 보라색 테두리
+    borderRadius: 12, // 모서리 둥글게 (원하면)
+    padding: 12,
   },
   headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 16,
   },
+
   label: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
   },
   toggleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   toggleSwitch: {
     width: 44,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#ddd',
-    position: 'relative',
+    backgroundColor: "#ddd",
+    position: "relative",
     padding: 2,
   },
   toggleSwitchActive: {
-    backgroundColor: '#6C5CE7',
+    backgroundColor: "#FF6B9D",
   },
   toggleKnob: {
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#fff',
-    position: 'absolute',
+    backgroundColor: "#fff",
+    position: "absolute",
     top: 2,
     left: 2,
   },
   toggleKnobActive: {
     left: 22,
   },
-  
+
   // 반복 설정 컨테이너
   settingsContainer: {
-    backgroundColor: '#f8f8f8',
+    backgroundColor: "#fff",
+    // backgroundColor: "#f8f8f8",
     borderRadius: 12,
     padding: 16,
     marginTop: 8,
     zIndex: 1,
   },
-  
+
   // 섹션 스타일
   section: {
     marginBottom: 24,
-    position: 'relative',
+    position: "relative",
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 16,
   },
-  
+
   // 반복 주기 버튼 스타일
   freqContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
     marginBottom: 16,
   },
@@ -470,82 +499,82 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: "#e0e0e0",
   },
   freqButtonActive: {
-    backgroundColor: '#6C5CE7',
-    borderColor: '#6C5CE7',
+    backgroundColor: "#6C5CE7",
+    borderColor: "#6C5CE7",
   },
   freqButtonText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
+    fontWeight: "600",
+    color: "#666",
   },
   freqButtonTextActive: {
-    color: '#fff',
+    color: "#fff",
   },
-  
+
   // 반복 간격 설정
   intervalInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 8,
   },
   intervalLabel: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   intervalTextInput: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
     minWidth: 60,
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 18,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: "700",
+    color: "#333",
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: "#e0e0e0",
   },
-  
+
   // 요일 선택
   daysContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 6,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   dayButton: {
     flex: 1,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: "#e0e0e0",
   },
   dayButtonActive: {
-    backgroundColor: '#6C5CE7',
-    borderColor: '#6C5CE7',
+    backgroundColor: "#6C5CE7",
+    borderColor: "#6C5CE7",
   },
   dayButtonText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
+    fontWeight: "600",
+    color: "#666",
   },
   dayButtonTextActive: {
-    color: '#fff',
+    color: "#fff",
   },
-  
+
   // 종료 조건 설정
   endConditionContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
     marginBottom: 16,
   },
@@ -553,152 +582,152 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: "#e0e0e0",
   },
   endConditionButtonActive: {
-    backgroundColor: '#6C5CE7',
-    borderColor: '#6C5CE7',
+    backgroundColor: "#6C5CE7",
+    borderColor: "#6C5CE7",
   },
   endConditionButtonText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
+    fontWeight: "600",
+    color: "#666",
   },
   endConditionButtonTextActive: {
-    color: '#fff',
+    color: "#fff",
   },
-  
+
   // 날짜 입력
   dateInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     marginTop: 12,
   },
   dateInputLabel: {
     fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
+    color: "#333",
+    fontWeight: "500",
   },
   dateButton: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#fff",
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: "#e0e0e0",
   },
   dateButtonText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
-  
+
   // 횟수 입력
   countInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     marginTop: 12,
   },
   countInputLabel: {
     fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
+    color: "#333",
+    fontWeight: "500",
   },
   countTextInput: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
     minWidth: 60,
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 16,
-    color: '#333',
+    color: "#333",
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: "#e0e0e0",
   },
-  
+
   // 예외일 설정
   exceptionContainer: {
     marginTop: 12,
   },
   exceptionLabel: {
     fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
+    color: "#333",
+    fontWeight: "500",
     marginBottom: 8,
   },
   exceptionDatesContainer: {
     marginBottom: 12,
   },
   exceptionDateItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#fff",
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: "#e0e0e0",
   },
   exceptionDateText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   removeDateButton: {
     padding: 4,
   },
   addExceptionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 8,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 8,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: "#e0e0e0",
   },
   addExceptionButtonText: {
     fontSize: 16,
-    color: '#6C5CE7',
-    fontWeight: '500',
+    color: "#6C5CE7",
+    fontWeight: "500",
   },
-  
+
   // 모달 스타일
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 12,
     padding: 20,
-    width: '90%',
+    width: "90%",
     maxWidth: 400,
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 20,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
   },
   closeButton: {
     padding: 4,

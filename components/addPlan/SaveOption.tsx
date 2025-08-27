@@ -98,6 +98,11 @@ export default function SaveOption({
 const styles = StyleSheet.create({
   container: {
     marginBottom: 20,
+    backgroundColor: "#fff", // 흰색 배경
+    borderWidth: 1, // 테두리 두께
+    borderColor: "#6C5CE7", // 보라색 테두리
+    borderRadius: 12, // 모서리 둥글게 (원하면)
+    padding: 12,
   },
   headerContainer: {
     flexDirection: "row",
@@ -139,7 +144,7 @@ const styles = StyleSheet.create({
 
   // 저축 설정 컨테이너
   settingsContainer: {
-    backgroundColor: "#f8f8f8",
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
     marginTop: 8,
