@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   RefreshControl,
   ScrollView,
@@ -8,7 +8,8 @@ import {
 } from 'react-native';
 import CustomAlert from '../components/CustomAlert';
 import ProductCard from '../components/ProductCard';
-import { fetchJson, HttpError } from '../services/api';
+import { SERVER_URL } from '../constants/server';
+import { getToken } from '../contexts/tokenManager';
 
 interface Product {
   id: string;
@@ -44,11 +45,27 @@ export default function AddAccountScreen({ onProductSelect }: AddAccountScreenPr
   const fetchProducts = async () => {
     setLoading(true);
     try {
+      console.log('🛍️ === 상품 목록 요청 ===');
       const endpoint = '/api/v1/product/list';
-      const data = await fetchJson<ProductListItemDTO[]>(endpoint);
+      
+      const response = await fetch(`${SERVER_URL}${endpoint}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${await getToken()}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`상품 목록 요청 실패: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('🛍️ === 상품 목록 응답 ===');
+      console.log(JSON.stringify(data, null, 2));
 
       // 백엔드 DTO → 화면용 Entity 매핑
-      const mapped: Product[] = data.map((item) => ({
+      const mapped: Product[] = data.map((item: ProductListItemDTO) => ({
         id: item.accountTypeUniqueNo,
         productName: item.accountName,
         productDescription: item.accountDescription,
@@ -58,16 +75,25 @@ export default function AddAccountScreen({ onProductSelect }: AddAccountScreenPr
       }));
 
       setProducts(mapped);
+      console.log('🛍️ === 상품 목록 변환 결과 ===');
+      console.log(JSON.stringify(mapped, null, 2));
     } catch (error) {
-      // 네트워크 실패나 서버 5xx면 빈 목록 유지
-      if (
-        (error instanceof Error && error.message.includes('Failed to fetch')) ||
-        (error instanceof HttpError && error.status >= 500)
-      ) {
-        setProducts([]);
-      } else {
-        setProducts([]);
+      console.error('❌ 상품 목록 가져오기 실패:', error);
+      
+      let errorMessage = '상품 목록을 불러오는데 실패했습니다.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('401')) {
+          errorMessage = '인증이 필요합니다. 다시 로그인해 주세요.';
+        } else if (error.message.includes('404')) {
+          errorMessage = '상품 정보를 찾을 수 없습니다.';
+        } else if (error.message.includes('500')) {
+          errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+        }
       }
+      
+      // 에러 메시지를 사용자에게 표시하거나 상태로 관리
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -82,12 +108,35 @@ export default function AddAccountScreen({ onProductSelect }: AddAccountScreenPr
 
   // 계좌 생성 API 호출 (임시로 주석 처리)
   const createAccount = async (product: Product) => {
-    // TODO: 실제 계좌 생성 API 호출로 교체
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ success: true, accountId: `ACC_${Date.now()}` });
-      }, 1000);
-    });
+    try {
+      console.log('🏦 === 계좌 생성 요청 ===');
+      console.log('선택된 상품:', JSON.stringify(product, null, 2));
+      
+      const response = await fetch(`${SERVER_URL}/api/v1/accounts`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${await getToken()}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId: product.id,
+          // 기타 필요한 데이터
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`계좌 생성 요청 실패: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log('🏦 === 계좌 생성 응답 ===');
+      console.log(JSON.stringify(result, null, 2));
+      
+      return result;
+    } catch (error) {
+      console.error('❌ 계좌 생성 실패:', error);
+      throw error;
+    }
   };
 
   // 상품 선택 처리
@@ -111,7 +160,20 @@ export default function AddAccountScreen({ onProductSelect }: AddAccountScreenPr
       // 상품 선택 완료 처리
       onProductSelect(selectedProduct);
     } catch (error) {
-      setAlertMessage('계좌 생성에 실패했습니다. 다시 시도해주세요.');
+      console.error('❌ 계좌 생성 확인 실패:', error);
+      
+      let errorMessage = '계좌 생성에 실패했습니다. 다시 시도해주세요.';
+      if (error instanceof Error) {
+        if (error.message.includes('401')) {
+          errorMessage = '인증이 필요합니다. 다시 로그인해 주세요.';
+        } else if (error.message.includes('400')) {
+          errorMessage = '잘못된 요청입니다. 입력 정보를 확인해 주세요.';
+        } else if (error.message.includes('500')) {
+          errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+        }
+      }
+      
+      setAlertMessage(errorMessage);
       setSelectedProduct(null); // 상품 정보 초기화
       setShowCustomAlert(true);
     }
