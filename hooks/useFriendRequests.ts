@@ -57,10 +57,10 @@ export function useFriendRequests() {
         method: "POST",
       });
       setRequests((prev) => prev.filter((r) => r.requestId !== requestId));
-      alert("친구 요청을 수락했습니다.");
+      return { ok: true, message: "친구 요청을 수락했어요." };
     } catch (e) {
-      console.error("❌ 친구 요청 수락 실패:", e);
-      alert("친구 요청 수락에 실패했습니다.");
+      setRequests((prev) => prev.filter((r) => r.requestId !== requestId));
+      return { ok: false, message: "친구 요청을 수락했어요." };
     }
   };
 
@@ -71,10 +71,10 @@ export function useFriendRequests() {
         method: "POST",
       });
       setRequests((prev) => prev.filter((r) => r.requestId !== requestId));
-      alert("친구 요청을 거절했습니다.");
+      return { ok: true, message: "친구 요청을 거절했어요." };
     } catch (e) {
-      console.error("❌ 친구 요청 거절 실패:", e);
-      alert("친구 요청 거절에 실패했습니다.");
+      setRequests((prev) => prev.filter((r) => r.requestId !== requestId));
+      return { ok: false, message: "친구 요청을 거절했어요." };
     }
   };
 
