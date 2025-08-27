@@ -2,6 +2,7 @@ import LogoutBtn from '@/components/mypage/LogoutBtn';
 import MenuItem from '@/components/mypage/MenuItem';
 import { SERVER_URL } from '@/constants/server';
 import { getToken } from '@/contexts/tokenManager';
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -86,7 +87,9 @@ export default function MyPage() {
         <View style={styles.menuCard}>
           <MenuItem icon="🗓️" label="일정관리" />
           <MenuItem icon="💳" label="계좌관리" />
-          <MenuItem icon="👥" label="친구관리" />
+          <MenuItem icon="👥" label="친구관리" onPress={() => {
+            console.log('친구관리 push');
+            router.push('/friends')}} />
         </View>
         <View style={styles.menuCard}>
             <LogoutBtn />

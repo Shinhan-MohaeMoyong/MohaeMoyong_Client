@@ -5,3 +5,4 @@ export type UserDTO = {
   imageUrl: string | null;
   isNew?: boolean;
 };
+
