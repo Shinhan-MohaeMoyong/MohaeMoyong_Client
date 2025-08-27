@@ -9,8 +9,9 @@ import {
 } from 'react-native';
 import AccountCard from '../components/AccountCard';
 import TransactionItem from '../components/TransactionItem';
+import { SERVER_URL } from '../constants/server';
+import { getToken } from '../contexts/tokenManager';
 import { AccountMapper } from '../mappers/AccountMapper';
-import { fetchAccountDetail } from '../services/api';
 import { AccountDetailDTO, TransactionDetailDTO } from '../types/dto/AccountDetailDTO';
 
 interface Transaction {
@@ -75,10 +76,25 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
     setLoading(true);
     setError(null);
     try {
+      console.log('🏦 === 계좌 상세 정보 요청 ===');
       const accountNo = account.accountNumber;
       
       // 새로운 API 엔드포인트 호출
-      const accountDetailResponse = await fetchAccountDetail(accountNo);
+      const response = await fetch(`${SERVER_URL}/api/v1/account/${encodeURIComponent(accountNo)}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${await getToken()}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`계좌 상세 정보 요청 실패: ${response.status} ${response.statusText}`);
+      }
+
+      const accountDetailResponse = await response.json();
+      console.log('🏦 === 계좌 상세 정보 응답 ===');
+      console.log(JSON.stringify(accountDetailResponse, null, 2));
       
       setAccountDetail(accountDetailResponse);
       
@@ -88,14 +104,29 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
       );
       
       setTransactions(mappedTransactions);
+      console.log('🏦 === 거래내역 변환 결과 ===');
+      console.log(JSON.stringify(mappedTransactions, null, 2));
       
       // 달성률은 별도 API에서 가져오거나 계산
       // 현재는 임시로 0으로 설정
       setAchievementRate(0);
       
     } catch (e) {
-      console.error('계좌 상세 정보 조회 실패:', e);
-      setError('계좌 상세 정보를 불러오지 못했습니다.');
+      console.error('❌ 계좌 상세 정보 조회 실패:', e);
+      
+      let errorMessage = '계좌 상세 정보를 불러오지 못했습니다.';
+      
+      if (e instanceof Error) {
+        if (e.message.includes('401')) {
+          errorMessage = '인증이 필요합니다. 다시 로그인해 주세요.';
+        } else if (e.message.includes('404')) {
+          errorMessage = '계좌 정보를 찾을 수 없습니다.';
+        } else if (e.message.includes('500')) {
+          errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
