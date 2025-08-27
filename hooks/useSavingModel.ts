@@ -1,38 +1,7 @@
 import { useCallback, useState } from 'react';
-import { fetchJson, HttpError } from '../services/api';
+import { SERVER_URL } from '../constants/server';
+import { getToken } from '../contexts/tokenManager';
 import { SavingStateEntity } from '../types/entity/SavingEntity';
-
-// Mock 데이터
-const mockSavingStates: SavingStateEntity[] = [
-  {
-    accountNumber: "0014354908425733",
-    balance: 189000,
-    accountAlias: "학비 저축계좌",
-    monthlySavings: [
-      { week: 1, amount: 48000 },
-      { week: 2, amount: 52000 },
-      { week: 3, amount: 45000 },
-      { week: 4, amount: 38000 },
-      { week: 5, amount: 42000 },
-      { week: 6, amount: 48000 },
-    ],
-    achievementRate: 41.0,
-  },
-  {
-    accountNumber: "0017140134561303",
-    balance: 100000,
-    accountAlias: "맥북 저축계좌",
-    monthlySavings: [
-      { week: 1, amount: 30000 },
-      { week: 2, amount: 35000 },
-      { week: 3, amount: 40000 },
-      { week: 4, amount: 45000 },
-      { week: 5, amount: 50000 },
-      { week: 6, amount: 55000 },
-    ],
-    achievementRate: 65.0,
-  },
-];
 
 // Model Layer - API 요청 및 Entity 저장
 export const useSavingModel = () => {
@@ -46,8 +15,24 @@ export const useSavingModel = () => {
     setError(null);
 
     try {
+      console.log('💰 === 저축 정보 요청 ===');
       const endpoint = '/api/v1/account/savingState';
-      const data = await fetchJson<any[]>(endpoint);
+      
+      const response = await fetch(`${SERVER_URL}${endpoint}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${await getToken()}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`저축 정보 요청 실패: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('💰 === 저축 정보 응답 ===');
+      console.log(JSON.stringify(data, null, 2));
 
       const savingStateEntities: SavingStateEntity[] = data.map((item: any) => ({
         accountNumber: item.accountNumber,
@@ -58,20 +43,20 @@ export const useSavingModel = () => {
       }));
 
       setSavingStates(savingStateEntities);
+      console.log('💰 === 저축 정보 변환 결과 ===');
+      console.log(JSON.stringify(savingStateEntities, null, 2));
+
     } catch (err) {
-      // 네트워크 실패 또는 서버 5xx → Mock 폴백
-      if (
-        (err instanceof Error && err.message.includes('Failed to fetch')) ||
-        (err instanceof HttpError && err.status >= 500)
-      ) {
-        setSavingStates(mockSavingStates);
-      } else {
-        let errorMessage = err instanceof Error ? err.message : '저축 정보를 불러오는데 실패했습니다.';
-        if (err instanceof HttpError && err.status === 401) {
-          errorMessage = '인증이 필요합니다. 다시 로그인해 주세요.';
-        }
-        setError(errorMessage);
+      console.error('❌ 저축 정보 가져오기 실패:', err);
+      
+      let errorMessage = err instanceof Error ? err.message : '저축 정보를 불러오는데 실패했습니다.';
+      
+      if (err instanceof Error && err.message.includes('401')) {
+        errorMessage = '인증이 필요합니다. 다시 로그인해 주세요.';
       }
+      
+      setError(errorMessage);
+      setSavingStates([]); // 에러 시 빈 배열로 설정
     } finally {
       setLoading(false);
     }
