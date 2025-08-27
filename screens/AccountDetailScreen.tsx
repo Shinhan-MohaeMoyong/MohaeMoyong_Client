@@ -38,9 +38,10 @@ interface AccountDetailProps {
 
 interface AccountDetailScreenProps {
   account: Account;
+  onBack?: () => void;
 }
 
-export default function AccountDetailScreen({ account }: AccountDetailScreenProps) {
+export default function AccountDetailScreen({ account, onBack }: AccountDetailScreenProps) {
   const [filterType, setFilterType] = useState<'all' | 'deposit' | 'withdrawal'>('all');
   const [refreshing, setRefreshing] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -190,6 +191,18 @@ export default function AccountDetailScreen({ account }: AccountDetailScreenProp
 
   return (
     <View style={styles.container}>
+      {/* 헤더 */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={onBack}
+        >
+          <Text style={styles.backButtonText}>← 뒤로</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>계좌 상세</Text>
+        <View style={styles.headerPlaceholder} />
+      </View>
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -389,5 +402,31 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#111827',
     marginBottom: 16,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  backButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  backButtonText: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  headerPlaceholder: {
+    width: 50,
   },
 });
