@@ -30,6 +30,7 @@ export default function PostBottomSheet({
   const insets = useSafeAreaInsets();
   const [footerHeight, setFooterHeight] = useState(0);
   const footerHeightRef = useRef(0);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   
   // usePostBottomSheet 훅 사용
   const { comments, postBottomSheetData, isLoadingDetail, isLoadingComments, fetchComments } = usePostBottomSheet();
@@ -116,6 +117,7 @@ export default function PostBottomSheet({
            scrollIndicatorInsets={{ bottom: footerHeight}}
            bounces={true}
            keyboardDismissMode="interactive"
+           nestedScrollEnabled={true}
          >
                                            {postData && (
                             <PostHeader 
@@ -129,7 +131,7 @@ export default function PostBottomSheet({
                  <Text style={styles.loadingText}>댓글을 불러오는 중...</Text>
                </View>
              ) : comments && comments.length > 0 && (
-               comments.map((item) => (
+               [...comments].reverse().map((item) => (
                  <CommentItem 
                    key={item.id} 
                    id={item.id}
