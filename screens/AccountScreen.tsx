@@ -1,3 +1,5 @@
+import { SERVER_URL } from '@/constants/server';
+import { getToken } from '@/contexts/tokenManager';
 import { useEffect, useState } from 'react';
 import {
   Alert,
@@ -10,7 +12,6 @@ import {
 } from 'react-native';
 import AccountCard from '../components/AccountCard';
 import { AccountMapper } from '../mappers/AccountMapper';
-import { fetchJson } from '../services/api';
 import AddAccountScreen from './AddAccountScreen';
 
 interface Account {
@@ -42,11 +43,27 @@ export default function AccountScreen({ onAccountPress }: AccountScreenProps) {
   const fetchAccounts = async () => {
     setLoading(true);
     try {
+      console.log('🏦 === 계좌 목록 요청 ===');
       const endpoint = '/api/v1/account/simpleList';
-      const data = await fetchJson<SimpleAccountDTO[]>(endpoint);
+      
+      const response = await fetch(`${SERVER_URL}${endpoint}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${await getToken()}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`계좌 목록 요청 실패: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('🏦 === 계좌 목록 응답 ===');
+      console.log(JSON.stringify(data, null, 2));
 
       // DTO → 화면에서 쓰는 Legacy Account로 매핑 (기존 뷰 로직 유지)
-      const mapped: Account[] = data.map((item) => ({
+      const mapped: Account[] = data.map((item: SimpleAccountDTO) => ({
         id: item.accountNo,
         accountNumber: item.accountNo,
         balance: item.accountBalance,
@@ -55,7 +72,11 @@ export default function AccountScreen({ onAccountPress }: AccountScreenProps) {
       }));
 
       setAccounts(mapped);
+      console.log('🏦 === 계좌 목록 변환 결과 ===');
+      console.log(JSON.stringify(mapped, null, 2));
+
     } catch (error) {
+      console.error('❌ 계좌 목록 가져오기 실패:', error);
       Alert.alert('오류', '계좌 목록을 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);

@@ -2,7 +2,7 @@
 import MohaeyoungHeader from "@/components/MohaeyoungHeader";
 import PostBottomSheet from "@/components/post/PostBottomSheet";
 import { useRouter } from "expo-router";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import FriendsList from "../components/FriendsList";
 import WeekGrid from "../components/WeekGrid";
