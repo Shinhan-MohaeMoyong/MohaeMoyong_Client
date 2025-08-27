@@ -1,7 +1,7 @@
 import { usePostBottomSheet } from '@/hooks/usePostBottomSheet';
 import type { PlanEntity } from "@/types/entity/PlanEntity";
 import { BottomSheetBackdrop, BottomSheetFooter, BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CommentInput from './CommentInput';

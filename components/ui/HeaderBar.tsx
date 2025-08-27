@@ -30,8 +30,8 @@ export default function HeaderBar({
     <View
       style={[
         styles.header,
-        { paddingTop: insets.top + extraTopGap }, 
-        { paddingBottom: insets.bottom + extraTopGap}
+        { paddingTop: extraTopGap }, 
+        { paddingBottom: extraTopGap}
       ]}
     >
       <View style={{ width: 24 }}>

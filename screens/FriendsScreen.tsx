@@ -90,6 +90,7 @@ export default function FriendsScreen() {
     if (primaryLabel === "요청 보내기") {
       setTarget(item);
       setMsgModalVisible(true);
+      console.log("요청보내기");
       return;
     }
 
