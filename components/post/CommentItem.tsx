@@ -1,10 +1,10 @@
-import { useUser } from '@/contexts/UserContext';
-import type { UserDTO } from '@/types/dto';
-import type { CommentDTO } from '@/types/dto/CommentDTO';
-import { Ionicons } from '@expo/vector-icons';
-import { useEffect } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
-import UserProfile from '../ui/UserProfile';
+import { useUser } from "@/contexts/UserContext";
+import type { UserDTO } from "@/types/dto";
+import type { CommentDTO } from "@/types/dto/CommentDTO";
+import { Ionicons } from "@expo/vector-icons";
+import { useEffect } from "react";
+import { Image, StyleSheet, Text, View } from "react-native";
+import UserProfile from "../ui/UserProfile";
 
 type Props = {
   id: string;
@@ -28,22 +28,19 @@ export default function CommentItem({ id, userDTO, comment, time, text, isAfterP
       <View style={styles.row}>
         <UserProfile user={userDTO} size={32} showName={false} />
         <View style={{ flex: 1 }}>
-          <Text style={styles.user}>{userDTO.name} <Text style={styles.time}>{time}</Text></Text>
-          {
-            comment.photos && comment.photos.length > 0 && (
-              comment.photos.map((photo) => (
-                  <Image source={{uri: photo}} style={{ width: 100, height: 100 }} />
-                
-              ))
-            )
-          }
+          <Text style={styles.user}>
+            {userDTO.name} <Text style={styles.time}>{time}</Text>
+          </Text>
+          {comment.photos &&
+            comment.photos.length > 0 &&
+            comment.photos.map((photo) => (
+              <Image source={{ uri: photo }} style={{ width: 100, height: 100 }} />
+            ))}
           <Text>{text}</Text>
         </View>
-        {isOwnComment && (
-          <Ionicons name="ellipsis-horizontal" size={18} color="#666" />
-        )}
+        {isOwnComment && <Ionicons name="ellipsis-horizontal" size={18} color="#666" />}
       </View>
-      
+
       {isAfterPlanEnd && (
         <>
           <View style={styles.separator} />
@@ -55,9 +52,9 @@ export default function CommentItem({ id, userDTO, comment, time, text, isAfterP
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', marginVertical: 6, alignItems: 'flex-start', gap: 8 },
-  user: { fontWeight: '600', fontSize: 13 },
-  time: { fontSize: 11, color: '#777' },
-  separator: { height: 1, backgroundColor: '#EDEDED', marginVertical: 12 },
-  reviewPrompt: { fontSize: 13, color: '#666', textAlign: 'center', marginBottom: 12 }
+  row: { flexDirection: "row", marginVertical: 6, alignItems: "flex-start", gap: 8 },
+  user: { fontWeight: "600", fontSize: 13 },
+  time: { fontSize: 11, color: "#777" },
+  separator: { height: 1, backgroundColor: "#EDEDED", marginVertical: 12 },
+  reviewPrompt: { fontSize: 13, color: "#666", textAlign: "center", marginBottom: 12 },
 });
