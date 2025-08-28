@@ -12,5 +12,6 @@ export interface AccountDetailDTO {
   accountNo: string;           // 계좌 번호
   accountBalance: number;      // 계좌 잔액
   accountName: string;         // 계좌 별칭
+  targetAmount: number;        // 목표 금액
   list: TransactionDetailDTO[]; // 거래목록
 }

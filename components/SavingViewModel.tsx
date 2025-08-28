@@ -95,6 +95,7 @@ export default function SavingViewModel({ onAccountPress }: SavingViewModelProps
           accountNumber={currentAccount.accountNumber}
           balance={currentAccount.balance}
           accountAlias={currentAccount.accountAlias}
+          targetAmount={currentAccount.targetAmount}
           monthlySavings={currentAccount.monthlySavings}
           achievementRate={currentAccount.achievementRate}
           encouragementMessage={currentAccount.encouragementMessage}

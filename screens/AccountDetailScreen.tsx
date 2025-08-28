@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import {
+  Alert,
+  Modal,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import AccountCard from '../components/AccountCard';
 import TransactionItem from '../components/TransactionItem';
@@ -45,10 +48,13 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
   const [filterType, setFilterType] = useState<'all' | 'deposit' | 'withdrawal'>('all');
   const [refreshing, setRefreshing] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [achievementRate, setAchievementRate] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [accountDetail, setAccountDetail] = useState<AccountDetailDTO | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [newTargetAmount, setNewTargetAmount] = useState('');
+  const [showAliasEditModal, setShowAliasEditModal] = useState(false);
+  const [newAccountAlias, setNewAccountAlias] = useState('');
 
   // API 응답을 내부 Transaction 타입으로 변환하는 함수
   const mapTransactionDTOToTransaction = (dto: TransactionDetailDTO, index: number): Transaction => {
@@ -70,6 +76,123 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
     const minute = time.substring(2, 4);
     
     return `${year}-${month}-${day} ${hour}:${minute}`;
+  };
+
+  // 목표 금액 수정 함수
+  const updateTargetAmount = async (newTargetAmount: number) => {
+    try {
+      console.log('🎯 === 목표 금액 수정 요청 ===');
+      console.log('📋 계좌번호:', account.accountNumber);
+      console.log('📋 새로운 목표 금액:', newTargetAmount);
+      
+      const response = await fetch(`${SERVER_URL}/api/v1/account/targetAmount`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${await getToken()}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          accountNo: account.accountNumber,
+          targetAmount: newTargetAmount,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`목표 금액 수정 실패: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.text();
+      console.log('✅ 목표 금액 수정 완료:', result);
+      
+      // 성공 시 계좌 상세 정보를 다시 불러와서 화면 업데이트
+      await fetchDetail();
+      
+      Alert.alert('성공', '목표 금액이 수정되었습니다.');
+    } catch (error) {
+      console.error('❌ 목표 금액 수정 실패:', error);
+      Alert.alert('오류', '목표 금액 수정에 실패했습니다.');
+    }
+  };
+
+  // 목표 금액 수정 버튼 클릭 처리
+  const handleTargetAmountEdit = () => {
+    setNewTargetAmount(accountDetail?.targetAmount?.toString() || '');
+    setShowEditModal(true);
+  };
+
+  // 목표 금액 수정 확인
+  const handleConfirmEdit = () => {
+    const newAmount = parseInt(newTargetAmount.replace(/[^0-9]/g, ''));
+    if (newAmount > 0) {
+      updateTargetAmount(newAmount);
+      setShowEditModal(false);
+    } else {
+      Alert.alert('오류', '올바른 금액을 입력해주세요.');
+    }
+  };
+
+  // 목표 금액 수정 취소
+  const handleCancelEdit = () => {
+    setShowEditModal(false);
+    setNewTargetAmount('');
+  };
+
+  // 계좌 별칭 수정 함수
+  const updateAccountAlias = async (newAlias: string) => {
+    try {
+      console.log('🏷️ === 계좌 별칭 수정 요청 ===');
+      console.log('📋 계좌번호:', account.accountNumber);
+      console.log('📋 새로운 별칭:', newAlias);
+      
+      const response = await fetch(`${SERVER_URL}/api/v1/account/accountAlias`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${await getToken()}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          accountNo: account.accountNumber,
+          accountAlias: newAlias,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`계좌 별칭 수정 실패: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.text();
+      console.log('✅ 계좌 별칭 수정 완료:', result);
+      
+      // 성공 시 계좌 상세 정보를 다시 불러와서 화면 업데이트
+      await fetchDetail();
+      
+      Alert.alert('성공', '계좌 별칭이 수정되었습니다.');
+    } catch (error) {
+      console.error('❌ 계좌 별칭 수정 실패:', error);
+      Alert.alert('오류', '계좌 별칭 수정에 실패했습니다.');
+    }
+  };
+
+  // 계좌 별칭 수정 버튼 클릭 처리
+  const handleAliasEdit = () => {
+    setNewAccountAlias(accountDetail?.accountName || '');
+    setShowAliasEditModal(true);
+  };
+
+  // 계좌 별칭 수정 확인
+  const handleConfirmAliasEdit = () => {
+    if (newAccountAlias.trim()) {
+      updateAccountAlias(newAccountAlias.trim());
+      setShowAliasEditModal(false);
+    } else {
+      Alert.alert('오류', '계좌 별칭을 입력해주세요.');
+    }
+  };
+
+  // 계좌 별칭 수정 취소
+  const handleCancelAliasEdit = () => {
+    setShowAliasEditModal(false);
+    setNewAccountAlias('');
   };
 
   const fetchDetail = async () => {
@@ -126,9 +249,7 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
       console.log('🏦 === 거래내역 변환 결과 ===');
       console.log(JSON.stringify(mappedTransactions, null, 2));
       
-      // 달성률은 별도 API에서 가져오거나 계산
-      // 현재는 임시로 0으로 설정
-      setAchievementRate(0);
+
       
     } catch (e) {
       console.error('❌ 계좌 상세 정보 조회 실패:', e);
@@ -232,25 +353,28 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
       >
         {/* 계좌 정보 카드 */}
         <AccountCard
-          account={AccountMapper.fromLegacyAccount(account)}
+          account={{
+            ...AccountMapper.fromLegacyAccount(account),
+            accountAlias: accountDetail?.accountName || account.accountAlias,
+          }}
           onPress={() => {}}
+          onAliasEdit={handleAliasEdit}
         />
 
-        {/* 달성률 */}
-        <View style={styles.achievementContainer}>
-          <Text style={styles.achievementTitle}>달성률</Text>
-          <View style={styles.progressBarContainer}>
-            <View style={styles.progressBar}>
-              <View
-                style={[
-                  styles.progressFill,
-                  { width: `${achievementRate}%` },
-                ]}
-              />
+        {/* 목표 금액 */}
+        {accountDetail && (
+          <View style={styles.targetAmountContainer}>
+            <View style={styles.targetAmountRow}>
+              <Text style={styles.targetAmountTitle}>목표 금액: {accountDetail.targetAmount.toLocaleString()}원</Text>
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={handleTargetAmountEdit}
+              >
+                <Text style={styles.editButtonText}>수정</Text>
+              </TouchableOpacity>
             </View>
-            <Text style={styles.achievementRate}>{achievementRate}%</Text>
           </View>
-        </View>
+        )}
 
         {/* 내역 구분 필터 */}
         <View style={styles.filterContainer}>
@@ -279,9 +403,88 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
           ))}
         </View>
       </ScrollView>
-    </View>
-  );
-}
+
+      {/* 목표 금액 수정 모달 */}
+      <Modal
+        visible={showEditModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleCancelEdit}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>목표 금액 수정</Text>
+            <Text style={styles.modalSubtitle}>새로운 목표 금액을 입력해주세요.</Text>
+            
+            <TextInput
+              style={styles.modalInput}
+              value={newTargetAmount}
+              onChangeText={setNewTargetAmount}
+              placeholder="목표 금액을 입력하세요"
+              keyboardType="numeric"
+              autoFocus={true}
+            />
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={handleCancelEdit}
+              >
+                <Text style={styles.cancelButtonText}>취소</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.modalButton, styles.confirmButton]}
+                onPress={handleConfirmEdit}
+              >
+                <Text style={styles.confirmButtonText}>수정</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+                 </View>
+       </Modal>
+
+       {/* 계좌 별칭 수정 모달 */}
+       <Modal
+         visible={showAliasEditModal}
+         transparent={true}
+         animationType="fade"
+         onRequestClose={handleCancelAliasEdit}
+       >
+         <View style={styles.modalOverlay}>
+           <View style={styles.modalContent}>
+             <Text style={styles.modalTitle}>계좌 별칭 수정</Text>
+             <Text style={styles.modalSubtitle}>새로운 계좌 별칭을 입력해주세요.</Text>
+             
+             <TextInput
+               style={styles.modalInput}
+               value={newAccountAlias}
+               onChangeText={setNewAccountAlias}
+               placeholder="계좌 별칭을 입력하세요"
+               autoFocus={true}
+             />
+             
+             <View style={styles.modalButtons}>
+               <TouchableOpacity
+                 style={[styles.modalButton, styles.cancelButton]}
+                 onPress={handleCancelAliasEdit}
+               >
+                 <Text style={styles.cancelButtonText}>취소</Text>
+               </TouchableOpacity>
+               
+               <TouchableOpacity
+                 style={[styles.modalButton, styles.confirmButton]}
+                 onPress={handleConfirmAliasEdit}
+               >
+                 <Text style={styles.confirmButtonText}>수정</Text>
+               </TouchableOpacity>
+             </View>
+           </View>
+         </View>
+       </Modal>
+     </View>
+   );
+ }
 
 const styles = StyleSheet.create({
   container: {
@@ -327,7 +530,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  achievementContainer: {
+  targetAmountContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
@@ -338,34 +541,29 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  achievementTitle: {
-    fontSize: 18,
+  targetAmountTitle: {
+    fontSize: 16,
     fontWeight: '600',
     color: '#111827',
-    marginBottom: 16,
+    flex: 1,
   },
-  progressBarContainer: {
+  targetAmountRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  progressBar: {
-    flex: 1,
-    height: 8,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
-    marginRight: 12,
-  },
-  progressFill: {
-    height: '100%',
+  editButton: {
     backgroundColor: '#A78BFA',
-    borderRadius: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
   },
-  achievementRate: {
-    fontSize: 16,
-    color: '#111827',
+  editButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '600',
-    minWidth: 40,
   },
+
   filterContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -447,5 +645,71 @@ const styles = StyleSheet.create({
   },
   headerPlaceholder: {
     width: 50,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
+    margin: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+    minWidth: 300,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 24,
+    backgroundColor: '#FFFFFF',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#F3F4F6',
+  },
+  confirmButton: {
+    backgroundColor: '#A78BFA',
+  },
+  cancelButtonText: {
+    color: '#6B7280',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  confirmButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
