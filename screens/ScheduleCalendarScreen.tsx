@@ -85,6 +85,12 @@ export default function ScheduleCalendarScreen() {
     console.log("Complete plan:", planId);
   };
 
+  // 일정 수정 핸들러
+  const handleEditPlan = (planId: string) => {
+    // TODO: 일정 수정 로직 구현
+    console.log("Edit plan:", planId);
+  };
+
   // 시간 포맷팅 함수
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString("ko-KR", {
@@ -212,6 +218,9 @@ export default function ScheduleCalendarScreen() {
                       endTime={formatTime(new Date(plan.endTime))}
                       title={plan.title}
                       location={plan.place || "장소 없음"}
+                      onEdit={() =>
+                        handleEditPlan(String(plan.planId || ""))
+                      }
                       onDelete={() =>
                         handleDeletePlan(String(plan.planId || ""))
                       }

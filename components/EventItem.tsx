@@ -6,6 +6,7 @@ interface EventItemProps {
   endTime: string;
   title: string;
   location: string;
+  onEdit: () => void;
   onDelete: () => void;
   onComplete: () => void;
   withdrawalAccount?: string;
@@ -17,6 +18,7 @@ export default function EventItem({
   endTime,
   title,
   location,
+  onEdit,
   onDelete,
   onComplete,
   withdrawalAccount,
@@ -45,6 +47,9 @@ export default function EventItem({
             <Text style={styles.title}>{title}</Text>
           </View>
           <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.editButton} onPress={onEdit}>
+              <Ionicons name="create" size={16} color="white" />
+            </TouchableOpacity>
             <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
               <Ionicons name="remove" size={16} color="white" />
             </TouchableOpacity>
@@ -144,6 +149,14 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: "row",
     gap: 8,
+  },
+  editButton: {
+    width: 28,
+    height: 28,
+    backgroundColor: "#FFA500",
+    borderRadius: 6,
+    justifyContent: "center",
+    alignItems: "center",
   },
   deleteButton: {
     width: 28,
