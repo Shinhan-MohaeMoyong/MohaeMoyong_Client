@@ -63,6 +63,7 @@ export default function PostHeader({ postData, onEdit, onDelete }: Props) {
   const [current, setCurrent] = useState(0);
   const [imageWidth, setImageWidth] = useState(0);
   const [errorSet, setErrorSet] = useState<Set<number>>(new Set());
+  
 
   // 대표 이미지 + 추가 사진
   const images = useMemo(() => {

@@ -43,7 +43,6 @@ export default function MohaeyoungScreen() {
     } = usePostBottomSheet();
 
     const weekInfo = getCurrentWeekInfo();
-    console.log('weekInfo:', weekInfo);
 
     const handlePlanPress = async (plan: PlanEntity) => {
         // usePostBottomSheet 훅에서 모든 로직을 처리하므로 plan만 전달
@@ -105,7 +104,7 @@ export default function MohaeyoungScreen() {
             {currentUser && (
                 <View style={styles.weekGridContainer}>
                     <WeekGrid
-                        plans={plans[currentUser.id] || []}
+                        plans={[...(plans[currentUser.id] || [])]}
                         startDay={weekInfo.startDay}
                         endDay={weekInfo.endDay}
                         startHour={5}

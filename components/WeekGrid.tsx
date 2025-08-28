@@ -1,6 +1,6 @@
 // src/components/schedule/WeekGrid.tsx
 import type { PlanEntity, PlanGridDTO } from "@/types";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   LayoutChangeEvent,
@@ -142,6 +142,10 @@ export default function WeekGrid({
       }),
     [atLeftEdge, atRightEdge, onChangeWeek, pullProgress]
   );
+
+  useEffect(() => {
+    console.log('WeekGrid rendering! :', plans);
+  }, [plans]);
 
   
 

@@ -1,5 +1,7 @@
 import { SERVER_URL } from "@/constants/server";
 import { getToken } from "@/contexts/tokenManager";
+import { useUser } from "@/contexts/UserContext";
+import { useMohaeyoung } from "@/hooks/useMohaeyoungScreen";
 import { usePostBottomSheet } from "@/hooks/usePostBottomSheet";
 import type { PostBottomSheetDTO } from "@/types/dto/PostBottomSheetDTO";
 import type { UserDTO } from "@/types/dto/UserDTO";
@@ -42,6 +44,8 @@ export default function PostBottomSheet({
 
   // usePostBottomSheet 훅 사용
   const { comments, isLoadingComments, fetchComments } = usePostBottomSheet();
+  const { fetchPlans } = useMohaeyoung();
+  const { loggedUser } = useUser();
 
   // 컴포넌트 마운트 시 댓글 가져오기
   useEffect(() => {
@@ -84,6 +88,8 @@ export default function PostBottomSheet({
         console.log('응답 데이터:', response.status);
         
         // 성공 시 로딩 해제
+        console.log('loggedUser?.userId:', loggedUser?.userId);
+        fetchPlans(loggedUser?.userId || 0);
         onClose();
       } catch (error) {
         console.error('❌ 일정 삭제 실패:', error);
