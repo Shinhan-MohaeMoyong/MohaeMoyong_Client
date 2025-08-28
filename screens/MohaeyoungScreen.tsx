@@ -59,6 +59,17 @@ export default function MohaeyoungScreen() {
         router.push('/add-plan');
     };
 
+    const handleEditPlan = (planId: number) => {
+        // 수정 화면으로 이동 (임시로 add-plan으로 이동)
+        router.push('/add-plan');
+    };
+
+    const handleDeletePlan = (planId: number) => {
+        // 삭제 로직 구현
+        console.log('삭제할 planId:', planId);
+        // TODO: 실제 삭제 API 호출
+    };
+
     // loggedUser가 변경될 때마다 currentUser 업데이트
     useEffect(() => {
         if (loggedUser && setCurrentUserTo) {
@@ -113,7 +124,10 @@ export default function MohaeyoungScreen() {
                          plan={selectedPlan || undefined}
                          postData={postBottomSheetData || undefined}
                          friends={friends}
-                         onClose={closeBottomSheet}/>
+                         onClose={closeBottomSheet}
+                         onEdit={handleEditPlan}
+                         onDelete={handleDeletePlan}
+                     />
                  )
              }
             

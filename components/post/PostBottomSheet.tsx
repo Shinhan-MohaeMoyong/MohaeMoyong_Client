@@ -1,3 +1,5 @@
+import { SERVER_URL } from "@/constants/server";
+import { getToken } from "@/contexts/tokenManager";
 import { usePostBottomSheet } from "@/hooks/usePostBottomSheet";
 import type { PostBottomSheetDTO } from "@/types/dto/PostBottomSheetDTO";
 import type { UserDTO } from "@/types/dto/UserDTO";
@@ -20,9 +22,18 @@ type Props = {
   postData?: PostBottomSheetDTO;
   friends?: UserDTO[];
   onClose: () => void;
+  onEdit?: (planId: number) => void;
+  onDelete?: (planId: number) => void;
 };
 
-export default function PostBottomSheet({ plan, postData, friends = [], onClose }: Props) {
+export default function PostBottomSheet({ 
+  plan, 
+  postData, 
+  friends = [], 
+  onClose,
+  onEdit,
+  onDelete 
+}: Props) {
   const sheetRef = useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => ["40%", "75%", "95%"], []);
   const insets = useSafeAreaInsets();
@@ -48,6 +59,37 @@ export default function PostBottomSheet({ plan, postData, friends = [], onClose 
   useEffect(() => {
     sheetRef.current?.present();
   }, []);
+
+  const handleEdit = () => {
+    if (postData?.planId) {
+      onEdit?.(postData.planId);
+      onClose();
+    }
+  };
+
+  const handleDelete = async () => {
+    if (postData?.planId) {
+      try {
+        const response = await fetch(`${SERVER_URL}/api/v1/plans/${postData.planId}`, {
+          method: "DELETE",
+          headers: {
+            "Authorization": `Bearer ${await getToken()}`
+          },
+        });
+        
+
+        
+        const responseData = await response;
+        console.log('📤 === 일정 삭제 완료 ===');
+        console.log('응답 데이터:', response.status);
+        
+        // 성공 시 로딩 해제
+        onClose();
+      } catch (error) {
+        console.error('❌ 일정 삭제 실패:', error);
+      }
+    }
+  };
 
   return (
     <BottomSheetModal
@@ -106,7 +148,13 @@ export default function PostBottomSheet({ plan, postData, friends = [], onClose 
         keyboardDismissMode="none"
         nestedScrollEnabled={true}
       >
-        {postData && <PostHeader postData={postData} />}
+        {postData && (
+          <PostHeader 
+            postData={postData} 
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        )}
 
         {isLoadingComments ? (
           <View style={styles.loadingContainer}>
@@ -115,7 +163,7 @@ export default function PostBottomSheet({ plan, postData, friends = [], onClose 
         ) : comments && comments.length > 0 ? (
           [...comments]
             .reverse()
-            .map((item) => (
+            .map((item, index) => (
               <CommentItem
                 key={item.id}
                 id={item.id}

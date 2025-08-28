@@ -173,8 +173,6 @@ export default function WeekGrid({
       
       // isNew 속성 추가 (PlanEntity의 new 필드 사용)
       const isNew = p.new || false;
-
-      console.log('p:', p);
       
       return { plan: p, rect: { top, left, width, height }, isNew };
     });
