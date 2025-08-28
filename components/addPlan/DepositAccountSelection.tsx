@@ -1,0 +1,281 @@
+import { SERVER_URL } from '@/constants/server';
+import { getToken } from '@/contexts/tokenManager';
+import AddAccountScreen from '@/screens/AddAccountScreen';
+import { useEffect, useState } from 'react';
+import {
+  Alert,
+  Modal,
+  RefreshControl,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { AccountMapper } from '../../mappers/AccountMapper';
+import AccountCard from '../AccountCard';
+
+interface Account {
+  id: string;
+  accountNumber: string;
+  balance: number;
+  accountAlias: string;
+  bankName: string;
+}
+
+interface DepositAccountSelectionProps {
+  visible: boolean;
+  onClose: () => void;
+  onAccountSelect: (account: Account) => void;
+}
+
+export default function DepositAccountSelection({ 
+  visible, 
+  onClose, 
+  onAccountSelect 
+}: DepositAccountSelectionProps) {
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showAddAccount, setShowAddAccount] = useState(false);
+
+  // 백엔드 응답 DTO
+  interface SimpleAccountDTO {
+    accountNo: string;
+    accountBalance: number;
+    accountName: string;
+  }
+
+  // 계좌 목록 가져오기
+  const fetchAccounts = async () => {
+    setLoading(true);
+    try {
+      console.log('🏦 === 계좌 목록 요청 ===');
+      const endpoint = '/api/v1/account/simpleList';
+      
+      const response = await fetch(`${SERVER_URL}${endpoint}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${await getToken()}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`계좌 목록 요청 실패: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('🏦 === 계좌 목록 응답 ===');
+      console.log(JSON.stringify(data, null, 2));
+
+      // DTO → 화면에서 쓰는 Legacy Account로 매핑 (기존 뷰 로직 유지)
+      const mapped: Account[] = data.map((item: SimpleAccountDTO) => ({
+        id: item.accountNo,
+        accountNumber: item.accountNo,
+        balance: item.accountBalance,
+        accountAlias: item.accountName,
+        bankName: '신한은행', // 응답에 없으므로 기본값
+      }));
+
+      setAccounts(mapped);
+      console.log('🏦 === 계좌 목록 변환 결과 ===');
+      console.log(JSON.stringify(mapped, null, 2));
+
+    } catch (error) {
+      console.error('❌ 계좌 목록 가져오기 실패:', error);
+      Alert.alert('오류', '계좌 목록을 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 새로고침 처리
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchAccounts();
+    setRefreshing(false);
+  };
+
+  // 새로운 계좌 추가하기
+  const handleAddAccount = () => {
+    setShowAddAccount(true);
+  };
+
+  // 상품 선택 처리
+  const handleProductSelect = (product: any) => {
+    // 상품 선택 완료 후 AddAccountScreen 닫기
+    setShowAddAccount(false);
+    
+    // 계좌 목록 새로고침 (새로 생성된 계좌 반영)
+    fetchAccounts();
+  };
+
+  // 계좌 선택 처리
+  const handleAccountPress = (account: Account) => {
+    onAccountSelect(account);
+    onClose();
+  };
+
+  useEffect(() => {
+    if (visible) {
+      fetchAccounts();
+    }
+  }, [visible]);
+
+  // 새로운 계좌 추가 화면이 표시되는 경우
+  if (showAddAccount) {
+    return (
+      <Modal
+        visible={visible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <AddAccountScreen
+          onProductSelect={handleProductSelect}
+        />
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+    >
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Text style={styles.closeButtonText}>취소</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>입금계좌 선택</Text>
+          <View style={styles.placeholder} />
+        </View>
+
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>계좌 목록을 불러오는 중...</Text>
+            </View>
+          ) : accounts.length > 0 ? (
+            accounts.map((account) => (
+              <AccountCard
+                key={account.id}
+                account={AccountMapper.fromLegacyAccount(account)}
+                onPress={() => handleAccountPress(account)}
+              />
+            ))
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>등록된 계좌가 없습니다.</Text>
+            </View>
+          )}
+
+          <TouchableOpacity
+            style={styles.addAccountButton}
+            onPress={handleAddAccount}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.addButtonIcon}>+</Text>
+            <Text style={styles.addButtonText}>새로운 계좌 추가하기</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+    backgroundColor: '#f9fafb',
+  },
+  closeButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  closeButtonText: {
+    fontSize: 16,
+    color: '#6b7280',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  placeholder: {
+    width: 60,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    paddingBottom: 40,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#6B7280',
+  },
+  addAccountButton: {
+    backgroundColor: '#A78BFA',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  addButtonIcon: {
+    fontSize: 20,
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    marginRight: 8,
+  },
+  addButtonText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#6B7280',
+  },
+});

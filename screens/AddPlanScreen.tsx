@@ -6,19 +6,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AddButton from '../components/addPlan/AddButton';
 import AddPlanHeader from '../components/addPlan/AddPlanHeader';
 import DateTimeSelector from '../components/addPlan/DateTimeSelector';
+import DepositAccountSelection from '../components/addPlan/DepositAccountSelection';
 import EventTypeSelector from '../components/addPlan/EventTypeSelector';
 import FriendListSection from '../components/addPlan/FriendListSection';
+import GroupScheduleSelectionScreen from '../components/addPlan/GroupScheduleSelectionScreen';
 import PhotoUpload from '../components/addPlan/PhotoUpload';
 import PlanInputFields from '../components/addPlan/PlanInputFields';
 import RepeatOption from '../components/addPlan/RepeatOption';
 import SaveOption from '../components/addPlan/SaveOption';
-import GroupScheduleSelectionScreen from '../components/GroupScheduleSelectionScreen';
 import { useAddPlanScreen } from '../hooks/useAddPlanScreen';
 
 export default function AddPlanScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [showFriendSelection, setShowFriendSelection] = useState(false);
+  const [showDepositAccountSelection, setShowDepositAccountSelection] = useState(false);
   const { 
     formData, 
     isLoading,
@@ -39,8 +41,18 @@ export default function AddPlanScreen() {
   };
 
   const handleDepositAccountPress = () => {
-    // 입금계좌 선택 화면으로 이동
-    //router.push('/account-select?type=deposit');
+    setShowDepositAccountSelection(true);
+  };
+
+  const handleDepositAccountSelection = (account: any) => {
+    updateFormData({ 
+      depositAccount: {
+        id: account.id,
+        bankName: account.bankName,
+        accountNumber: account.accountNumber,
+        accountType: '입금계좌'
+      }
+    });
   };
 
   const handleEventTypeChange = (type: 'group' | 'personal') => {
@@ -165,6 +177,13 @@ export default function AddPlanScreen() {
           onConfirm={handleFriendSelectionConfirm}
           maxSelection={100}
           initialSelectedFriends={formData.selectedFriends}
+        />
+
+        {/* DepositAccountSelection 모달 */}
+        <DepositAccountSelection
+          visible={showDepositAccountSelection}
+          onClose={() => setShowDepositAccountSelection(false)}
+          onAccountSelect={handleDepositAccountSelection}
         />
       </View>
     </KeyboardAvoidingView>
