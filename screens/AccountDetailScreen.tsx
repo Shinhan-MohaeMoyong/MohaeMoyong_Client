@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import {
+  Alert,
+  Modal,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import AccountCard from '../components/AccountCard';
 import TransactionItem from '../components/TransactionItem';
@@ -48,6 +51,8 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [accountDetail, setAccountDetail] = useState<AccountDetailDTO | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [newTargetAmount, setNewTargetAmount] = useState('');
 
   // API 응답을 내부 Transaction 타입으로 변환하는 함수
   const mapTransactionDTOToTransaction = (dto: TransactionDetailDTO, index: number): Transaction => {
@@ -69,6 +74,65 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
     const minute = time.substring(2, 4);
     
     return `${year}-${month}-${day} ${hour}:${minute}`;
+  };
+
+  // 목표 금액 수정 함수
+  const updateTargetAmount = async (newTargetAmount: number) => {
+    try {
+      console.log('🎯 === 목표 금액 수정 요청 ===');
+      console.log('📋 계좌번호:', account.accountNumber);
+      console.log('📋 새로운 목표 금액:', newTargetAmount);
+      
+      const response = await fetch(`${SERVER_URL}/api/v1/account/targetAmount`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${await getToken()}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          accountNo: account.accountNumber,
+          targetAmount: newTargetAmount,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`목표 금액 수정 실패: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.text();
+      console.log('✅ 목표 금액 수정 완료:', result);
+      
+      // 성공 시 계좌 상세 정보를 다시 불러와서 화면 업데이트
+      await fetchDetail();
+      
+      Alert.alert('성공', '목표 금액이 수정되었습니다.');
+    } catch (error) {
+      console.error('❌ 목표 금액 수정 실패:', error);
+      Alert.alert('오류', '목표 금액 수정에 실패했습니다.');
+    }
+  };
+
+  // 목표 금액 수정 버튼 클릭 처리
+  const handleTargetAmountEdit = () => {
+    setNewTargetAmount(accountDetail?.targetAmount?.toString() || '');
+    setShowEditModal(true);
+  };
+
+  // 목표 금액 수정 확인
+  const handleConfirmEdit = () => {
+    const newAmount = parseInt(newTargetAmount.replace(/[^0-9]/g, ''));
+    if (newAmount > 0) {
+      updateTargetAmount(newAmount);
+      setShowEditModal(false);
+    } else {
+      Alert.alert('오류', '올바른 금액을 입력해주세요.');
+    }
+  };
+
+  // 목표 금액 수정 취소
+  const handleCancelEdit = () => {
+    setShowEditModal(false);
+    setNewTargetAmount('');
   };
 
   const fetchDetail = async () => {
@@ -236,7 +300,15 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
         {/* 목표 금액 */}
         {accountDetail && (
           <View style={styles.targetAmountContainer}>
-            <Text style={styles.targetAmountTitle}>목표 금액: {accountDetail.targetAmount.toLocaleString()}원</Text>
+            <View style={styles.targetAmountRow}>
+              <Text style={styles.targetAmountTitle}>목표 금액: {accountDetail.targetAmount.toLocaleString()}원</Text>
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={handleTargetAmountEdit}
+              >
+                <Text style={styles.editButtonText}>수정</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
@@ -267,6 +339,46 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
           ))}
         </View>
       </ScrollView>
+
+      {/* 목표 금액 수정 모달 */}
+      <Modal
+        visible={showEditModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleCancelEdit}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>목표 금액 수정</Text>
+            <Text style={styles.modalSubtitle}>새로운 목표 금액을 입력해주세요.</Text>
+            
+            <TextInput
+              style={styles.modalInput}
+              value={newTargetAmount}
+              onChangeText={setNewTargetAmount}
+              placeholder="목표 금액을 입력하세요"
+              keyboardType="numeric"
+              autoFocus={true}
+            />
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={handleCancelEdit}
+              >
+                <Text style={styles.cancelButtonText}>취소</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.modalButton, styles.confirmButton]}
+                onPress={handleConfirmEdit}
+              >
+                <Text style={styles.confirmButtonText}>수정</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -330,6 +442,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#111827',
+    flex: 1,
+  },
+  targetAmountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  editButton: {
+    backgroundColor: '#A78BFA',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  editButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
 
   filterContainer: {
@@ -413,5 +542,71 @@ const styles = StyleSheet.create({
   },
   headerPlaceholder: {
     width: 50,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
+    margin: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+    minWidth: 300,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 24,
+    backgroundColor: '#FFFFFF',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#F3F4F6',
+  },
+  confirmButton: {
+    backgroundColor: '#A78BFA',
+  },
+  cancelButtonText: {
+    color: '#6B7280',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  confirmButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
