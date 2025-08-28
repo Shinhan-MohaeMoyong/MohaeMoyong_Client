@@ -78,17 +78,36 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
     try {
       console.log('🏦 === 계좌 상세 정보 요청 ===');
       const accountNo = account.accountNumber;
+      console.log('📋 요청할 계좌번호:', accountNo);
+      console.log('📋 요청 URL:', `${SERVER_URL}/api/v1/account/detail`);
       
-      // 새로운 API 엔드포인트 호출
-      const response = await fetch(`${SERVER_URL}/api/v1/account/${encodeURIComponent(accountNo)}`, {
-        method: 'GET',
+      const requestBody = {
+        accountNo: accountNo
+      };
+      console.log('📋 요청 Body:', JSON.stringify(requestBody, null, 2));
+      
+      // POST 방식으로 API 엔드포인트 호출
+      const response = await fetch(`${SERVER_URL}/api/v1/account/detail`, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${await getToken()}`,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
+        console.error('❌ HTTP 상태 코드:', response.status);
+        console.error('❌ HTTP 상태 텍스트:', response.statusText);
+        
+        // 에러 응답 본문도 확인
+        try {
+          const errorResponse = await response.text();
+          console.error('❌ 에러 응답 본문:', errorResponse);
+        } catch (textError) {
+          console.error('❌ 에러 응답 본문 읽기 실패:', textError);
+        }
+        
         throw new Error(`계좌 상세 정보 요청 실패: ${response.status} ${response.statusText}`);
       }
 
