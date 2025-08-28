@@ -1,6 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 type AccountInfo = {
   bankName: string;
@@ -18,15 +17,15 @@ type Props = {
   onSavingAmountChange: (amount: string) => void;
 };
 
-export default function SaveOption({ 
-  isEnabled, 
+export default function SaveOption({
+  isEnabled,
   onToggle,
   withdrawalAccount,
   depositAccount,
   savingAmount,
   onWithdrawalAccountSelect,
   onDepositAccountSelect,
-  onSavingAmountChange
+  onSavingAmountChange,
 }: Props) {
   return (
     <View style={styles.container}>
@@ -45,10 +44,7 @@ export default function SaveOption({
           {/* 출금 계좌 */}
           <View style={styles.fieldContainer}>
             <Text style={styles.fieldLabel}>출금계좌</Text>
-            <TouchableOpacity 
-              style={styles.accountSelector}
-              onPress={onWithdrawalAccountSelect}
-            >
+            <TouchableOpacity style={styles.accountSelector} onPress={onWithdrawalAccountSelect}>
               {withdrawalAccount ? (
                 <View style={styles.accountInfo}>
                   <Text style={styles.bankName}>{withdrawalAccount.bankName}</Text>
@@ -64,10 +60,7 @@ export default function SaveOption({
           {/* 입금 계좌 */}
           <View style={styles.fieldContainer}>
             <Text style={styles.fieldLabel}>입금계좌</Text>
-            <TouchableOpacity 
-              style={styles.accountSelector}
-              onPress={onDepositAccountSelect}
-            >
+            <TouchableOpacity style={styles.accountSelector} onPress={onDepositAccountSelect}>
               {depositAccount ? (
                 <View style={styles.accountInfo}>
                   <Text style={styles.bankName}>{depositAccount.bankName}</Text>
@@ -105,17 +98,22 @@ export default function SaveOption({
 const styles = StyleSheet.create({
   container: {
     marginBottom: 20,
+    backgroundColor: "#fff", // 흰색 배경
+    borderWidth: 1, // 테두리 두께
+    borderColor: "#6C5CE7", // 보라색 테두리
+    borderRadius: 12, // 모서리 둥글게 (원하면)
+    padding: 12,
   },
   headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 16,
   },
   label: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
   },
   toggleContainer: {
     padding: 4,
@@ -124,96 +122,96 @@ const styles = StyleSheet.create({
     width: 44,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#ddd',
-    position: 'relative',
+    backgroundColor: "#ddd",
+    position: "relative",
     padding: 2,
   },
   toggleSwitchActive: {
-    backgroundColor: '#FF6B9D',
+    backgroundColor: "#FF6B9D",
   },
   toggleKnob: {
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#fff',
-    position: 'absolute',
+    backgroundColor: "#fff",
+    position: "absolute",
     top: 2,
     left: 2,
   },
   toggleKnobActive: {
     left: 22,
   },
-  
+
   // 저축 설정 컨테이너
   settingsContainer: {
-    backgroundColor: '#f8f8f8',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
     marginTop: 8,
   },
-  
+
   // 필드 컨테이너
   fieldContainer: {
     marginBottom: 20,
   },
   fieldLabel: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 8,
   },
-  
+
   // 계좌 선택기
   accountSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#fff",
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: "#e0e0e0",
   },
   accountInfo: {
     flex: 1,
   },
   bankName: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
     marginBottom: 2,
   },
   accountNumber: {
     fontSize: 14,
-    color: '#999',
+    color: "#999",
   },
   placeholderText: {
     fontSize: 16,
-    color: '#999',
+    color: "#999",
   },
-  
+
   // 금액 입력
   amountContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF9C4',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF9C4",
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#FFD54F',
+    borderColor: "#FFD54F",
   },
   amountInput: {
     flex: 1,
     fontSize: 18,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: "700",
+    color: "#333",
     marginLeft: 12,
     marginRight: 8,
   },
   currencyText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
   },
 });

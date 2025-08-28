@@ -1,53 +1,83 @@
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type Props = {
   onPress: () => void;
   disabled?: boolean;
+  loading?: boolean;
+  title?: string;
 };
 
-export default function AddButton({ onPress, disabled = false }: Props) {
+export default function AddButton({
+  onPress,
+  disabled = false,
+  loading = false,
+  title = '추가하기',
+}: Props) {
+  const isBlocked = disabled || loading;
+
   return (
-    <TouchableOpacity 
-      style={[styles.button, disabled && styles.buttonDisabled]} 
+    <TouchableOpacity
+      style={[styles.button, isBlocked && styles.buttonDisabled]}
       onPress={onPress}
-      disabled={disabled}
+      disabled={isBlocked}
+      activeOpacity={0.8}
     >
-      <Text style={[styles.buttonText, disabled && styles.buttonTextDisabled]}>
-        {disabled ? '추가 중...' : '추가하기'}
-      </Text>
+      <View style={styles.contentRow}>
+        {loading ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <>
+            <Ionicons name="add" size={16} color="#fff" style={styles.icon} />
+            <Text style={[styles.buttonText, isBlocked && styles.buttonTextDisabled]}>
+              {title}
+            </Text>
+          </>
+        )}
+      </View>
     </TouchableOpacity>
   );
 }
 
+const PURPLE = '#6C5CE7';
+const PURPLE_DARK = '#5848D9';
+
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: '#6C5CE7',
-    borderRadius: 12,
-    paddingVertical: 16,
-    marginHorizontal: 20,
-    marginBottom: 20,
+    backgroundColor: PURPLE,
+    borderRadius: 24,
+    paddingVertical: 14, // ⬆️ 높이 키움
+    paddingHorizontal: 80, // ⬇️ 좌우 폭 조금 줄임
+    alignSelf: "center", // ⬅️ 화면 중앙에 배치
+    marginBottom: 24, // ⬆️ 아래 여백 키움
+    alignItems: "center",
+    justifyContent: "center",
+
+    // 은은한 그림자
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  buttonDisabled: {
+    backgroundColor: '#C9C7E8',
+  },
+  contentRow: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    columnGap: 6,
+  },
+  icon: {
+    marginRight: 2,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 14,           // 🔽 작게
     fontWeight: '700',
   },
-  buttonDisabled: {
-    backgroundColor: '#ccc',
-    shadowOpacity: 0.05,
-  },
   buttonTextDisabled: {
-    color: '#999',
+    color: '#f0f0f0',
   },
 });
