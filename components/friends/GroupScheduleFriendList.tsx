@@ -29,7 +29,6 @@ export default function GroupScheduleFriendList({
           },
         });
         const data = await response.json();
-        console.log(data);
         setFriends(data);
         setLoading(false);
       } catch (e) {
