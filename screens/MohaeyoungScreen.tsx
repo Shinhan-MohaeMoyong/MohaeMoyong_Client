@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    padding: 16,
+    padding: 8,
   },
   weekGridContainer: {
     flex: 1,
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   
     // 가운데 주차 네비게이션
   weekHeader: {
-    marginTop: 6,
+    marginTop: 3,
     marginBottom: 8,
     paddingHorizontal: 8,
     flexDirection: "row",

@@ -39,8 +39,8 @@ export default function AddButton({
   );
 }
 
-const PURPLE = '#6C5CE7';
-const PURPLE_DARK = '#5848D9';
+const PURPLE = '#8C93FF';
+const PURPLE_DARK = '#6C5CE7';
 
 const styles = StyleSheet.create({
   button: {

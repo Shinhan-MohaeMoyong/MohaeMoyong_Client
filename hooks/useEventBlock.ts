@@ -29,7 +29,7 @@ export const useEventBlock = (plan: PlanEntity) => {
   // 이벤트 블록 스타일 계산
   const eventBlockStyle = useMemo(() => ({
     backgroundColor,
-    borderRadius: 5,
+    borderRadius: 0,
     padding: 8,
     overflow: 'hidden' as const,
   }), [backgroundColor]);

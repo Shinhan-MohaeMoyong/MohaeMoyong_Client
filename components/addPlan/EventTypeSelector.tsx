@@ -50,7 +50,7 @@ export default function EventTypeSelector({ selectedType, onSelectType }: Props)
   );
 }
 
-const PURPLE = '#6C5CE7';
+const PURPLE = '#8C93FF';
 
 const styles = StyleSheet.create({
   container: {

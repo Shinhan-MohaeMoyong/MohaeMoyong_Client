@@ -199,6 +199,7 @@ export default function FriendsScreen() {
             </Text>
           </View>
         }
+        keyboardShouldPersistTaps="always"
       />
 
       {/* 메시지 입력 모달 */}
@@ -262,7 +263,7 @@ const styles = StyleSheet.create({
   // Tabs
   tabsWrap: {
     paddingHorizontal: 20,
-    marginTop: 12,
+    marginTop: 8,
   },
   tabsRow: {
     flexDirection: "row",

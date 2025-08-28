@@ -50,7 +50,7 @@ export default function MohaeyoungHeader({
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
-    paddingBottom: 10,
+//    paddingBottom: 10,
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",

@@ -16,7 +16,7 @@ export default function HeaderBar({
   title,
   right,
   showBack = true,
-  extraTopGap = 30,
+  extraTopGap = 10,
 }: Props) {
   const router = useRouter();
   const insets = useSafeAreaInsets(); // 🔹 노치/상단바 높이
@@ -31,7 +31,7 @@ export default function HeaderBar({
       style={[
         styles.header,
         { paddingTop: extraTopGap }, 
-        { paddingBottom: extraTopGap}
+        { paddingBottom: extraTopGap + extraTopGap}
       ]}
     >
       <View style={{ width: 24 }}>
