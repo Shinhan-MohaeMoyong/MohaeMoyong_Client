@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import GroupScheduleFriendList from "./friends/GroupScheduleFriendList";
+import GroupScheduleFriendList from "./addPlan/GroupScheduleFriendList";
 
 interface GroupScheduleSelectionScreenProps {
   visible: boolean;

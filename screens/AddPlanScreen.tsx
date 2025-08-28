@@ -7,17 +7,18 @@ import AddButton from '../components/addPlan/AddButton';
 import AddPlanHeader from '../components/addPlan/AddPlanHeader';
 import DateTimeSelector from '../components/addPlan/DateTimeSelector';
 import EventTypeSelector from '../components/addPlan/EventTypeSelector';
+import FriendListSection from '../components/addPlan/FriendListSection';
 import PhotoUpload from '../components/addPlan/PhotoUpload';
 import PlanInputFields from '../components/addPlan/PlanInputFields';
 import RepeatOption from '../components/addPlan/RepeatOption';
 import SaveOption from '../components/addPlan/SaveOption';
+import GroupScheduleSelectionScreen from '../components/GroupScheduleSelectionScreen';
 import { useAddPlanScreen } from '../hooks/useAddPlanScreen';
 
 export default function AddPlanScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [showFriendSelection, setShowFriendSelection] = useState(false);
-  const [selectedFriends, setSelectedFriends] = useState<RowItem[]>([]);
   const { 
     formData, 
     isLoading,
@@ -48,13 +49,10 @@ export default function AddPlanScreen() {
 
   const handleFriendSelectionConfirm = (selectedFriends: RowItem[]) => {
     updateFormData({ selectedFriends });
-    setSelectedFriends(selectedFriends);
-    console.log('selectedFriends', selectedFriends);
     setShowFriendSelection(false);
   };
 
   const handleFriendSelectionClose = () => {
-    // 모달을 닫을 때는 선택된 친구 목록을 유지
     setShowFriendSelection(false);
   };
 
@@ -99,6 +97,15 @@ export default function AddPlanScreen() {
             onSelectType={(type) => updateFormData({ eventType: type })}
           />
 
+          {/* 단체일정일 때만 FriendListSection 표시 */}
+          {formData.eventType === 'group' && (
+            <FriendListSection
+              selectedFriends={formData.selectedFriends}
+              onFriendToggle={handleFriendToggle}
+              onEditPress={handleEditFriends}
+            />
+          )}
+
           <PlanInputFields
             title={formData.title}
             location={formData.place}
@@ -111,7 +118,6 @@ export default function AddPlanScreen() {
           <PhotoUpload
             selectedFiles={formData.files}
             onPhotoUpload={handlePhotoUpload}
-            onPhotoRemove={handlePhotoRemove}
           />
 
           <DateTimeSelector
@@ -122,6 +128,8 @@ export default function AddPlanScreen() {
             onStartTimeChange={handleStartTimeChange}
             onEndTimeChange={handleEndTimeChange}
           />
+
+          
 
           <RepeatOption
             repeatConfig={formData.repeatConfig}
@@ -134,8 +142,8 @@ export default function AddPlanScreen() {
             withdrawalAccount={formData.withdrawalAccount}
             depositAccount={formData.depositAccount}
             savingAmount={formData.savingAmount}
-            onWithdrawalAccountSelect={handleWithdrawalAccountSelect}
-            onDepositAccountSelect={handleDepositAccountSelect}
+            onWithdrawalAccountSelect={handleWithdrawalAccountPress}
+            onDepositAccountSelect={handleDepositAccountPress}
             onSavingAmountChange={handleSavingAmountChange}
           />
         </ScrollView>
@@ -148,6 +156,15 @@ export default function AddPlanScreen() {
             }
           }}
           disabled={isLoading}
+        />
+
+        {/* GroupScheduleSelectionScreen 모달 */}
+        <GroupScheduleSelectionScreen
+          visible={showFriendSelection}
+          onClose={handleFriendSelectionClose}
+          onConfirm={handleFriendSelectionConfirm}
+          maxSelection={100}
+          initialSelectedFriends={formData.selectedFriends}
         />
       </View>
     </KeyboardAvoidingView>
