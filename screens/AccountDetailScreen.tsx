@@ -45,7 +45,6 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
   const [filterType, setFilterType] = useState<'all' | 'deposit' | 'withdrawal'>('all');
   const [refreshing, setRefreshing] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [achievementRate, setAchievementRate] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [accountDetail, setAccountDetail] = useState<AccountDetailDTO | null>(null);
@@ -126,9 +125,7 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
       console.log('🏦 === 거래내역 변환 결과 ===');
       console.log(JSON.stringify(mappedTransactions, null, 2));
       
-      // 달성률은 별도 API에서 가져오거나 계산
-      // 현재는 임시로 0으로 설정
-      setAchievementRate(0);
+
       
     } catch (e) {
       console.error('❌ 계좌 상세 정보 조회 실패:', e);
@@ -236,21 +233,12 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
           onPress={() => {}}
         />
 
-        {/* 달성률 */}
-        <View style={styles.achievementContainer}>
-          <Text style={styles.achievementTitle}>달성률</Text>
-          <View style={styles.progressBarContainer}>
-            <View style={styles.progressBar}>
-              <View
-                style={[
-                  styles.progressFill,
-                  { width: `${achievementRate}%` },
-                ]}
-              />
-            </View>
-            <Text style={styles.achievementRate}>{achievementRate}%</Text>
+        {/* 목표 금액 */}
+        {accountDetail && (
+          <View style={styles.targetAmountContainer}>
+            <Text style={styles.targetAmountTitle}>목표 금액: {accountDetail.targetAmount.toLocaleString()}원</Text>
           </View>
-        </View>
+        )}
 
         {/* 내역 구분 필터 */}
         <View style={styles.filterContainer}>
@@ -327,7 +315,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  achievementContainer: {
+  targetAmountContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
@@ -338,34 +326,12 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  achievementTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 16,
-  },
-  progressBarContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  progressBar: {
-    flex: 1,
-    height: 8,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
-    marginRight: 12,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#A78BFA',
-    borderRadius: 4,
-  },
-  achievementRate: {
+  targetAmountTitle: {
     fontSize: 16,
-    color: '#111827',
     fontWeight: '600',
-    minWidth: 40,
+    color: '#111827',
   },
+
   filterContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,

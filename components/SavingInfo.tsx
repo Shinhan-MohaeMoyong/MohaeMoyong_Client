@@ -91,7 +91,7 @@ export default function SavingInfo({
       <View style={styles.graphContainer}>
         <Text style={styles.graphTitle}>주간 저축 현황</Text>
         <Text style={styles.maxAmountText}>
-          최대 저축액 : {maxAmount.toLocaleString()}원
+          주간 최대 저축액 : {maxAmount.toLocaleString()}원
         </Text>
 
         {/* 막대 그래프 */}
