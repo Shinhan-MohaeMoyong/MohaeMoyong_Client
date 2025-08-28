@@ -159,7 +159,6 @@ export function useAddPlanScreen() {
         method: 'POST',
         body: uploadFormData,
         headers: {
-          'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${await getToken()}`,
         },
       });
@@ -187,16 +186,16 @@ export function useAddPlanScreen() {
   const createAddPlanRequest = async (): Promise<AddPlanRequestEntity> => {
     // 날짜와 시간을 YYYY-MM-DDTHH:MM:SS 형식으로 변환
     // 사용자가 선택한 연도, 월, 일을 사용
-    const selectedYear = formData.selectedYear;
-    const selectedMonth = formData.selectedMonth;
     const selectedDay = parseInt(formData.selectedDate);
+
+    console.log(formData.selectedDate)
     
     // 시작 시간과 종료 시간을 YYYY-MM-DDTHH:MM:SS 형식으로 변환
-    const startDateTime = new Date(selectedYear, selectedMonth - 1, selectedDay);
+    const startDateTime = new Date(formData.selectedDate);
     const [startHour, startMinute] = formData.startTime.split(':').map(Number);
     startDateTime.setHours(startHour, startMinute, 0, 0);
     
-    const endDateTime = new Date(selectedYear, selectedMonth - 1, selectedDay);
+    const endDateTime = new Date(formData.selectedDate);
     const [endHour, endMinute] = formData.endTime.split(':').map(Number);
     endDateTime.setHours(endHour, endMinute, 0, 0);
     
@@ -373,8 +372,9 @@ export function useAddPlanScreen() {
     console.log('');
     
     console.log('🚀 === AddPlanRequestEntity 생성 ===');
+    let requestEntity: AddPlanRequestEntity;
     try {
-      const requestEntity = await createAddPlanRequest();
+      requestEntity = await createAddPlanRequest();
       console.log('AddPlanRequestEntity 객체 생성 완료!');
       console.log('📋 Request Entity 내용:');
       console.log(JSON.stringify(requestEntity, null, 2));
@@ -399,7 +399,6 @@ export function useAddPlanScreen() {
     // TODO: 실제 API 호출 로직 추가
     // 여기에 서버로 데이터를 전송하는 로직을 추가할 예정
     try {
-      const requestEntity = await createAddPlanRequest();
       console.log('📤 === 서버로 전송할 데이터 ===');
       console.log(JSON.stringify(requestEntity, null, 2));
       

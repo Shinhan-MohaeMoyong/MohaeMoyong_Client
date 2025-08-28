@@ -26,7 +26,6 @@ export default function FriendListSection({ selectedFriends, onFriendToggle, onE
           },
         });
         const data = await response.json();
-        console.log(data);
         setFriends(data);
         setLoading(false);
       } catch (e) {

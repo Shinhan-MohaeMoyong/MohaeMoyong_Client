@@ -1,4 +1,3 @@
-import React from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 type Props = {
@@ -21,7 +20,7 @@ export default function PlanInputFields({
   return (
     <View style={styles.container}>
       <View style={styles.field}>
-        <Text style={styles.label}>제목</Text>
+        <Text style={styles.label}>*제목</Text>
         <TextInput
           style={styles.input}
           value={title}
@@ -32,7 +31,7 @@ export default function PlanInputFields({
       </View>
       
       <View style={styles.field}>
-        <Text style={styles.label}>장소</Text>
+        <Text style={styles.label}>*장소</Text>
         <TextInput
           style={styles.input}
           value={location}
@@ -43,7 +42,7 @@ export default function PlanInputFields({
       </View>
       
       <View style={styles.field}>
-        <Text style={styles.label}>상세 내용</Text>
+        <Text style={styles.label}>* 상세 내용</Text>
         <TextInput
           style={[styles.input, styles.contentInput]}
           value={content}
