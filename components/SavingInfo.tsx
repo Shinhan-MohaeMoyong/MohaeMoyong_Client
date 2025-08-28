@@ -146,7 +146,7 @@ export default function SavingInfo({
                 style={[styles.progressFill, { width: `${achievementRate}%` }]}
               />
             </View>
-            <Text style={styles.achievementRate}>{achievementRate}%</Text>
+            <Text style={styles.achievementRate}>{achievementRate.toFixed(2)}%</Text>
           </View>
         </View>
       </View>

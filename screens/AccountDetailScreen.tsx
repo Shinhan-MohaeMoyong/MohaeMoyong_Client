@@ -53,6 +53,8 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
   const [accountDetail, setAccountDetail] = useState<AccountDetailDTO | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [newTargetAmount, setNewTargetAmount] = useState('');
+  const [showAliasEditModal, setShowAliasEditModal] = useState(false);
+  const [newAccountAlias, setNewAccountAlias] = useState('');
 
   // API 응답을 내부 Transaction 타입으로 변환하는 함수
   const mapTransactionDTOToTransaction = (dto: TransactionDetailDTO, index: number): Transaction => {
@@ -133,6 +135,64 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
   const handleCancelEdit = () => {
     setShowEditModal(false);
     setNewTargetAmount('');
+  };
+
+  // 계좌 별칭 수정 함수
+  const updateAccountAlias = async (newAlias: string) => {
+    try {
+      console.log('🏷️ === 계좌 별칭 수정 요청 ===');
+      console.log('📋 계좌번호:', account.accountNumber);
+      console.log('📋 새로운 별칭:', newAlias);
+      
+      const response = await fetch(`${SERVER_URL}/api/v1/account/accountAlias`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${await getToken()}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          accountNo: account.accountNumber,
+          accountAlias: newAlias,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`계좌 별칭 수정 실패: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.text();
+      console.log('✅ 계좌 별칭 수정 완료:', result);
+      
+      // 성공 시 계좌 상세 정보를 다시 불러와서 화면 업데이트
+      await fetchDetail();
+      
+      Alert.alert('성공', '계좌 별칭이 수정되었습니다.');
+    } catch (error) {
+      console.error('❌ 계좌 별칭 수정 실패:', error);
+      Alert.alert('오류', '계좌 별칭 수정에 실패했습니다.');
+    }
+  };
+
+  // 계좌 별칭 수정 버튼 클릭 처리
+  const handleAliasEdit = () => {
+    setNewAccountAlias(accountDetail?.accountName || '');
+    setShowAliasEditModal(true);
+  };
+
+  // 계좌 별칭 수정 확인
+  const handleConfirmAliasEdit = () => {
+    if (newAccountAlias.trim()) {
+      updateAccountAlias(newAccountAlias.trim());
+      setShowAliasEditModal(false);
+    } else {
+      Alert.alert('오류', '계좌 별칭을 입력해주세요.');
+    }
+  };
+
+  // 계좌 별칭 수정 취소
+  const handleCancelAliasEdit = () => {
+    setShowAliasEditModal(false);
+    setNewAccountAlias('');
   };
 
   const fetchDetail = async () => {
@@ -293,8 +353,12 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
       >
         {/* 계좌 정보 카드 */}
         <AccountCard
-          account={AccountMapper.fromLegacyAccount(account)}
+          account={{
+            ...AccountMapper.fromLegacyAccount(account),
+            accountAlias: accountDetail?.accountName || account.accountAlias,
+          }}
           onPress={() => {}}
+          onAliasEdit={handleAliasEdit}
         />
 
         {/* 목표 금액 */}
@@ -377,11 +441,50 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
               </TouchableOpacity>
             </View>
           </View>
-        </View>
-      </Modal>
-    </View>
-  );
-}
+                 </View>
+       </Modal>
+
+       {/* 계좌 별칭 수정 모달 */}
+       <Modal
+         visible={showAliasEditModal}
+         transparent={true}
+         animationType="fade"
+         onRequestClose={handleCancelAliasEdit}
+       >
+         <View style={styles.modalOverlay}>
+           <View style={styles.modalContent}>
+             <Text style={styles.modalTitle}>계좌 별칭 수정</Text>
+             <Text style={styles.modalSubtitle}>새로운 계좌 별칭을 입력해주세요.</Text>
+             
+             <TextInput
+               style={styles.modalInput}
+               value={newAccountAlias}
+               onChangeText={setNewAccountAlias}
+               placeholder="계좌 별칭을 입력하세요"
+               autoFocus={true}
+             />
+             
+             <View style={styles.modalButtons}>
+               <TouchableOpacity
+                 style={[styles.modalButton, styles.cancelButton]}
+                 onPress={handleCancelAliasEdit}
+               >
+                 <Text style={styles.cancelButtonText}>취소</Text>
+               </TouchableOpacity>
+               
+               <TouchableOpacity
+                 style={[styles.modalButton, styles.confirmButton]}
+                 onPress={handleConfirmAliasEdit}
+               >
+                 <Text style={styles.confirmButtonText}>수정</Text>
+               </TouchableOpacity>
+             </View>
+           </View>
+         </View>
+       </Modal>
+     </View>
+   );
+ }
 
 const styles = StyleSheet.create({
   container: {

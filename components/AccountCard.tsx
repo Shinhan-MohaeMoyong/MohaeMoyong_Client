@@ -4,11 +4,13 @@ import { AccountDTO } from '../types/dto/AccountDTO';
 interface AccountCardProps {
   account: AccountDTO;
   onPress: () => void;
+  onAliasEdit?: () => void;
 }
 
 export default function AccountCard({
   account,
-  onPress
+  onPress,
+  onAliasEdit
 }: AccountCardProps) {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
@@ -33,9 +35,19 @@ export default function AccountCard({
         </Text>
         
         {/* 계좌 별칭 */}
-        <Text style={styles.accountAlias}>
-          {account.accountAlias}
-        </Text>
+        <View style={styles.aliasContainer}>
+          <Text style={styles.accountAlias}>
+            {account.accountAlias}
+          </Text>
+          {onAliasEdit && (
+            <TouchableOpacity
+              style={styles.aliasEditButton}
+              onPress={onAliasEdit}
+            >
+              <Text style={styles.aliasEditButtonText}>수정</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         
         {/* 새 계좌 표시 */}
         {account.isNew && (
@@ -107,6 +119,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
     fontWeight: '500',
+    flex: 1,
+  },
+  aliasContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  aliasEditButton: {
+    backgroundColor: '#A78BFA',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    marginLeft: 8,
+  },
+  aliasEditButtonText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '600',
   },
   newBadge: {
     backgroundColor: '#4F46E5',
