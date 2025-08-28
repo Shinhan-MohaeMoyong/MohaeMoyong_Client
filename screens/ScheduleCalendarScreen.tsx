@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import MonthlyCalendar from "../components/MonthlyCalendar";
 import TopTabs, { TopTabKey } from "../components/TopTabs";
@@ -16,15 +16,15 @@ import WeekSelector from "../components/WeekSelector";
 import { useUser } from "../contexts/UserContext";
 import { useMohaeyoung } from "../hooks/useMohaeyoungScreen";
 import type { PlanEntity } from "../types";
-import AccountDetailScreen from './AccountDetailScreen';
-import AccountScreen from './AccountScreen';
-import SavingScreen from './SavingScreen';
+import AccountDetailScreen from "./AccountDetailScreen";
+import AccountScreen from "./AccountScreen";
+import SavingScreen from "./SavingScreen";
 
-const { height: screenHeight } = Dimensions.get('window');
-const BOTTOM_SHEET_HEIGHT = screenHeight * 0.6;        // 60% - 초기상태
-const MIDDLE_SNAP_HEIGHT = screenHeight * 0.3;          // 30% - 중간 snap
-const FULL_SCREEN_HEIGHT = screenHeight * 0.95;         // 95% - 전체화면
-const DRAG_THRESHOLD = 50;  // 드래그 임계값을 낮춰 더 민감하게
+const { height: screenHeight } = Dimensions.get("window");
+const BOTTOM_SHEET_HEIGHT = screenHeight * 0.6; // 60% - 초기상태
+const MIDDLE_SNAP_HEIGHT = screenHeight * 0.3; // 30% - 중간 snap
+const FULL_SCREEN_HEIGHT = screenHeight * 0.95; // 95% - 전체화면
+const DRAG_THRESHOLD = 50; // 드래그 임계값을 낮춰 더 민감하게
 const EXPAND_THRESHOLD = -80; // 확장 임계값도 낮춰 더 쉽게 확장되도록
 const MIDDLE_THRESHOLD = -30; // 중간 snap 임계값
 
@@ -48,12 +48,13 @@ export default function ScheduleCalendarScreen() {
   const [activeTab, setActiveTab] = useState<TopTabKey>("일정");
   const [selectedAccount, setSelectedAccount] = useState<any>(null);
   const [showAccountDetail, setShowAccountDetail] = useState(false);
-  
+  const [showHeader, setShowHeader] = useState(true);
+
   // 바텀시트 관련 상태
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [snapPosition, setSnapPosition] = useState<'bottom' | 'middle' | 'full'>('bottom');
-  
+  const [snapPosition, setSnapPosition] = useState<"bottom" | "middle" | "full">("bottom");
+
   // 바텀시트 애니메이션
   const pan = useRef(new Animated.ValueXY()).current;
   const currentPosition = useRef(0);
@@ -93,7 +94,7 @@ export default function ScheduleCalendarScreen() {
   // 선택된 날짜의 일정들
   const selectedDatePlans = useMemo(() => {
     const selectedKey = toKey(selectedDate);
-    return userPlans.filter(plan => {
+    return userPlans.filter((plan) => {
       const planKey = toKey(new Date(plan.startTime));
       return planKey === selectedKey;
     });
@@ -102,7 +103,7 @@ export default function ScheduleCalendarScreen() {
   // 날짜 선택 시 바텀시트 열기
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
-    setSnapPosition('bottom');
+    setSnapPosition("bottom");
     setIsExpanded(false);
     setIsBottomSheetVisible(true);
     currentPosition.current = 0;
@@ -112,7 +113,7 @@ export default function ScheduleCalendarScreen() {
   const handleCloseBottomSheet = () => {
     setIsBottomSheetVisible(false);
     setIsExpanded(false);
-    setSnapPosition('bottom');
+    setSnapPosition("bottom");
     pan.setValue({ x: 0, y: 0 });
     currentPosition.current = 0;
   };
@@ -120,40 +121,40 @@ export default function ScheduleCalendarScreen() {
   // snap 위치 계산 함수
   const getSnapPosition = (gestureState: any) => {
     const { dy } = gestureState;
-    
+
     if (dy < EXPAND_THRESHOLD) {
-      return 'full';      // 위로 충분히 드래그 → 전체화면
+      return "full"; // 위로 충분히 드래그 → 전체화면
     } else if (dy < MIDDLE_THRESHOLD) {
-      return 'middle';    // 위로 적당히 드래그 → 중간
+      return "middle"; // 위로 적당히 드래그 → 중간
     } else if (dy > DRAG_THRESHOLD) {
-      return 'bottom';    // 아래로 충분히 드래그 → 닫기
+      return "bottom"; // 아래로 충분히 드래그 → 닫기
     } else {
       return snapPosition; // 현재 위치 유지
     }
   };
 
   // snap 애니메이션 함수
-  const snapToPosition = (position: 'bottom' | 'middle' | 'full') => {
+  const snapToPosition = (position: "bottom" | "middle" | "full") => {
     let targetY: number;
-    
+
     switch (position) {
-      case 'bottom':
+      case "bottom":
         targetY = 0;
-        setSnapPosition('bottom');
+        setSnapPosition("bottom");
         setIsExpanded(false);
         break;
-      case 'middle':
+      case "middle":
         targetY = -(MIDDLE_SNAP_HEIGHT - BOTTOM_SHEET_HEIGHT);
-        setSnapPosition('middle');
+        setSnapPosition("middle");
         setIsExpanded(false);
         break;
-      case 'full':
+      case "full":
         targetY = -(FULL_SCREEN_HEIGHT - BOTTOM_SHEET_HEIGHT);
-        setSnapPosition('full');
+        setSnapPosition("full");
         setIsExpanded(true);
         break;
     }
-    
+
     Animated.spring(pan.y, {
       toValue: targetY,
       useNativeDriver: true,
@@ -172,10 +173,10 @@ export default function ScheduleCalendarScreen() {
         onPanResponderMove: (_, gestureState) => {
           // 현재 바텀시트의 위치를 기준으로 드래그 거리를 계산
           const newY = currentPosition.current + gestureState.dy;
-          
+
           // 드래그 제한 설정
           const maxUpDrag = isExpanded ? 0 : -FULL_SCREEN_HEIGHT + BOTTOM_SHEET_HEIGHT;
-          
+
           if (newY < maxUpDrag) {
             pan.y.setValue(maxUpDrag);
           } else if (newY > 0) {
@@ -188,7 +189,7 @@ export default function ScheduleCalendarScreen() {
           if (gestureState.dy < -EXPAND_THRESHOLD && !isExpanded) {
             // 위로 드래그하여 확장
             setIsExpanded(true);
-            setSnapPosition('full');
+            setSnapPosition("full");
             const targetY = -FULL_SCREEN_HEIGHT + BOTTOM_SHEET_HEIGHT;
             pan.setValue({ x: 0, y: targetY });
             currentPosition.current = targetY;
@@ -198,7 +199,7 @@ export default function ScheduleCalendarScreen() {
           } else if (isExpanded && gestureState.dy > MIDDLE_THRESHOLD) {
             // 확장된 상태에서 중간으로 축소
             setIsExpanded(false);
-            setSnapPosition('middle');
+            setSnapPosition("middle");
             const targetY = -MIDDLE_SNAP_HEIGHT + BOTTOM_SHEET_HEIGHT;
             pan.setValue({ x: 0, y: targetY });
             currentPosition.current = targetY;
@@ -208,7 +209,7 @@ export default function ScheduleCalendarScreen() {
               const targetY = -FULL_SCREEN_HEIGHT + BOTTOM_SHEET_HEIGHT;
               pan.setValue({ x: 0, y: targetY });
               currentPosition.current = targetY;
-            } else if (snapPosition === 'middle') {
+            } else if (snapPosition === "middle") {
               const targetY = -MIDDLE_SNAP_HEIGHT + BOTTOM_SHEET_HEIGHT;
               pan.setValue({ x: 0, y: targetY });
               currentPosition.current = targetY;
@@ -240,20 +241,42 @@ export default function ScheduleCalendarScreen() {
     setShowAccountDetail(true);
   };
 
+  // AddAccountScreen에서 헤더 보이기/숨기기 처리 함수
+  const handleAddAccountScreenVisibleHeader = (visible: boolean) => {
+    setShowHeader(visible);
+  };
+
+  // AccountDetailScreen에서 뒤로 가기 처리 함수
+  const handleDetailBackPress = () => {
+    // AccountDetailScreen에서 벗어나면 Header 다시 보이기
+    setShowHeader(true);
+    setShowAccountDetail(false);
+    setSelectedAccount(null);
+  };
+
+  React.useEffect(() => {
+    if (showAccountDetail && selectedAccount) {
+      setShowHeader(false);
+    }
+  }, [showAccountDetail, selectedAccount]);
+
   const renderContent = () => {
     switch (activeTab) {
       case "계좌":
         if (showAccountDetail && selectedAccount) {
           return <AccountDetailScreen account={selectedAccount} />;
         }
-                 return (
-           <View style={{ flex: 1, width: '100%', paddingTop: 8 }}>
-             <AccountScreen onAccountPress={handleAccountPress} />
-           </View>
-         );
-             case "일정":
-         return (
-           <ScrollView contentContainerStyle={{ paddingBottom: 24, paddingTop: 8 }}>
+        return (
+          <View style={{ flex: 1, width: "100%", paddingTop: 8 }}>
+            <AccountScreen
+              onAccountPress={handleAccountPress}
+              visibleHeader={handleAddAccountScreenVisibleHeader}
+            />
+          </View>
+        );
+      case "일정":
+        return (
+          <ScrollView contentContainerStyle={{ paddingBottom: 24, paddingTop: 8 }}>
             {/* 월간 달력 */}
             <MonthlyCalendar
               monthDate={monthDate}
@@ -264,7 +287,7 @@ export default function ScheduleCalendarScreen() {
               }}
               markedDates={marked}
             />
-            
+
             {/* 선택된 날짜의 일정 목록 */}
             {selectedDatePlans.length > 0 && (
               <View style={styles.plansContainer}>
@@ -272,16 +295,13 @@ export default function ScheduleCalendarScreen() {
                   {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일 일정
                 </Text>
                 {selectedDatePlans.map((plan, index) => (
-                  <View
-                    key={plan.planId || index}
-                    style={styles.planItem}
-                  >
+                  <View key={plan.planId || index} style={styles.planItem}>
                     <View style={styles.planTimeContainer}>
                       <Text style={styles.planTime}>
-                        {new Date(plan.startTime).toLocaleTimeString('ko-KR', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: false
+                        {new Date(plan.startTime).toLocaleTimeString("ko-KR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: false,
                         })}
                       </Text>
                     </View>
@@ -290,14 +310,14 @@ export default function ScheduleCalendarScreen() {
                         {plan.title}
                       </Text>
                       <Text style={styles.planDescription} numberOfLines={2}>
-                        {plan.place || '장소 없음'}
+                        {plan.place || "장소 없음"}
                       </Text>
                     </View>
                   </View>
                 ))}
               </View>
             )}
-            
+
             {/* 주간 선택기 */}
             <WeekSelector
               selectedDate={selectedDate}
@@ -307,12 +327,12 @@ export default function ScheduleCalendarScreen() {
             />
           </ScrollView>
         );
-             case "저축":
-         return (
-           <View style={{ flex: 1, width: '100%', paddingTop: 8 }}>
-             <SavingScreen />
-           </View>
-         );
+      case "저축":
+        return (
+          <View style={{ flex: 1, width: "100%", paddingTop: 8 }}>
+            <SavingScreen />
+          </View>
+        );
       default:
         return null;
     }
@@ -320,61 +340,61 @@ export default function ScheduleCalendarScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        {/* TopTabs 추가 */}
-        <TopTabs active={activeTab} onChange={handleTabChange} style={styles.tabsRow} />
-      </View>
+      {showHeader && (
+        <View style={styles.header}>
+          {/* TopTabs 추가 */}
+          <TopTabs active={activeTab} onChange={handleTabChange} style={styles.tabsRow} />
+        </View>
+      )}
 
       {/* 탭에 따른 콘텐츠 렌더링 */}
       {renderContent()}
 
-             {/* 새로운 바텀시트 */}
-       {isBottomSheetVisible && (
-         <View style={styles.overlay}>
-           <TouchableOpacity style={styles.backdrop} onPress={handleCloseBottomSheet} />
-           <SafeAreaView>
-             <Animated.View 
-               style={[
-                 styles.bottomSheet,
-                 {
-                   transform: [
-                     { translateY: pan.y },
-                   ],
-                   maxHeight: snapPosition === 'full' ? FULL_SCREEN_HEIGHT : 
-                              snapPosition === 'middle' ? MIDDLE_SNAP_HEIGHT : 
-                              BOTTOM_SHEET_HEIGHT,
-                 },
-               ]}
-               >
-            {/* 핸들 바 - 드래그 가능 */}
-            <View 
-              style={styles.handle}
-              {...panResponder.panHandlers}
+      {/* 새로운 바텀시트 */}
+      {isBottomSheetVisible && (
+        <View style={styles.overlay}>
+          <TouchableOpacity style={styles.backdrop} onPress={handleCloseBottomSheet} />
+          <SafeAreaView>
+            <Animated.View
+              style={[
+                styles.bottomSheet,
+                {
+                  transform: [{ translateY: pan.y }],
+                  maxHeight:
+                    snapPosition === "full"
+                      ? FULL_SCREEN_HEIGHT
+                      : snapPosition === "middle"
+                      ? MIDDLE_SNAP_HEIGHT
+                      : BOTTOM_SHEET_HEIGHT,
+                },
+              ]}
             >
-              <View style={styles.handleBar} />
-            </View>
-            
-            {/* 주간 날짜 선택기 */}
-            <WeekSelector
-              selectedDate={selectedDate}
-              onSelectDate={(d) => {
-                handleDateSelect(d);
-              }}
-            />
-            
-            {/* 일정 상세 정보 컴포넌트 */}
-            <View style={styles.eventDetail}>
-              <Text style={styles.eventDetailText}>일정 상세 정보</Text>
-              <Text style={styles.eventDetailText}>시작: 15:00</Text>
-              <Text style={styles.eventDetailText}>종료: 19:00</Text>
-              <Text style={styles.eventDetailText}>제목: 개인 공부</Text>
-              <Text style={styles.eventDetailText}>장소: 집</Text>
-                                      </View>
-           </Animated.View>
-             </SafeAreaView>
-         </View>
-       )}
-     </SafeAreaView>
+              {/* 핸들 바 - 드래그 가능 */}
+              <View style={styles.handle} {...panResponder.panHandlers}>
+                <View style={styles.handleBar} />
+              </View>
+
+              {/* 주간 날짜 선택기 */}
+              <WeekSelector
+                selectedDate={selectedDate}
+                onSelectDate={(d) => {
+                  handleDateSelect(d);
+                }}
+              />
+
+              {/* 일정 상세 정보 컴포넌트 */}
+              <View style={styles.eventDetail}>
+                <Text style={styles.eventDetailText}>일정 상세 정보</Text>
+                <Text style={styles.eventDetailText}>시작: 15:00</Text>
+                <Text style={styles.eventDetailText}>종료: 19:00</Text>
+                <Text style={styles.eventDetailText}>제목: 개인 공부</Text>
+                <Text style={styles.eventDetailText}>장소: 집</Text>
+              </View>
+            </Animated.View>
+          </SafeAreaView>
+        </View>
+      )}
+    </SafeAreaView>
   );
 }
 
@@ -388,22 +408,22 @@ function toKey(d: Date) {
 // 바텀시트 관련 유틸 제거
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
+  container: {
+    flex: 1,
     backgroundColor: "#fff",
-    width: '100%',
+    width: "100%",
   },
-  header: { 
-    flexDirection: "row", 
-    alignItems: "center", 
-    justifyContent: "center", 
-    paddingHorizontal: 12, 
-    paddingTop: 16, 
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 12,
+    paddingTop: 16,
     paddingBottom: 8,
     backgroundColor: "#fff",
   },
   tabsRow: { flex: 1 },
-  
+
   // 일정 목록 스타일
   plansContainer: {
     paddingHorizontal: 20,
@@ -411,64 +431,64 @@ const styles = StyleSheet.create({
   },
   plansTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 16,
   },
   planItem: {
-    flexDirection: 'row',
-    backgroundColor: '#f8f9fa',
+    flexDirection: "row",
+    backgroundColor: "#f8f9fa",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#007AFF',
+    borderLeftColor: "#007AFF",
   },
   planTimeContainer: {
     marginRight: 16,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   planTime: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#007AFF',
+    fontWeight: "600",
+    color: "#007AFF",
   },
   planContent: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   planTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 4,
   },
   planDescription: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     lineHeight: 20,
   },
 
   // 바텀시트 스타일
   overlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
     zIndex: 1000,
   },
   backdrop: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
   },
   bottomSheet: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingHorizontal: 20,
@@ -476,110 +496,110 @@ const styles = StyleSheet.create({
     // maxHeight: BOTTOM_SHEET_HEIGHT, // This will be overridden by inline style
   },
   handle: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 12,
   },
   handleBar: {
     width: 40,
     height: 4,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: "#E5E7EB",
     borderRadius: 2,
   },
-  
+
   // 일정 상세 정보 스타일
   planDetailContainer: {
     paddingTop: 10,
   },
   planDetailTitle: {
     fontSize: 24,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: "700",
+    color: "#333",
     marginBottom: 12,
   },
   planDetailTime: {
     fontSize: 16,
-    color: '#007AFF',
-    fontWeight: '600',
+    color: "#007AFF",
+    fontWeight: "600",
     marginBottom: 16,
   },
   planDetailDescription: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
     lineHeight: 24,
     marginBottom: 20,
   },
   planDetailMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: "#E5E7EB",
   },
   planDetailMetaLabel: {
     fontSize: 14,
-    color: '#999',
+    color: "#999",
     marginRight: 8,
   },
   planDetailMetaValue: {
     fontSize: 14,
-    color: '#333',
-    fontWeight: '500',
+    color: "#333",
+    fontWeight: "500",
   },
   bottomSheetPlansList: {
     maxHeight: 200, // 스크롤 가능한 높이
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   bottomSheetPlanItem: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: "#E5E7EB",
   },
   bottomSheetPlanTime: {
     width: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   bottomSheetPlanTimeText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#007AFF',
+    fontWeight: "600",
+    color: "#007AFF",
   },
   bottomSheetPlanContent: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     marginLeft: 10,
   },
   bottomSheetPlanTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 2,
   },
   bottomSheetPlanPlace: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
   emptyPlansContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 30,
     paddingHorizontal: 20,
   },
   emptyPlansIcon: {
     fontSize: 50,
-    color: '#E0E0E0',
+    color: "#E0E0E0",
     marginBottom: 10,
   },
   emptyPlansTitle: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 8,
   },
   emptyPlansDescription: {
     fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
     lineHeight: 20,
   },
   eventDetail: {
@@ -588,7 +608,7 @@ const styles = StyleSheet.create({
   },
   eventDetailText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
     marginBottom: 8,
   },
 });

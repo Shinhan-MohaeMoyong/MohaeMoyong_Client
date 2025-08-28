@@ -24,9 +24,10 @@ interface Account {
 
 interface AccountScreenProps {
   onAccountPress: (account: Account) => void;
+  visibleHeader: (visible: boolean) => void;
 }
 
-export default function AccountScreen({ onAccountPress }: AccountScreenProps) {
+export default function AccountScreen({ onAccountPress, visibleHeader }: AccountScreenProps) {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -91,7 +92,14 @@ export default function AccountScreen({ onAccountPress }: AccountScreenProps) {
 
   // 새로운 계좌 추가하기
   const handleAddAccount = () => {
+    visibleHeader(false);
     setShowAddAccount(true);
+  };
+
+  // AddAccountScreen에서 뒤로 가기 처리 함수
+  const handleBackAddAccountScreen = () => {
+    visibleHeader(true);
+    setShowAddAccount(false);
   };
 
   // 상품 선택 처리
@@ -109,7 +117,12 @@ export default function AccountScreen({ onAccountPress }: AccountScreenProps) {
 
   // 새로운 계좌 추가 화면이 표시되는 경우
   if (showAddAccount) {
-    return <AddAccountScreen onProductSelect={handleProductSelect} />;
+    return (
+      <AddAccountScreen
+        onProductSelect={handleProductSelect}
+        onBackPress={handleBackAddAccountScreen}
+      />
+    );
   }
 
   return (

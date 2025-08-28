@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -31,7 +30,7 @@ interface Product {
 
 interface AddAccountScreenProps {
   onProductSelect: (product: Product) => void;
-  onBack?: () => void; // 뒤로가기 콜백
+  onBackPress?: () => void; // 뒤로가기 콜백
 }
 
 interface ProductListItemDTO {
@@ -150,7 +149,7 @@ function AccountCreationInputModal({
   );
 }
 
-export default function AddAccountScreen({ onProductSelect, onBack }: AddAccountScreenProps) {
+export default function AddAccountScreen({ onProductSelect, onBackPress }: AddAccountScreenProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -249,14 +248,11 @@ export default function AddAccountScreen({ onProductSelect, onBack }: AddAccount
   return (
     <View style={styles.container}>
       {/* 헤더 */}
-      {/* 헤더 */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          {onBack && (
-            <Pressable style={styles.backBtnAbs} onPress={onBack}>
-              <Text style={styles.backBtnText}>←</Text>
-            </Pressable>
-          )}
+          <TouchableOpacity style={styles.backButton} onPress={onBackPress}>
+            <Text style={styles.backButtonText}>← 뒤로</Text>
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>수시입출금 상품목록</Text>
         </View>
 
@@ -469,4 +465,12 @@ const styles = StyleSheet.create({
   },
   btnPrimaryText: { color: "#FFF", textAlign: "center", fontWeight: "900" },
   btnDisabled: { backgroundColor: "#D1D5DB", shadowOpacity: 0 },
+  backButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  backButtonText: {
+    fontSize: 14,
+    color: "#6B7280",
+  },
 });
