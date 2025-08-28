@@ -1,6 +1,5 @@
 import { useEventBlock } from '@/hooks/useEventBlock';
 import type { PlanEntity } from '@/types/entity/PlanEntity';
-import React from 'react';
 import { GestureResponderEvent, Pressable, StyleSheet, Text, View } from 'react-native';
 
 type Props = {
@@ -28,6 +27,8 @@ export default function EventBlock({ plan, rect, isNew = false, onPress }: Props
     // 기존 onPress 콜백 호출
     onPress?.(plan, e);
   };
+
+  console.log('EventBlock : ', plan);
 
   return (
     <Pressable 

@@ -144,10 +144,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         data = (await res.json()) as PlanEntity[];
-        data.forEach(plan => {
-          plan.new = true;
-        });
-        console.log('fetchPlans data:', data);
+        //console.log('fetchPlans data:', data);
       }
 
       setPlans(prev => ({ ...prev, [friendId]: data }));
@@ -227,7 +224,9 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
                   },
                 });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                friendPlans = (await res.json()) as PlanEntity[];
+                const test = await res.json();
+                console.log('원본 : ', test);
+                friendPlans = (test) as PlanEntity[];
               }
 
               // 친구 ID를 키로 해서 일정 저장
