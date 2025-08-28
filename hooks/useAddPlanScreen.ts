@@ -1,5 +1,5 @@
 import { getToken } from '@/contexts/tokenManager';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { RepeatConfig } from '../components/addPlan/RepeatOption';
 import { SERVER_URL } from '../constants/server';
 import type { AddPlanRequestEntity, RecurrenceConfig } from '../types/entity/AddPlanRequestEntity';
@@ -92,6 +92,10 @@ export function useAddPlanScreen() {
     depositAccount: null,
     savingAmount: ''
   });
+
+  useEffect(() => {
+    console.log('formData', formData);
+  }, [formData]);
 
   const updateFormData = (updates: Partial<AddPlanFormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));

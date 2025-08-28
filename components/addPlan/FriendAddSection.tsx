@@ -10,7 +10,7 @@ export default function FriendAddSection({ onAddFriends }: FriendAddSectionProps
     { id: 1, name: 'Friends', image: 'https://via.placeholder.com/60/FF6B6B/FFFFFF?text=F' },
     { id: 2, name: 'Sport', image: 'https://via.placeholder.com/60/4ECDC4/FFFFFF?text=S' },
     { id: 3, name: 'Design', image: 'https://via.placeholder.com/60/45B7D1/FFFFFF?text=D' },
-    { id: 4, name: 'New', image: 'https://via.placeholder.com/60/96CEB4/FFFFFF?text=+' },
+    { id: 4, name: '수정', image: 'https://via.placeholder.com/60/6C5CE7/FFFFFF?text=✏' },
   ];
 
   return (

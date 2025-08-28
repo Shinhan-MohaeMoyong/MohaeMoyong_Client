@@ -183,6 +183,11 @@ export function useFriends() {
     }
   }, [tab, isSearchActive, debouncedQuery, loadFriends, searchUsers, loadOutbox]);
 
+  // 컴포넌트가 마운트될 때 친구 목록을 자동으로 로드
+  useEffect(() => {
+    loadFriends();
+  }, [loadFriends]);
+
   // ──────────────────────────────────────────────
   // 클라이언트 필터 (friends 탭에서만)
   // ──────────────────────────────────────────────

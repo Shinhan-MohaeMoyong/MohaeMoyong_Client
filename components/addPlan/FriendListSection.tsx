@@ -1,59 +1,103 @@
 // components/addPlan/FriendListSection.tsx
-import { useFriends } from '@/hooks/useFriends';
-import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SERVER_URL } from '@/constants/server';
+import { getToken } from '@/contexts/tokenManager';
+import { toUserDTO } from '@/mappers/userMapper';
+import { FriendEntity } from '@/types';
+import { useEffect, useState } from 'react';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import UserProfile from '../ui/UserProfile';
 
 interface FriendListSectionProps {
   selectedFriends: { id: number; name: string; avatar: string }[];
   onFriendToggle: (friend: { id: number; name: string; avatar: string }) => void;
+  onEditPress: () => void;
 }
 
-export default function FriendListSection({ selectedFriends, onFriendToggle }: FriendListSectionProps) {
-  const { data: friends, loading } = useFriends();
+export default function FriendListSection({ selectedFriends, onFriendToggle, onEditPress }: FriendListSectionProps) {
+  const [friends, setFriends] = useState<FriendEntity[]>([]);
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    const loadFriends = async () => {
+      try {
+        const response = await fetch(`${SERVER_URL}/api/v1/friends`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${await getToken()}`,
+          },
+        });
+        const data = await response.json();
+        console.log(data);
+        setFriends(data);
+        setLoading(false);
+      } catch (e) {
+        console.log(e);
+      }
+    };
+    loadFriends();
+  }, []);
 
   const renderFriendItem = ({ item }: { item: any }) => {
     const isSelected = selectedFriends.some(selected => selected.id === item.id);
-    
+    toUserDTO(item)
+    if(!isSelected) return null;
     return (
-      <TouchableOpacity 
-        style={[styles.friendRow, isSelected && styles.selectedFriendRow]}
-        onPress={() => onFriendToggle(item)}
-      >
-        <Image 
-          source={{ uri: item.avatar || "https://via.placeholder.com/40" }} 
-          style={styles.avatar} 
-        />
-        <Text style={[styles.friendName, isSelected && styles.selectedFriendName]}>
-          {item.name}
-        </Text>
-        {isSelected && (
-          <View style={styles.selectedIndicator}>
-            <Text style={styles.selectedText}>✓</Text>
-          </View>
-        )}
-      </TouchableOpacity>
+      <UserProfile
+        user={toUserDTO(item)}
+        size={46}
+      />
     );
   };
 
   if (loading) {
     return (
       <View style={styles.container}>
-        <Text style={styles.label}>친구 리스트</Text>
+        <Text style={styles.label}>함께 참여하는 친구</Text>
         <Text style={styles.loadingText}>친구 목록을 불러오는 중...</Text>
+      </View>
+    );
+  }
+
+  if (!friends || friends.length === 0) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.label}>친구 리스트</Text>
+        <Text style={styles.loadingText}>친구가 없습니다.</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>친구 리스트</Text>
+      <View style={styles.header}>
+        {/* 왼쪽 */}
+        <Text style={styles.label}>함께 참여하는 친구</Text>
+
+        {/* 오른쪽 묶음 */}
+        <View style={styles.rightGroup}>
+          {selectedFriends.length > 0 && (
+            <Text style={styles.selectedCount}>
+              {selectedFriends.length}명 선택됨
+            </Text>
+          )}
+          <TouchableOpacity
+            style={styles.editButtonContainer}
+            onPress={onEditPress}
+          >
+            <Text style={styles.editText}>✏️ 수정</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <View style={styles.listContainer}>
         <FlatList
           data={friends}
           renderItem={renderFriendItem}
           keyExtractor={(item) => item.id.toString()}
-          showsVerticalScrollIndicator={true}
+          horizontal={true}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           style={styles.list}
+          nestedScrollEnabled={true}
+        
         />
       </View>
     </View>
@@ -65,11 +109,25 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 20,
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   label: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
-    marginBottom: 12,
+  },
+  rightGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  selectedCount: {
+    fontSize: 14,
+    color: '#6C5CE7',
+    fontWeight: '500',
   },
   listContainer: {
     backgroundColor: '#fff',
@@ -77,16 +135,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e7eb',
     maxHeight: 200,
+    padding: 10,
   },
   list: {
-    flex: 1,
+    height: 80,
   },
   friendRow: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
     backgroundColor: '#fff',
+    
   },
   selectedFriendRow: {
     backgroundColor: '#f0f9ff',
@@ -131,5 +191,28 @@ const styles = StyleSheet.create({
     padding: 20,
     color: '#6b7280',
     fontSize: 16,
+  },
+  editButtonContainer: {
+    backgroundColor: '#6C5CE7',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 30,
+    marginHorizontal: 10,
+    marginVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  editText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

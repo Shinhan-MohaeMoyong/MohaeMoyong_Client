@@ -1,5 +1,9 @@
 // components/friends/GroupScheduleFriendList.tsx
-import { RowItem, useFriends } from "@/hooks/useFriends";
+import { SERVER_URL } from "@/constants/server";
+import { getToken } from "@/contexts/tokenManager";
+import { RowItem } from "@/hooks/useFriends";
+import { FriendEntity } from "@/types";
+import { useEffect, useState } from "react";
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface GroupScheduleFriendListProps {
@@ -13,7 +17,27 @@ export default function GroupScheduleFriendList({
   selectedFriends = [],
   maxSelection,
 }: GroupScheduleFriendListProps) {
-  const { data: friends, loading } = useFriends();
+  const [friends, setFriends] = useState<FriendEntity[]>([]);
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    const loadFriends = async () => {
+      try {
+        const response = await fetch(`${SERVER_URL}/api/v1/friends`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${await getToken()}`,
+          },
+        });
+        const data = await response.json();
+        console.log(data);
+        setFriends(data);
+        setLoading(false);
+      } catch (e) {
+        console.log(e);
+      }
+    };
+    loadFriends();
+  }, []);
 
   const isSelected = (friend: RowItem) => {
     return selectedFriends.some(selected => selected.id === friend.id);
@@ -52,7 +76,7 @@ export default function GroupScheduleFriendList({
         <View style={styles.left}>
           <View style={styles.avatarContainer}>
             <Image 
-              source={{ uri: item.avatar || "https://via.placeholder.com/40" }} 
+              source={{ uri: item.imageUrl || "https://via.placeholder.com/40" }} 
               style={styles.avatar} 
             />
             {selected && <View style={styles.selectedIndicator} />}

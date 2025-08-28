@@ -1,3 +1,5 @@
+import FriendListSection from '@/components/addPlan/FriendListSection';
+import { RowItem } from '@/hooks/useFriends';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -6,8 +8,6 @@ import AddButton from '../components/addPlan/AddButton';
 import AddPlanHeader from '../components/addPlan/AddPlanHeader';
 import DateTimeSelector from '../components/addPlan/DateTimeSelector';
 import EventTypeSelector from '../components/addPlan/EventTypeSelector';
-import FriendAddSection from '../components/addPlan/FriendAddSection';
-import FriendListSection from '../components/addPlan/FriendListSection';
 import PhotoUpload from '../components/addPlan/PhotoUpload';
 import PlanInputFields from '../components/addPlan/PlanInputFields';
 import RepeatOption from '../components/addPlan/RepeatOption';
@@ -19,6 +19,7 @@ export default function AddPlanScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [showFriendSelection, setShowFriendSelection] = useState(false);
+  const [selectedFriends, setSelectedFriends] = useState<RowItem[]>([]);
   const { 
     formData, 
     isLoading,
@@ -45,17 +46,17 @@ export default function AddPlanScreen() {
 
   const handleEventTypeChange = (type: 'group' | 'personal') => {
     updateFormData({ eventType: type });
-    if (type === 'group') {
-      setShowFriendSelection(true);
-    }
   };
 
-  const handleFriendSelectionConfirm = (selectedFriends: any[]) => {
+  const handleFriendSelectionConfirm = (selectedFriends: RowItem[]) => {
     updateFormData({ selectedFriends });
+    setSelectedFriends(selectedFriends);
+    console.log('selectedFriends', selectedFriends);
     setShowFriendSelection(false);
   };
 
   const handleFriendSelectionClose = () => {
+    // 모달을 닫을 때는 선택된 친구 목록을 유지
     setShowFriendSelection(false);
   };
 
@@ -93,10 +94,11 @@ export default function AddPlanScreen() {
         
         {formData.eventType === 'group' && (
           <>
-            <FriendAddSection onAddFriends={handleEditFriends} />
+            {/* <FriendAddSection onAddFriends={handleEditFriends} /> */}
             <FriendListSection 
-              selectedFriends={formData.selectedFriends} 
+              selectedFriends={selectedFriends} 
               onFriendToggle={handleFriendToggle}
+              onEditPress={handleEditFriends}
             />
           </>
         )}
@@ -158,6 +160,7 @@ export default function AddPlanScreen() {
          onClose={handleFriendSelectionClose}
          onConfirm={handleFriendSelectionConfirm}
          maxSelection={10}
+         initialSelectedFriends={formData.selectedFriends}
        />
     </View>
   );

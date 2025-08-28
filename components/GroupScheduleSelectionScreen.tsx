@@ -1,14 +1,14 @@
 // components/GroupScheduleSelectionScreen.tsx
 import { RowItem } from "@/hooks/useFriends";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-    Alert,
-    Modal,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Modal,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import GroupScheduleFriendList from "./friends/GroupScheduleFriendList";
 
@@ -17,6 +17,7 @@ interface GroupScheduleSelectionScreenProps {
   onClose: () => void;
   onConfirm: (selectedFriends: RowItem[]) => void;
   maxSelection?: number;
+  initialSelectedFriends?: RowItem[];
 }
 
 export default function GroupScheduleSelectionScreen({
@@ -24,8 +25,16 @@ export default function GroupScheduleSelectionScreen({
   onClose,
   onConfirm,
   maxSelection = 10,
+  initialSelectedFriends = [],
 }: GroupScheduleSelectionScreenProps) {
-  const [selectedFriends, setSelectedFriends] = useState<RowItem[]>([]);
+  const [selectedFriends, setSelectedFriends] = useState<RowItem[]>(initialSelectedFriends);
+
+  // visible이 변경될 때마다 초기 선택된 친구들을 동기화
+  useEffect(() => {
+    if (visible) {
+      setSelectedFriends(initialSelectedFriends);
+    }
+  }, [visible, initialSelectedFriends]);
 
   const handleFriendSelect = (friend: RowItem) => {
     setSelectedFriends(prev => {
