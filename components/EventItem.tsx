@@ -13,6 +13,7 @@ interface EventItemProps {
   location: string;
   onDelete: () => void;
   onComplete: () => void;
+  hasSavingsGoal?: boolean;
   withdrawalAccount?: AccountInfo | null;
   depositAccount?: AccountInfo | null;
   onSelectWithdrawalAccount?: () => void;
@@ -26,6 +27,7 @@ export default function EventItem({
   location,
   onDelete,
   onComplete,
+  hasSavingsGoal = false,
   withdrawalAccount,
   depositAccount,
   onSelectWithdrawalAccount,
@@ -77,42 +79,44 @@ export default function EventItem({
             />
             <Text style={styles.location}>{location}</Text>
           </View>
-          <View style={styles.accountSection}>
-            {withdrawalAccount ? (
-              <View style={styles.accountItem}>
-                <Text style={styles.accountLabel}>출금:</Text>
-                <View style={styles.accountInfo}>
-                  <Text style={styles.bankName}>{withdrawalAccount.bankName}</Text>
-                  <Text style={styles.accountNumber}>{withdrawalAccount.accountNumber}</Text>
+          {hasSavingsGoal && (
+            <View style={styles.accountSection}>
+              {withdrawalAccount ? (
+                <View style={styles.accountItem}>
+                  <Text style={styles.accountLabel}>출금:</Text>
+                  <View style={styles.accountInfo}>
+                    <Text style={styles.bankName}>{withdrawalAccount.bankName}</Text>
+                    <Text style={styles.accountNumber}>{withdrawalAccount.accountNumber}</Text>
+                  </View>
                 </View>
-              </View>
-            ) : onSelectWithdrawalAccount && (
-              <TouchableOpacity 
-                style={styles.accountSelector}
-                onPress={onSelectWithdrawalAccount}
-              >
-                <Text style={styles.placeholderText}>출금계좌 선택</Text>
-                <Ionicons name="chevron-down" size={16} color="rgba(255, 255, 255, 0.8)" />
-              </TouchableOpacity>
-            )}
-            {depositAccount ? (
-              <View style={styles.accountItem}>
-                <Text style={styles.accountLabel}>입금:</Text>
-                <View style={styles.accountInfo}>
-                  <Text style={styles.bankName}>{depositAccount.bankName}</Text>
-                  <Text style={styles.accountNumber}>{depositAccount.accountNumber}</Text>
+              ) : onSelectWithdrawalAccount && (
+                <TouchableOpacity 
+                  style={styles.accountSelector}
+                  onPress={onSelectWithdrawalAccount}
+                >
+                  <Text style={styles.placeholderText}>출금계좌 선택</Text>
+                  <Ionicons name="chevron-down" size={16} color="rgba(255, 255, 255, 0.8)" />
+                </TouchableOpacity>
+              )}
+              {depositAccount ? (
+                <View style={styles.accountItem}>
+                  <Text style={styles.accountLabel}>입금:</Text>
+                  <View style={styles.accountInfo}>
+                    <Text style={styles.bankName}>{depositAccount.bankName}</Text>
+                    <Text style={styles.accountNumber}>{depositAccount.accountNumber}</Text>
+                  </View>
                 </View>
-              </View>
-            ) : onSelectDepositAccount && (
-              <TouchableOpacity 
-                style={styles.accountSelector}
-                onPress={onSelectDepositAccount}
-              >
-                <Text style={styles.placeholderText}>입금계좌 선택</Text>
-                <Ionicons name="chevron-down" size={16} color="rgba(255, 255, 255, 0.8)" />
-              </TouchableOpacity>
-            )}
-          </View>
+              ) : onSelectDepositAccount && (
+                <TouchableOpacity 
+                  style={styles.accountSelector}
+                  onPress={onSelectDepositAccount}
+                >
+                  <Text style={styles.placeholderText}>입금계좌 선택</Text>
+                  <Ionicons name="chevron-down" size={16} color="rgba(255, 255, 255, 0.8)" />
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
         </View>
       </View>
     </View>

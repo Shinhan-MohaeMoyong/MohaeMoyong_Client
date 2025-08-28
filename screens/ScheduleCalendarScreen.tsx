@@ -136,6 +136,7 @@ export default function ScheduleCalendarScreen() {
 
       const plansData = await response.json();
       console.log("✅ 날짜별 일정 조회 성공:", plansData);
+      console.log("📊 [API Response] 일정 데이터 상세:", JSON.stringify(plansData, null, 2));
       return plansData;
     } catch (error) {
       console.error('❌ 날짜별 일정 조회 실패:', error);
@@ -449,25 +450,41 @@ export default function ScheduleCalendarScreen() {
                                    ) : selectedDatePlans.length > 0 ? (
                     selectedDatePlans
                       .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-                      .map((plan, index) => (
-                     <EventItem
-                       key={plan.planId || index}
-                       startTime={formatTime(new Date(plan.startTime))}
-                       endTime={formatTime(new Date(plan.endTime))}
-                       title={plan.title}
-                       location={plan.place || "장소 없음"}
-                       onDelete={() =>
-                         handleDeletePlan(String(plan.planId || ""))
-                       }
-                       onComplete={() =>
-                         handleCompletePlan(String(plan.planId || ""))
-                       }
-                                               withdrawalAccount={plan.withDrawAccountNo ? { bankName: "은행명", accountNumber: plan.withDrawAccountNo } : null}
-                        depositAccount={plan.depositAccountNo ? { bankName: "은행명", accountNumber: plan.depositAccountNo } : null}
-                        onSelectWithdrawalAccount={() => handleAccountSelect(plan, 'withdrawal')}
-                        onSelectDepositAccount={() => handleAccountSelect(plan, 'deposit')}
-                     />
-                   ))
+                      .map((plan, index) => {
+                        // EventItem에 전달되는 정보 로깅
+                        console.log('📋 [EventItem] 일정 정보:', {
+                          planId: plan.planId,
+                          title: plan.title,
+                          startTime: formatTime(new Date(plan.startTime)),
+                          endTime: formatTime(new Date(plan.endTime)),
+                          location: plan.place || "장소 없음",
+                          hasSavingsGoal: plan.hasSavingsGoal,
+                          withdrawalAccount: plan.withDrawAccountNo ? { bankName: "은행명", accountNumber: plan.withDrawAccountNo } : null,
+                          depositAccount: plan.depositAccountNo ? { bankName: "은행명", accountNumber: plan.depositAccountNo } : null,
+                          rawPlanData: plan // 전체 원본 데이터
+                        });
+                        
+                        return (
+                          <EventItem
+                            key={plan.planId || index}
+                            startTime={formatTime(new Date(plan.startTime))}
+                            endTime={formatTime(new Date(plan.endTime))}
+                            title={plan.title}
+                            location={plan.place || "장소 없음"}
+                            hasSavingsGoal={plan.hasSavingsGoal}
+                            onDelete={() =>
+                              handleDeletePlan(String(plan.planId || ""))
+                            }
+                            onComplete={() =>
+                              handleCompletePlan(String(plan.planId || ""))
+                            }
+                            withdrawalAccount={plan.withDrawAccountNo ? { bankName: "은행명", accountNumber: plan.withDrawAccountNo } : null}
+                            depositAccount={plan.depositAccountNo ? { bankName: "은행명", accountNumber: plan.depositAccountNo } : null}
+                            onSelectWithdrawalAccount={() => handleAccountSelect(plan, 'withdrawal')}
+                            onSelectDepositAccount={() => handleAccountSelect(plan, 'deposit')}
+                          />
+                        );
+                      })
                  ) : (
                    <View style={styles.emptyEventsContainer}>
                      <Text style={styles.emptyEventsText}>
