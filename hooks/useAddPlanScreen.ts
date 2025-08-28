@@ -47,6 +47,9 @@ export type AddPlanFormData = {
   // 이벤트 타입
   eventType: 'group' | 'personal';
   
+  // 단체 일정 참여자
+  selectedFriends: { id: number; name: string; avatar: string }[];
+  
   // 공개/비공개
   isPublic: boolean;
   
@@ -73,6 +76,7 @@ export function useAddPlanScreen() {
     startTime: '09:00',
     endTime: '10:00',
     eventType: 'personal',
+    selectedFriends: [],
     isPublic: true,
     repeatConfig: {
       enabled: false,
@@ -241,7 +245,7 @@ export function useAddPlanScreen() {
       savingsAmount: formData.saveOption && formData.savingAmount ? parseInt(formData.savingAmount) : null,
       depositAccountNo: formData.saveOption && formData.depositAccount ? formData.depositAccount.accountNumber : undefined,
       withdrawalAccountNo: formData.saveOption && formData.withdrawalAccount ? formData.withdrawalAccount.accountNumber : undefined,
-      participantIds: formData.eventType === 'group' ? [] : null, // TODO: 실제 참여자 ID 배열로 교체
+      participantIds: formData.eventType === 'group' ? formData.selectedFriends.map(friend => friend.id.toString()) : null,
       photos: imageUrls.slice(1), // 첫 번째 URL을 제외한 나머지를 photos 배열에
       recurrence: recurrenceConfig
     };

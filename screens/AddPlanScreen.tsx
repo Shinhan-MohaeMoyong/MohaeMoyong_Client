@@ -1,19 +1,24 @@
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AddButton from '../components/addPlan/AddButton';
 import AddPlanHeader from '../components/addPlan/AddPlanHeader';
 import DateTimeSelector from '../components/addPlan/DateTimeSelector';
 import EventTypeSelector from '../components/addPlan/EventTypeSelector';
+import FriendAddSection from '../components/addPlan/FriendAddSection';
+import FriendListSection from '../components/addPlan/FriendListSection';
 import PhotoUpload from '../components/addPlan/PhotoUpload';
 import PlanInputFields from '../components/addPlan/PlanInputFields';
 import RepeatOption from '../components/addPlan/RepeatOption';
 import SaveOption from '../components/addPlan/SaveOption';
+import GroupScheduleSelectionScreen from '../components/GroupScheduleSelectionScreen';
 import { useAddPlanScreen } from '../hooks/useAddPlanScreen';
 
 export default function AddPlanScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const [showFriendSelection, setShowFriendSelection] = useState(false);
   const { 
     formData, 
     isLoading,
@@ -38,6 +43,41 @@ export default function AddPlanScreen() {
     //router.push('/account-select?type=deposit');
   };
 
+  const handleEventTypeChange = (type: 'group' | 'personal') => {
+    updateFormData({ eventType: type });
+    if (type === 'group') {
+      setShowFriendSelection(true);
+    }
+  };
+
+  const handleFriendSelectionConfirm = (selectedFriends: any[]) => {
+    updateFormData({ selectedFriends });
+    setShowFriendSelection(false);
+  };
+
+  const handleFriendSelectionClose = () => {
+    setShowFriendSelection(false);
+  };
+
+  const handleEditFriends = () => {
+    setShowFriendSelection(true);
+  };
+
+  const handleFriendToggle = (friend: { id: number; name: string; avatar: string }) => {
+    const isSelected = formData.selectedFriends.some(f => f.id === friend.id);
+    if (isSelected) {
+      // 이미 선택된 친구라면 선택 해제
+      updateFormData({ 
+        selectedFriends: formData.selectedFriends.filter(f => f.id !== friend.id) 
+      });
+    } else {
+      // 새로운 친구 선택
+      updateFormData({ 
+        selectedFriends: [...formData.selectedFriends, friend] 
+      });
+    }
+  };
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <AddPlanHeader 
@@ -48,8 +88,18 @@ export default function AddPlanScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <EventTypeSelector 
           selectedType={formData.eventType} 
-          onSelectType={(type) => updateFormData({ eventType: type })} 
+          onSelectType={handleEventTypeChange} 
         />
+        
+        {formData.eventType === 'group' && (
+          <>
+            <FriendAddSection onAddFriends={handleEditFriends} />
+            <FriendListSection 
+              selectedFriends={formData.selectedFriends} 
+              onFriendToggle={handleFriendToggle}
+            />
+          </>
+        )}
         
         <PlanInputFields
           title={formData.title}
@@ -101,6 +151,13 @@ export default function AddPlanScreen() {
            }
          }} 
          disabled={isLoading}
+       />
+
+       <GroupScheduleSelectionScreen
+         visible={showFriendSelection}
+         onClose={handleFriendSelectionClose}
+         onConfirm={handleFriendSelectionConfirm}
+         maxSelection={10}
        />
     </View>
   );
