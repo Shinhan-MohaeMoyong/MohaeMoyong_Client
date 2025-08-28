@@ -66,9 +66,9 @@ const styles = StyleSheet.create({
     position: "relative", // ✅ 절대배치용
     backgroundColor: "#FFFFFF",
     borderRadius: 20,
-    padding: 16,
+    padding: 18,
     paddingRight: 20,
-    paddingBottom: 22, // ✅ 큰 금액 공간 확보
+    paddingBottom: 25, // ✅ 큰 금액 공간 확보
     marginBottom: 16,
     flexDirection: "row",
     alignItems: "flex-start",
@@ -80,13 +80,13 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 2,
     width: "100%",
-    minHeight: 110, // ✅ 스케치 비율 확보
+    minHeight: 125, // ✅ 스케치 비율 확보
   },
 
   leftCol: { marginRight: 12 },
   bankLogo: {
-    width: 48,
-    height: 48,
+    width: 53,
+    height: 53,
     borderRadius: 24,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
@@ -95,14 +95,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     overflow: "hidden",
   },
-  bankLogoImg: { width: 34, height: 34 },
+  bankLogoImg: { width: 50, height: 50 },
   bankLogoText: { fontSize: 16, color: "#6C5CE7", fontWeight: "800" },
 
   rightCol: { flex: 1, minWidth: 0 },
-  accountAlias: { fontSize: 15, fontWeight: "800", color: "#111827" },
+  accountAlias: { marginTop: 5, fontSize: 18, fontWeight: "800", color: "#111827" },
   accountNumber: {
-    marginTop: 6,
-    fontSize: 13,
+    marginTop: 8,
+    fontSize: 16,
     color: "#6B7280",
     fontVariant: ["tabular-nums"],
     letterSpacing: 0.2,

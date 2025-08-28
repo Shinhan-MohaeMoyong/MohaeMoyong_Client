@@ -343,7 +343,10 @@ export default function ScheduleCalendarScreen() {
       {showHeader && (
         <View style={styles.header}>
           {/* TopTabs 추가 */}
-          <TopTabs active={activeTab} onChange={handleTabChange} style={styles.tabsRow} />
+          <TopTabs
+              active={activeTab}
+              indicatorColor="#ff00aa" trackColor="#000" indicatorHeight={6} fontSize={20}
+            />
         </View>
       )}
 
@@ -493,7 +496,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     paddingHorizontal: 20,
     paddingBottom: 30,
-    // maxHeight: BOTTOM_SHEET_HEIGHT, // This will be overridden by inline style
   },
   handle: {
     alignItems: "center",

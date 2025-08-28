@@ -19,18 +19,15 @@ interface Product {
   id: string;
   productName: string;
   productDescription: string;
-  bankName: string; // ✅ bankLogo 제거
+  bankName: string;
   isExclusive: boolean;
   exclusiveNote?: string;
   preferentialNote?: string;
-  // 필요 시 확장:
-  // bankLogoUrl?: string;      // 서버에서 URL 내려줄 때
-  // bankLogoText?: string;     // 텍스트 로고 쓰고 싶을 때
 }
 
 interface AddAccountScreenProps {
   onProductSelect: (product: Product) => void;
-  onBackPress?: () => void; // 뒤로가기 콜백
+  onBackPress?: () => void;
 }
 
 interface ProductListItemDTO {
@@ -82,10 +79,8 @@ function AccountCreationInputModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.overlay}>
         <View style={styles.modalCard}>
-          {/* 드래그바 느낌의 핸들 */}
           <View style={styles.handleBar} />
 
-          {/* 헤더 */}
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>계좌 생성</Text>
             <Text style={styles.modalSubtitle} numberOfLines={2}>
@@ -93,7 +88,6 @@ function AccountCreationInputModal({
             </Text>
           </View>
 
-          {/* 폼 */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>계좌 별칭</Text>
             <TextInput
@@ -125,7 +119,6 @@ function AccountCreationInputModal({
             <Text style={styles.helperText}>숫자만 입력하면 자동으로 쉼표가 들어가요</Text>
           </View>
 
-          {/* 버튼 */}
           <View style={styles.modalButtonRow}>
             <TouchableOpacity
               style={[styles.modalButton, styles.btnGhost]}
@@ -177,10 +170,8 @@ export default function AddAccountScreen({ onProductSelect, onBackPress }: AddAc
         id: item.accountTypeUniqueNo,
         productName: item.accountName,
         productDescription: item.accountDescription,
-        bankName: "신한은행", // ✅ 로고는 ProductCard 내부 매핑으로 자동 처리
+        bankName: "신한은행",
         isExclusive: false,
-        // bankLogoUrl: undefined, // 서버가 URL 내려주면 여기 채워서 넘기면 됨
-        // bankLogoText: "신한",   // 텍스트 로고 쓰고 싶으면 선택적으로
       }));
       setProducts(mapped);
     } catch {
@@ -251,14 +242,15 @@ export default function AddAccountScreen({ onProductSelect, onBackPress }: AddAc
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <TouchableOpacity style={styles.backButton} onPress={onBackPress}>
-            <Text style={styles.backButtonText}>← 뒤로</Text>
+            <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>수시입출금 상품목록</Text>
         </View>
 
-        <Text style={styles.headerSubtitle}>필요한 계좌 상품을 선택해서 바로 만들 수 있어요</Text>
+        <Text style={styles.headerSubtitle}>
+          필요한 계좌 상품을 선택해서 바로 만들 수 있어요
+        </Text>
 
-        {/* 검색 바 */}
         <View style={styles.searchBar}>
           <TextInput
             style={styles.searchInput}
@@ -275,7 +267,6 @@ export default function AddAccountScreen({ onProductSelect, onBackPress }: AddAc
         </View>
       </View>
 
-      {/* 목록 */}
       <ScrollView
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
@@ -291,8 +282,6 @@ export default function AddAccountScreen({ onProductSelect, onBackPress }: AddAc
               productName={product.productName}
               productDescription={product.productDescription}
               bankName={product.bankName}
-              // bankLogoUrl={product.bankLogoUrl} // 서버에서 주면 주석 해제
-              // bankLogoText={product.bankLogoText}
               isExclusive={product.isExclusive}
               onPress={() => handleProductSelect(product)}
               style={{ marginBottom: 16 }}
@@ -307,7 +296,6 @@ export default function AddAccountScreen({ onProductSelect, onBackPress }: AddAc
         )}
       </ScrollView>
 
-      {/* 계좌 생성 입력 모달 */}
       {showInputModal && selectedProduct && (
         <AccountCreationInputModal
           visible={showInputModal}
@@ -317,7 +305,6 @@ export default function AddAccountScreen({ onProductSelect, onBackPress }: AddAc
         />
       )}
 
-      {/* Alert */}
       {showCustomAlert && (
         <CustomAlert
           visible={showCustomAlert}
@@ -333,31 +320,41 @@ export default function AddAccountScreen({ onProductSelect, onBackPress }: AddAc
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFF" },
-  header: { padding: 20, borderBottomWidth: 1, borderBottomColor: "#F3F4F6" },
+  header: {
+    paddingTop: 14,
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F3F4F6",
+    justifyContent: "flex-start",
+  },
   headerTop: {
-    position: "relative",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 32,
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "flex-start", 
+  minHeight: 44,
+  position: "relative",
   },
-  backBtnAbs: { position: "absolute", left: 0, padding: 4 },
-  backBtnText: { fontSize: 20, color: "#374151" },
-  headerRow: { flexDirection: "row", alignItems: "center" },
-  backBtn: { marginRight: 12, padding: 4 },
+  backButton: { padding: 4, zIndex: 1 }, 
+  backButtonText: { fontSize: 22, color: "black" },
+
   headerTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: "#111827",
+    position: "absolute",
+    left: 0,
+    right: 0,
     textAlign: "center",
+    fontSize: 23,
+    fontWeight: "900",
+    color: "#111827",
   },
-  headerSubtitle: { marginTop: 6, fontSize: 13, color: "#6B7280", textAlign: "center" },
-  searchBar: { marginTop: 14, position: "relative" },
+  headerSubtitle: { fontSize: 13, color: "#6B7280", marginBottom: 8 ,textAlign: "center",},
+  searchBar: { position: "relative" },
   searchInput: {
     borderWidth: 1,
     borderColor: "#E5E7EB",
     backgroundColor: "#F9FAFB",
     borderRadius: 12,
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 14,
     paddingRight: 40,
     fontSize: 15,
@@ -366,26 +363,26 @@ const styles = StyleSheet.create({
   clearBtn: {
     position: "absolute",
     right: 8,
-    top: 8,
-    height: 32,
-    width: 32,
-    borderRadius: 16,
+    top: 6,
+    height: 28,
+    width: 28,
+    borderRadius: 14,
     backgroundColor: "#EDE9FE",
     alignItems: "center",
     justifyContent: "center",
   },
-  clearBtnText: { fontSize: 18, color: "#6D28D9" },
+  clearBtnText: { fontSize: 16, color: "#6D28D9" },
   content: { flex: 1 },
   contentContainer: { padding: 20, paddingBottom: 40 },
   emptyWrap: { alignItems: "center", paddingVertical: 64 },
   emptyEmoji: { fontSize: 40, marginBottom: 12 },
   emptyTitle: { fontSize: 18, fontWeight: "700", color: "#374151", marginBottom: 6 },
   emptyDesc: { fontSize: 14, color: "#6B7280", textAlign: "center", paddingHorizontal: 20 },
-  // 모달
-  // 오버레이 & 카드
+
+  // 모달 스타일들 그대로 유지...
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(15, 23, 42, 0.55)", // 살짝 어두운 유리 느낌
+    backgroundColor: "rgba(15, 23, 42, 0.55)",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 20,
@@ -412,13 +409,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#E5E7EB",
     marginBottom: 10,
   },
-
-  // 헤더
   modalHeader: { alignItems: "center", marginBottom: 8 },
   modalTitle: { fontSize: 20, fontWeight: "900", color: "#0B1220" },
   modalSubtitle: { marginTop: 6, fontSize: 14, color: "#6B7280", textAlign: "center" },
-
-  // 입력
   inputContainer: { marginTop: 16 },
   inputLabel: { fontSize: 13, fontWeight: "800", marginBottom: 8, color: "#374151" },
   input: {
@@ -443,8 +436,6 @@ const styles = StyleSheet.create({
   },
   suffixPillText: { fontSize: 13, fontWeight: "800", color: "#4F46E5" },
   helperText: { marginTop: 6, fontSize: 12, color: "#9CA3AF" },
-
-  // 버튼
   modalButtonRow: { flexDirection: "row", marginTop: 22 },
   modalButton: { flex: 1, paddingVertical: 13, borderRadius: 12 },
   btnGhost: {
@@ -465,12 +456,4 @@ const styles = StyleSheet.create({
   },
   btnPrimaryText: { color: "#FFF", textAlign: "center", fontWeight: "900" },
   btnDisabled: { backgroundColor: "#D1D5DB", shadowOpacity: 0 },
-  backButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  backButtonText: {
-    fontSize: 14,
-    color: "#6B7280",
-  },
 });
