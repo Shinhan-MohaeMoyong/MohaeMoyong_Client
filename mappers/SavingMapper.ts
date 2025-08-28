@@ -45,6 +45,7 @@ export class SavingMapper {
       accountNumber: entity.accountNumber,
       balance: formattedBalance,
       accountAlias: entity.accountAlias,
+      targetAmount: entity.targetAmount,
       monthlySavings,
       achievementRate: entity.achievementRate,
       achievementRateText,

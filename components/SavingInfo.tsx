@@ -15,6 +15,7 @@ interface SavingInfoProps {
   accountNumber: string;
   balance: string; // 포맷된 잔액
   accountAlias: string;
+  targetAmount: number; // 목표 금액
   monthlySavings: MonthlySavingDTO[];
   achievementRate: number;
   encouragementMessage: string;
@@ -27,6 +28,7 @@ export default function SavingInfo({
   accountNumber,
   balance,
   accountAlias,
+  targetAmount,
   monthlySavings,
   achievementRate,
   encouragementMessage,
@@ -133,6 +135,9 @@ export default function SavingInfo({
 
       {/* 저축 목표 및 달성률 */}
       <View style={styles.goalContainer}>
+        <Text style={styles.targetAmountText}>
+          목표 금액: {targetAmount.toLocaleString()}원
+        </Text>
         <View style={styles.achievementContainer}>
           <Text style={styles.achievementText}>* 달성률: </Text>
           <View style={styles.progressBarContainer}>
@@ -272,6 +277,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#6B7280",
     marginBottom: 12,
+  },
+  targetAmountText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#111827",
+    marginBottom: 16,
+    textAlign: "center",
   },
   achievementContainer: {
     flexDirection: "row",

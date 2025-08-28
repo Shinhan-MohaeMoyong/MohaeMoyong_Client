@@ -38,6 +38,7 @@ export const useSavingModel = () => {
         accountNumber: item.accountNumber,
         balance: item.balance,
         accountAlias: item.accountAlias,
+        targetAmount: item.targetAmount,
         monthlySavings: item.monthlySavings || [],
         achievementRate: item.achievementRate,
       }));

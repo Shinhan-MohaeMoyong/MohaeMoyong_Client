@@ -8,6 +8,7 @@ export interface SavingStateDTO {
   accountNumber: string;
   balance: string; // 포맷된 잔액 (예: "1,000,000원")
   accountAlias: string;
+  targetAmount: number; // 목표 금액
   monthlySavings: MonthlySavingDTO[];
   achievementRate: number;
   achievementRateText: string; // 포맷된 달성률 (예: "75%")
