@@ -30,6 +30,30 @@ const minToHHmm = (mins: number) => {
 };
 const snap = (mins: number, step = STEP_MIN) => Math.round(mins / step) * step;
 
+// ✅ 유틸: ISO -> Date(자정), 일수 차이, 포맷
+const parseISO = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+};
+const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const diffInDays = (a: Date, b: Date) => {
+  const A = startOfDay(a).getTime();
+  const B = startOfDay(b).getTime();
+  return Math.round((A - B) / (1000 * 60 * 60 * 24));
+};
+const WEEKDAY_KR = ["일", "월", "화", "수", "목", "금", "토"];
+const formatKoreanDate = (d: Date) =>
+  `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEKDAY_KR[d.getDay()]})`;
+const relativeLabelFromToday = (selected: Date, today: Date) => {
+  const delta = diffInDays(selected, today); // +면 미래, -면 과거
+  if (delta === 0) return "오늘";
+  if (delta === 1) return "내일";
+  if (delta === 2) return "모레";
+  if (delta === -1) return "어제";
+  if (delta === -2) return "그저께";
+  return delta > 0 ? `오늘에서 ${delta}일 뒤` : `오늘에서 ${Math.abs(delta)}일 전`;
+};
+
 export default function DateTimeSelector({
   selectedDate,
   startTime,
@@ -41,6 +65,8 @@ export default function DateTimeSelector({
   // 오늘/선택 날짜
   const today = useMemo(() => new Date(), []);
   const isoToday = useMemo(() => toISO(today), [today]);
+
+  // 선택 ISO 정규화
   const normalizedDateISO = useMemo(() => {
     if (!selectedDate) return isoToday;
     if (/^\d{4}-\d{2}-\d{2}$/.test(selectedDate)) return selectedDate;
@@ -53,13 +79,22 @@ export default function DateTimeSelector({
     return isoToday;
   }, [selectedDate, isoToday]);
 
-  // 날짜 스트립(21일)
+  const selectedDateObj = useMemo(() => parseISO(normalizedDateISO), [normalizedDateISO]);
+  const selectedAbsLabel = useMemo(() => formatKoreanDate(selectedDateObj), [selectedDateObj]);
+  const selectedRelLabel = useMemo(
+    () => relativeLabelFromToday(selectedDateObj, today),
+    [selectedDateObj, today]
+  );
+
+  // ✅ 날짜 스트립: 선택일 기준으로 ±10일
   const dateStrip = useMemo(() => {
     const arr: { iso: string; labelTop: string; labelBottom: string; isToday: boolean }[] = [];
+    const anchor = startOfDay(selectedDateObj);
+    const start = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() - 10); // -10
     for (let i = 0; i < 21; i++) {
-      const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+      const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
       const iso = toISO(d);
-      const weekday = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
+      const weekday = WEEKDAY_KR[d.getDay()];
       arr.push({
         iso,
         labelTop: weekday,
@@ -68,7 +103,7 @@ export default function DateTimeSelector({
       });
     }
     return arr;
-  }, [today, isoToday]);
+  }, [selectedDateObj, isoToday]);
 
   // 시간 상태(분)
   const [startMin, setStartMin] = useState<number>(() => snap(parseHHmmToMin(startTime)));
@@ -132,7 +167,24 @@ export default function DateTimeSelector({
     <View style={styles.container}>
       <Text style={styles.label}>*날짜</Text>
 
-      {/* 날짜 스트립 */}
+      {/* ✅ 선택일 정보 바: 절대일 + 상대일 + 오늘로 이동 */}
+      <View style={styles.selectedInfoBar}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <Ionicons name="calendar-outline" size={16} color="#574BD6" />
+          <Text style={styles.selectedAbs}>{selectedAbsLabel}</Text>
+          <Text style={styles.selectedRel}>· {selectedRelLabel}</Text>
+        </View>
+        <TouchableOpacity
+          onPress={() => onDateSelect(isoToday)}
+          style={styles.todayBtn}
+          accessibilityLabel="오늘로 이동"
+        >
+          <Ionicons name="navigate-outline" size={14} color="#6C5CE7" />
+          <Text style={styles.todayBtnText}>오늘</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* 날짜 스트립 (선택일 중심) */}
       <FlatList
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -189,7 +241,7 @@ export default function DateTimeSelector({
       {/* 시간 */}
       <Text style={[styles.label, { marginTop: 20 }]}>*시간</Text>
 
-      {/* ⬇️ 시작/종료 한 행, 동일 너비, 가운데 정렬 */}
+      {/* 시작/종료 한 행 */}
       <View style={styles.timeRowOneLine}>
         <TouchableOpacity
           onPress={() => beginEdit("start")}
@@ -212,14 +264,18 @@ export default function DateTimeSelector({
         </TouchableOpacity>
       </View>
 
-      {/* 편집 패널: 같은 폭으로 중앙 */}
+      {/* 편집 패널 */}
       {editing && (
         <View style={styles.editPanelCentered}>
           <Text style={styles.editTitle}>
             {editing === "start" ? "시작 시간 설정" : "종료 시간 설정"}
           </Text>
           <DateTimePicker
-            value={tempDate}
+            value={(() => {
+              const d = new Date();
+              d.setHours(Math.floor(tempMin / 60), tempMin % 60, 0, 0);
+              return d;
+            })()}
             mode="time"
             display={Platform.OS === "ios" ? "spinner" : "spinner"}
             is24Hour
@@ -236,7 +292,7 @@ export default function DateTimeSelector({
         </View>
       )}
 
-      {/* 소요시간: 위 한 행과 같은 폭으로 정렬 */}
+      {/* 소요시간 */}
       <View style={styles.durationBarWide}>
         <Ionicons name="time-outline" size={18} />
         <Text style={styles.durationText}>총 소요 {durationLabel}</Text>
@@ -248,6 +304,36 @@ export default function DateTimeSelector({
 const styles = StyleSheet.create({
   container: { marginBottom: 20 },
   label: { fontSize: 16, fontWeight: "700", color: "#222", marginBottom: 12 },
+
+  // ✅ 선택일 정보 바
+  selectedInfoBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    marginHorizontal: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E7E5FF",
+    backgroundColor: "#F5F4FF",
+    marginBottom: 8,
+  },
+  selectedAbs: { fontSize: 14, fontWeight: "800", color: "#2a255e" },
+  selectedRel: { fontSize: 12, fontWeight: "700", color: "#6C5CE7" },
+  todayBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: "#EEF1FF",
+    borderWidth: 1,
+    borderColor: "#DDE2FF",
+  },
+  todayBtnText: { color: "#6C5CE7", fontWeight: "800", fontSize: 12 },
 
   // 날짜 스트립
   dateItem: {
@@ -286,19 +372,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
 
-  // === 시간 한 줄 & 동일 폭 컨테이너 ===
+  // 시간 한 줄
   timeRowOneLine: {
     marginTop: 4,
     marginBottom: 8,
-    width: "92%", // ⬅️ 기준 폭
-    alignSelf: "center", // 중앙 정렬
+    marginHorizontal: 4,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-
   timeBadgeLarge: {
-    flex: 1, // ⬅️ 두 배지 동일 폭
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -310,18 +394,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E6E5FF",
   },
-  timeBadgeTextLarge: {
-    fontSize: 18,
-    fontWeight: "900",
-    color: "#2a255e",
-  },
+  timeBadgeTextLarge: { fontSize: 18, fontWeight: "900", color: "#2a255e" },
   arrowLarge: { fontSize: 18, color: "#888" },
 
-  // 편집 패널: 상단 행과 동일 폭
+  // 편집 패널
   editPanelCentered: {
     marginTop: 12,
-    width: "92%", // ⬅️ 동일 폭
-    alignSelf: "center",
+    marginHorizontal: 4,
     padding: 12,
     borderRadius: 14,
     borderWidth: 1,
@@ -335,11 +414,10 @@ const styles = StyleSheet.create({
   btnPrimary: { backgroundColor: "#6C5CE7" },
   btnText: { fontWeight: "800" },
 
-  // 소요시간: 동일 폭
+  // 소요시간
   durationBarWide: {
     marginTop: 12,
-    width: "92%", // ⬅️ 위 행과 같은 폭
-    alignSelf: "center",
+    marginHorizontal: 4,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,

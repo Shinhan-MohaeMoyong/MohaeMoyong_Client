@@ -221,9 +221,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f0f0",
     borderRadius: 20,
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    minHeight: 20,
-    maxHeight: 50,
+    paddingVertical: 13, // ⬆️ 안쪽 여백도 키움
+    minHeight: 44, // ⬆️ 기본 높이 넉넉하게
+    maxHeight: 120, // ⬆️ 여러 줄 입력 가능
+    fontSize: 15, // 글자 크기도 살짝 키움 (선택사항)
+    textAlignVertical: "top", // 안드로이드에서 위쪽 정렬
   },
   imageBtn: {
     width: 40,

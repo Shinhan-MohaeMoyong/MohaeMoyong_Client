@@ -1,5 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type Props = {
   onPress: () => void;
@@ -12,7 +12,7 @@ export default function AddButton({
   onPress,
   disabled = false,
   loading = false,
-  title = '추가하기',
+  title = "추가하기",
 }: Props) {
   const isBlocked = disabled || loading;
 
@@ -29,9 +29,7 @@ export default function AddButton({
         ) : (
           <>
             <Ionicons name="add" size={16} color="#fff" style={styles.icon} />
-            <Text style={[styles.buttonText, isBlocked && styles.buttonTextDisabled]}>
-              {title}
-            </Text>
+            <Text style={[styles.buttonText, isBlocked && styles.buttonTextDisabled]}>{title}</Text>
           </>
         )}
       </View>
@@ -39,45 +37,45 @@ export default function AddButton({
   );
 }
 
-const PURPLE = '#6C5CE7';
-const PURPLE_DARK = '#5848D9';
+const PURPLE = "#6C5CE7";
+const PURPLE_DARK = "#5848D9";
 
 const styles = StyleSheet.create({
   button: {
     backgroundColor: PURPLE,
-    borderRadius: 24,        // pill 느낌
-    paddingVertical: 10,     // 🔽 작게
-    paddingHorizontal: 20,
-    marginHorizontal: 20,
-    marginBottom: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 24,
+    paddingVertical: 14, // ⬆️ 높이 키움
+    paddingHorizontal: 80, // ⬇️ 좌우 폭 조금 줄임
+    alignSelf: "center", // ⬅️ 화면 중앙에 배치
+    marginBottom: 24, // ⬆️ 아래 여백 키움
+    alignItems: "center",
+    justifyContent: "center",
 
-    // 은은한 그림자
-    shadowColor: '#000',
+    // 그림자
+    shadowColor: "#000",
     shadowOpacity: 0.06,
     shadowRadius: 3,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
   buttonDisabled: {
-    backgroundColor: '#C9C7E8',
+    backgroundColor: "#C9C7E8",
   },
   contentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     columnGap: 6,
   },
   icon: {
     marginRight: 2,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 14,           // 🔽 작게
-    fontWeight: '700',
+    color: "#fff",
+    fontSize: 14, // 🔽 작게
+    fontWeight: "700",
   },
   buttonTextDisabled: {
-    color: '#f0f0f0',
+    color: "#f0f0f0",
   },
 });

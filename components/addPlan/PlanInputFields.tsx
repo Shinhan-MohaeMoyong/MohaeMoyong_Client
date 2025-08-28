@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from "react-native";
 
 type Props = {
   title: string;
@@ -29,7 +29,7 @@ export default function PlanInputFields({
           placeholderTextColor="#999"
         />
       </View>
-      
+
       <View style={styles.field}>
         <Text style={styles.label}>*장소</Text>
         <TextInput
@@ -40,9 +40,9 @@ export default function PlanInputFields({
           placeholderTextColor="#999"
         />
       </View>
-      
+
       <View style={styles.field}>
-        <Text style={styles.label}>* 상세 내용</Text>
+        <Text style={styles.label}>*상세 내용</Text>
         <TextInput
           style={[styles.input, styles.contentInput]}
           value={content}
@@ -67,22 +67,22 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#f8f8f8',
+    backgroundColor: "#f8f8f8",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#333',
+    color: "#333",
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: "#e0e0e0",
   },
   contentInput: {
     height: 100,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
 });
