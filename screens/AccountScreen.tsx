@@ -1,7 +1,7 @@
-import { SERVER_URL } from '@/constants/server';
-import { getToken } from '@/contexts/tokenManager';
-import AddAccountScreen from '@/screens/AddAccountScreen';
-import { useEffect, useState } from 'react';
+import { SERVER_URL } from "@/constants/server";
+import { getToken } from "@/contexts/tokenManager";
+import AddAccountScreen from "@/screens/AddAccountScreen";
+import { useEffect, useState } from "react";
 import {
   Alert,
   RefreshControl,
@@ -10,9 +10,9 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
-import AccountCard from '../components/AccountCard';
-import { AccountMapper } from '../mappers/AccountMapper';
+} from "react-native";
+import AccountCard from "../components/AccountCard";
+import { AccountMapper } from "../mappers/AccountMapper";
 
 interface Account {
   id: string;
@@ -43,14 +43,14 @@ export default function AccountScreen({ onAccountPress }: AccountScreenProps) {
   const fetchAccounts = async () => {
     setLoading(true);
     try {
-      console.log('🏦 === 계좌 목록 요청 ===');
-      const endpoint = '/api/v1/account/simpleList';
-      
+      console.log("🏦 === 계좌 목록 요청 ===");
+      const endpoint = "/api/v1/account/simpleList";
+
       const response = await fetch(`${SERVER_URL}${endpoint}`, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${await getToken()}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${await getToken()}`,
+          "Content-Type": "application/json",
         },
       });
 
@@ -59,7 +59,7 @@ export default function AccountScreen({ onAccountPress }: AccountScreenProps) {
       }
 
       const data = await response.json();
-      console.log('🏦 === 계좌 목록 응답 ===');
+      console.log("🏦 === 계좌 목록 응답 ===");
       console.log(JSON.stringify(data, null, 2));
 
       // DTO → 화면에서 쓰는 Legacy Account로 매핑 (기존 뷰 로직 유지)
@@ -68,16 +68,15 @@ export default function AccountScreen({ onAccountPress }: AccountScreenProps) {
         accountNumber: item.accountNo,
         balance: item.accountBalance,
         accountAlias: item.accountName,
-        bankName: '신한은행', // 응답에 없으므로 기본값
+        bankName: "신한은행", // 응답에 없으므로 기본값
       }));
 
       setAccounts(mapped);
-      console.log('🏦 === 계좌 목록 변환 결과 ===');
+      console.log("🏦 === 계좌 목록 변환 결과 ===");
       console.log(JSON.stringify(mapped, null, 2));
-
     } catch (error) {
-      console.error('❌ 계좌 목록 가져오기 실패:', error);
-      Alert.alert('오류', '계좌 목록을 불러오는데 실패했습니다.');
+      console.error("❌ 계좌 목록 가져오기 실패:", error);
+      Alert.alert("오류", "계좌 목록을 불러오는데 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -99,7 +98,7 @@ export default function AccountScreen({ onAccountPress }: AccountScreenProps) {
   const handleProductSelect = (product: any) => {
     // 상품 선택 완료 후 AddAccountScreen 닫기
     setShowAddAccount(false);
-    
+
     // 계좌 목록 새로고침 (새로 생성된 계좌 반영)
     fetchAccounts();
   };
@@ -110,11 +109,7 @@ export default function AccountScreen({ onAccountPress }: AccountScreenProps) {
 
   // 새로운 계좌 추가 화면이 표시되는 경우
   if (showAddAccount) {
-    return (
-      <AddAccountScreen
-        onProductSelect={handleProductSelect}
-      />
-    );
+    return <AddAccountScreen onProductSelect={handleProductSelect} />;
   }
 
   return (
@@ -122,9 +117,7 @@ export default function AccountScreen({ onAccountPress }: AccountScreenProps) {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         showsVerticalScrollIndicator={false}
       >
         {loading ? (
@@ -140,8 +133,10 @@ export default function AccountScreen({ onAccountPress }: AccountScreenProps) {
             />
           ))
         ) : (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>등록된 계좌가 없습니다.</Text>
+          <View style={styles.emptyWrap}>
+            <Text style={styles.emptyEmoji}>🫧</Text>
+            <Text style={styles.emptyTitle}>등록된 계좌가 없어요</Text>
+            <Text style={styles.emptyDesc}>하단 버튼을 눌러 새로운 계좌를 추가해보세요.</Text>
           </View>
         )}
 
@@ -161,7 +156,7 @@ export default function AccountScreen({ onAccountPress }: AccountScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: "white",
   },
   scrollView: {
     flex: 1,
@@ -173,47 +168,62 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F9FAFB",
   },
   loadingText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: "#6B7280",
   },
   addAccountButton: {
-    backgroundColor: '#A78BFA',
+    backgroundColor: "#A78BFA",
     borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+    marginTop: 24,
+    alignSelf: "center",
   },
   addButtonIcon: {
-    fontSize: 20,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    marginRight: 8,
+    fontSize: 18,
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    marginRight: 6,
   },
   addButtonText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '600',
+    fontSize: 15,
+    color: "#FFFFFF",
+    fontWeight: "600",
   },
-  emptyContainer: {
+  emptyWrap: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 50,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 60,
   },
-  emptyText: {
-    fontSize: 16,
-    color: '#6B7280',
+  emptyEmoji: {
+    fontSize: 40,
+    marginBottom: 12,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 6,
+  },
+  emptyDesc: {
+    fontSize: 14,
+    color: "#6B7280",
+    textAlign: "center",
+    paddingHorizontal: 20,
+    lineHeight: 20,
   },
 });

@@ -1,43 +1,45 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from "react";
 import {
-    Alert,
-    Modal,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
-} from 'react-native';
-import CustomAlert from '../components/CustomAlert';
-import ProductCard from '../components/ProductCard';
-import { SERVER_URL } from '../constants/server';
-import { getToken } from '../contexts/tokenManager';
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import CustomAlert from "../components/CustomAlert";
+import ProductCard from "../components/ProductCard";
+import { SERVER_URL } from "../constants/server";
+import { getToken } from "../contexts/tokenManager";
 
 interface Product {
   id: string;
   productName: string;
   productDescription: string;
-  bankName: string;
-  bankLogo: string;
+  bankName: string; // ✅ bankLogo 제거
   isExclusive: boolean;
   exclusiveNote?: string;
   preferentialNote?: string;
+  // 필요 시 확장:
+  // bankLogoUrl?: string;      // 서버에서 URL 내려줄 때
+  // bankLogoText?: string;     // 텍스트 로고 쓰고 싶을 때
 }
 
 interface AddAccountScreenProps {
   onProductSelect: (product: Product) => void;
+  onBack?: () => void; // 뒤로가기 콜백
 }
 
-// 백엔드 응답 DTO 타입
 interface ProductListItemDTO {
-  accountName: string; // 상품명
-  accountDescription: string; // 상품 설명
-  accountTypeUniqueNo: string; // 상품 고유 번호
+  accountName: string;
+  accountDescription: string;
+  accountTypeUniqueNo: string;
 }
 
-// 계좌 생성 입력 모달 컴포넌트
 interface AccountCreationInputModalProps {
   visible: boolean;
   productName: string;
@@ -49,103 +51,97 @@ function AccountCreationInputModal({
   visible,
   productName,
   onConfirm,
-  onCancel
+  onCancel,
 }: AccountCreationInputModalProps) {
-  const [accountName, setAccountName] = useState('');
-  const [targetAmount, setTargetAmount] = useState('');
+  const [accountName, setAccountName] = useState("");
+  const [targetAmount, setTargetAmount] = useState("");
   const [isValid, setIsValid] = useState(false);
 
-  // 숫자에 쉼표 추가하는 함수
   const formatNumberWithCommas = (value: string): string => {
-    // 숫자가 아닌 문자 제거
-    const numericValue = value.replace(/[^0-9]/g, '');
-    // 3자리 단위로 쉼표 추가
-    return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const numeric = value.replace(/[^0-9]/g, "");
+    return numeric.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
-  // 목표금액 입력 처리
   const handleTargetAmountChange = (value: string) => {
-    const formattedValue = formatNumberWithCommas(value);
-    setTargetAmount(formattedValue);
+    setTargetAmount(formatNumberWithCommas(value));
   };
 
-  React.useEffect(() => {
-    const isAccountNameValid = accountName.trim().length > 0 && accountName.trim().length <= 20;
-    // 쉼표 제거 후 숫자 검증
-    const numericAmount = targetAmount.replace(/[^0-9]/g, '');
-    const isTargetAmountValid = numericAmount.length > 0 && parseInt(numericAmount) > 0;
-    setIsValid(isAccountNameValid && isTargetAmountValid);
+  useEffect(() => {
+    const nameOk = accountName.trim().length > 0 && accountName.trim().length <= 20;
+    const numeric = targetAmount.replace(/[^0-9]/g, "");
+    const amountOk = numeric.length > 0 && parseInt(numeric, 10) > 0;
+    setIsValid(nameOk && amountOk);
   }, [accountName, targetAmount]);
 
   const handleConfirm = () => {
-    if (!isValid) {
-      Alert.alert('입력 오류', '모든 필드를 올바르게 입력해주세요.');
-      return;
-    }
-    // 쉼표 제거 후 숫자만 전달
-    const numericAmount = targetAmount.replace(/[^0-9]/g, '');
-    onConfirm(accountName.trim(), numericAmount);
-  };
-
-  const handleCancel = () => {
-    setAccountName('');
-    setTargetAmount('');
-    setIsValid(false);
-    onCancel();
+    if (!isValid) return;
+    const numeric = targetAmount.replace(/[^0-9]/g, "");
+    onConfirm(accountName.trim(), numeric);
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="slide"
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.overlay}>
-        <View style={styles.modal}>
-          <Text style={styles.modalTitle}>계좌 생성</Text>
-          <Text style={styles.modalSubtitle}>{productName}</Text>
-          
+        <View style={styles.modalCard}>
+          {/* 드래그바 느낌의 핸들 */}
+          <View style={styles.handleBar} />
+
+          {/* 헤더 */}
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>계좌 생성</Text>
+            <Text style={styles.modalSubtitle} numberOfLines={2}>
+              {productName}
+            </Text>
+          </View>
+
+          {/* 폼 */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>계좌 별칭</Text>
             <TextInput
               style={styles.input}
               value={accountName}
               onChangeText={setAccountName}
-              placeholder="계좌 별칭을 입력하세요"
+              placeholder="예) 생활비, 여행적금"
               maxLength={20}
+              placeholderTextColor="#9CA3AF"
             />
-            {accountName.length > 0 && accountName.length > 20 && (
-              <Text style={styles.errorText}>계좌 별칭은 20자 이하여야 합니다.</Text>
-            )}
+            <Text style={styles.helperText}>최대 20자 • 나중에 언제든지 변경할 수 있어요</Text>
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>목표 금액</Text>
-            <TextInput
-              style={styles.input}
-              value={targetAmount}
-              onChangeText={handleTargetAmountChange}
-              placeholder="목표 금액을 입력하세요"
-              keyboardType="numeric"
-            />
-            {targetAmount.length > 0 && targetAmount.replace(/[^0-9]/g, '').length === 0 && (
-              <Text style={styles.errorText}>숫자만 입력해주세요.</Text>
-            )}
+            <View style={styles.inputRow}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                value={targetAmount}
+                onChangeText={handleTargetAmountChange}
+                placeholder="예) 1,000,000"
+                keyboardType="numeric"
+                placeholderTextColor="#9CA3AF"
+              />
+              <View style={styles.suffixPill}>
+                <Text style={styles.suffixPillText}>원</Text>
+              </View>
+            </View>
+            <Text style={styles.helperText}>숫자만 입력하면 자동으로 쉼표가 들어가요</Text>
           </View>
 
-          <View style={styles.modalButtonContainer}>
+          {/* 버튼 */}
+          <View style={styles.modalButtonRow}>
             <TouchableOpacity
-              style={[styles.modalButton, styles.cancelButton]}
-              onPress={handleCancel}
+              style={[styles.modalButton, styles.btnGhost]}
+              onPress={onCancel}
+              activeOpacity={0.9}
             >
-              <Text style={styles.cancelButtonText}>취소</Text>
+              <Text style={styles.btnGhostText}>취소</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.modalButton, styles.confirmButton, !isValid && styles.disabledButton]}
+              style={[styles.modalButton, styles.btnPrimary, !isValid && styles.btnDisabled]}
               onPress={handleConfirm}
               disabled={!isValid}
+              activeOpacity={0.9}
             >
-              <Text style={styles.confirmButtonText}>확인</Text>
+              <Text style={styles.btnPrimaryText}>확인</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -154,226 +150,163 @@ function AccountCreationInputModal({
   );
 }
 
-export default function AddAccountScreen({ onProductSelect }: AddAccountScreenProps) {
+export default function AddAccountScreen({ onProductSelect, onBack }: AddAccountScreenProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showCustomAlert, setShowCustomAlert] = useState(false);
-  const [alertMessage, setAlertMessage] = useState('');
+  const [alertMessage, setAlertMessage] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showInputModal, setShowInputModal] = useState(false);
+  const [query, setQuery] = useState("");
 
-  // 상품 목록 가져오기
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      console.log('🛍️ === 상품 목록 요청 ===');
-      const endpoint = '/api/v1/product/list';
-      
-      const response = await fetch(`${SERVER_URL}${endpoint}`, {
-        method: 'GET',
+      const response = await fetch(`${SERVER_URL}/api/v1/product/list`, {
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${await getToken()}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${await getToken()}`,
+          "Content-Type": "application/json",
         },
       });
 
-      if (!response.ok) {
-        throw new Error(`상품 목록 요청 실패: ${response.status} ${response.statusText}`);
-      }
+      if (!response.ok) throw new Error("상품 목록 요청 실패");
 
       const data = await response.json();
-      console.log('🛍️ === 상품 목록 응답 ===');
-      console.log(JSON.stringify(data, null, 2));
-
-      // 백엔드 DTO → 화면용 Entity 매핑
       const mapped: Product[] = data.map((item: ProductListItemDTO) => ({
         id: item.accountTypeUniqueNo,
         productName: item.accountName,
         productDescription: item.accountDescription,
-        bankName: '신한은행', // 백엔드 응답에 없으므로 고정값/추후 확장
-        bankLogo: '신한\n은행', // 단순 표시용
-        isExclusive: false, // 응답에 없으므로 기본값
+        bankName: "신한은행", // ✅ 로고는 ProductCard 내부 매핑으로 자동 처리
+        isExclusive: false,
+        // bankLogoUrl: undefined, // 서버가 URL 내려주면 여기 채워서 넘기면 됨
+        // bankLogoText: "신한",   // 텍스트 로고 쓰고 싶으면 선택적으로
       }));
-
       setProducts(mapped);
-      console.log('🛍️ === 상품 목록 변환 결과 ===');
-      console.log(JSON.stringify(mapped, null, 2));
-    } catch (error) {
-      console.error('❌ 상품 목록 가져오기 실패:', error);
-      
-      let errorMessage = '상품 목록을 불러오는데 실패했습니다.';
-      
-      if (error instanceof Error) {
-        if (error.message.includes('401')) {
-          errorMessage = '인증이 필요합니다. 다시 로그인해 주세요.';
-        } else if (error.message.includes('404')) {
-          errorMessage = '상품 정보를 찾을 수 없습니다.';
-        } else if (error.message.includes('500')) {
-          errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
-        }
-      }
-      
-      // 에러 메시지를 사용자에게 표시하거나 상태로 관리
+    } catch {
       setProducts([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // 새로고침 처리
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchProducts();
     setRefreshing(false);
   };
 
-  // 계좌 생성 API 호출
   const createAccount = async (product: Product, accountName: string, targetAmount: string) => {
-    try {
-      console.log('🏦 === 계좌 생성 요청 ===');
-      console.log('선택된 상품:', JSON.stringify(product, null, 2));
-      console.log('계좌 별칭:', accountName);
-      console.log('목표 금액:', targetAmount);
-      
-      const response = await fetch(`${SERVER_URL}/api/v1/account`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${await getToken()}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          accountName: accountName,
-          accountTypeUniqueNo: product.id,
-          targetAmount: Number(targetAmount)
-        }),
-      });
-
-      console.log('🏦 === 응답 정보 ===');
-      console.log('Status:', response.status);
-      console.log('Status Text:', response.statusText);
-
-      // 201 Created는 성공을 의미하므로 별도 처리
-      if (response.status === 201) {
-        console.log('🏦 === 계좌 생성 성공 (201 Created) ===');
-        return { success: true, message: '계좌가 성공적으로 생성되었습니다.' };
-      }
-
-      // 다른 성공 상태코드들 처리
-      if (response.ok) {
-        const responseText = await response.text();
-        console.log('🏦 === 서버 응답 텍스트 ===');
-        console.log('Response Text:', responseText);
-        console.log('Response Text Length:', responseText.length);
-        
-        if (responseText.trim()) {
-          const result = JSON.parse(responseText);
-          console.log('🏦 === 계좌 생성 응답 ===');
-          console.log(JSON.stringify(result, null, 2));
-          return result;
-        } else {
-          console.log('🏦 === 빈 응답 - 성공으로 처리 ===');
-          return { success: true, message: '계좌가 성공적으로 생성되었습니다.' };
-        }
-      }
-
-      // 에러 상태코드 처리
-      throw new Error(`계좌 생성 요청 실패: ${response.status} ${response.statusText}`);
-    } catch (error) {
-      console.error('❌ 계좌 생성 실패:', error);
-      throw error;
-    }
+    const response = await fetch(`${SERVER_URL}/api/v1/account`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${await getToken()}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        accountName,
+        accountTypeUniqueNo: product.id,
+        targetAmount: Number(targetAmount),
+      }),
+    });
+    if (!response.ok) throw new Error("계좌 생성 실패");
   };
 
-  // 상품 선택 처리
   const handleProductSelect = (product: Product) => {
     setSelectedProduct(product);
     setShowInputModal(true);
   };
 
-  // 모달 확인 핸들러
   const handleInputConfirm = async (accountName: string, targetAmount: string) => {
     setShowInputModal(false);
     if (!selectedProduct) return;
-    
     try {
-      const result = await createAccount(selectedProduct, accountName, targetAmount);
-      setAlertMessage('계좌가 성공적으로 생성되었습니다!');
+      await createAccount(selectedProduct, accountName, targetAmount);
+      setAlertMessage("계좌가 성공적으로 생성되었습니다!");
       setShowCustomAlert(true);
       onProductSelect(selectedProduct);
-    } catch (error) {
-      console.error('❌ 계좌 생성 실패:', error);
-      
-      let errorMessage = '계좌 생성에 실패했습니다. 다시 시도해주세요.';
-      if (error instanceof Error) {
-        if (error.message.includes('401')) {
-          errorMessage = '인증이 필요합니다. 다시 로그인해 주세요.';
-        } else if (error.message.includes('400')) {
-          errorMessage = '잘못된 요청입니다. 입력 정보를 확인해 주세요.';
-        } else if (error.message.includes('500')) {
-          errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
-        }
-      }
-      
-      setAlertMessage(errorMessage);
+    } catch {
+      setAlertMessage("계좌 생성 실패");
       setShowCustomAlert(true);
     }
-  };
-
-  // 모달 취소 핸들러
-  const handleInputCancel = () => {
-    setShowInputModal(false);
-    setSelectedProduct(null);
-  };
-
-  // 커스텀 Alert 닫기
-  const closeCustomAlert = () => {
-    setShowCustomAlert(false);
-    setAlertMessage('');
-    setSelectedProduct(null);
   };
 
   useEffect(() => {
     fetchProducts();
   }, []);
 
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter((p) =>
+      [p.productName, p.productDescription, p.bankName]
+        .filter(Boolean)
+        .some((v) => v.toLowerCase().includes(q))
+    );
+  }, [products, query]);
+
   return (
     <View style={styles.container}>
       {/* 헤더 */}
+      {/* 헤더 */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>수시입출금 상품목록</Text>
+        <View style={styles.headerTop}>
+          {onBack && (
+            <Pressable style={styles.backBtnAbs} onPress={onBack}>
+              <Text style={styles.backBtnText}>←</Text>
+            </Pressable>
+          )}
+          <Text style={styles.headerTitle}>수시입출금 상품목록</Text>
+        </View>
+
+        <Text style={styles.headerSubtitle}>필요한 계좌 상품을 선택해서 바로 만들 수 있어요</Text>
+
+        {/* 검색 바 */}
+        <View style={styles.searchBar}>
+          <TextInput
+            style={styles.searchInput}
+            value={query}
+            onChangeText={setQuery}
+            placeholder="상품명/설명/은행명으로 검색"
+            placeholderTextColor="#9CA3AF"
+          />
+          {query.length > 0 && (
+            <TouchableOpacity style={styles.clearBtn} onPress={() => setQuery("")}>
+              <Text style={styles.clearBtnText}>×</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
-      {/* 상품 목록 */}
+      {/* 목록 */}
       <ScrollView
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         showsVerticalScrollIndicator={false}
       >
         {loading ? (
-          <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>상품 목록을 불러오는 중...</Text>
-          </View>
-        ) : products.length > 0 ? (
-          products.map((product) => (
+          <ActivityIndicator size="small" color="#8B5CF6" style={{ marginTop: 40 }} />
+        ) : filtered.length > 0 ? (
+          filtered.map((product) => (
             <ProductCard
               key={product.id}
               productName={product.productName}
               productDescription={product.productDescription}
               bankName={product.bankName}
-              bankLogo={product.bankLogo}
+              // bankLogoUrl={product.bankLogoUrl} // 서버에서 주면 주석 해제
+              // bankLogoText={product.bankLogoText}
               isExclusive={product.isExclusive}
-              exclusiveNote={product.exclusiveNote}
-              preferentialNote={product.preferentialNote}
               onPress={() => handleProductSelect(product)}
+              style={{ marginBottom: 16 }}
             />
           ))
         ) : (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>등록된 상품이 없습니다.</Text>
+          <View style={styles.emptyWrap}>
+            <Text style={styles.emptyEmoji}>🫧</Text>
+            <Text style={styles.emptyTitle}>표시할 상품이 없어요</Text>
+            <Text style={styles.emptyDesc}>검색어나 조건을 다시 확인해 주세요.</Text>
           </View>
         )}
       </ScrollView>
@@ -384,20 +317,18 @@ export default function AddAccountScreen({ onProductSelect }: AddAccountScreenPr
           visible={showInputModal}
           productName={selectedProduct.productName}
           onConfirm={handleInputConfirm}
-          onCancel={handleInputCancel}
+          onCancel={() => setShowInputModal(false)}
         />
       )}
 
-      {/* 커스텀 Alert */}
+      {/* Alert */}
       {showCustomAlert && (
         <CustomAlert
           visible={showCustomAlert}
           title="알림"
           message={alertMessage}
-          buttons={[
-            { text: '확인', onPress: closeCustomAlert }
-          ]}
-          onClose={closeCustomAlert}
+          buttons={[{ text: "확인", onPress: () => setShowCustomAlert(false) }]}
+          onClose={() => setShowCustomAlert(false)}
         />
       )}
     </View>
@@ -405,130 +336,137 @@ export default function AddAccountScreen({ onProductSelect }: AddAccountScreenPr
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
+  container: { flex: 1, backgroundColor: "#FFF" },
+  header: { padding: 20, borderBottomWidth: 1, borderBottomColor: "#F3F4F6" },
+  headerTop: {
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 32,
   },
-  header: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
+  backBtnAbs: { position: "absolute", left: 0, padding: 4 },
+  backBtnText: { fontSize: 20, color: "#374151" },
+  headerRow: { flexDirection: "row", alignItems: "center" },
+  backBtn: { marginRight: 12, padding: 4 },
   headerTitle: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#000000',
-    textAlign: 'center',
+    fontWeight: "800",
+    color: "#111827",
+    textAlign: "center",
   },
-  placeholder: {
-    width: 40,
+  headerSubtitle: { marginTop: 6, fontSize: 13, color: "#6B7280", textAlign: "center" },
+  searchBar: { marginTop: 14, position: "relative" },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    paddingRight: 40,
+    fontSize: 15,
+    color: "#111827",
   },
-  content: {
-    flex: 1,
+  clearBtn: {
+    position: "absolute",
+    right: 8,
+    top: 8,
+    height: 32,
+    width: 32,
+    borderRadius: 16,
+    backgroundColor: "#EDE9FE",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  contentContainer: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  loadingText: {
-    fontSize: 16,
-    color: '#6B7280',
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#6B7280',
-  },
-  // 모달 스타일
+  clearBtnText: { fontSize: 18, color: "#6D28D9" },
+  content: { flex: 1 },
+  contentContainer: { padding: 20, paddingBottom: 40 },
+  emptyWrap: { alignItems: "center", paddingVertical: 64 },
+  emptyEmoji: { fontSize: 40, marginBottom: 12 },
+  emptyTitle: { fontSize: 18, fontWeight: "700", color: "#374151", marginBottom: 6 },
+  emptyDesc: { fontSize: 14, color: "#6B7280", textAlign: "center", paddingHorizontal: 20 },
+  // 모달
+  // 오버레이 & 카드
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(15, 23, 42, 0.55)", // 살짝 어두운 유리 느낌
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
   },
-  modal: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 24,
-    width: '80%',
-    maxWidth: 400,
+  modalCard: {
+    width: "100%",
+    maxWidth: 420,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 18,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: "#EEF2F7",
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 8,
+  handleBar: {
+    alignSelf: "center",
+    width: 44,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: "#E5E7EB",
+    marginBottom: 10,
   },
-  modalSubtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#333',
-  },
+
+  // 헤더
+  modalHeader: { alignItems: "center", marginBottom: 8 },
+  modalTitle: { fontSize: 20, fontWeight: "900", color: "#0B1220" },
+  modalSubtitle: { marginTop: 6, fontSize: 14, color: "#6B7280", textAlign: "center" },
+
+  // 입력
+  inputContainer: { marginTop: 16 },
+  inputLabel: { fontSize: 13, fontWeight: "800", marginBottom: 8, color: "#374151" },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  modalButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 24,
-  },
-  modalButton: {
-    flex: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
     paddingVertical: 12,
-    borderRadius: 8,
-    marginHorizontal: 8,
+    paddingHorizontal: 14,
+    fontSize: 16,
+    backgroundColor: "#F9FAFB",
+    color: "#111827",
   },
-  cancelButton: {
-    backgroundColor: '#f3f4f6',
+  inputRow: { flexDirection: "row", alignItems: "center" },
+  suffixPill: {
+    marginLeft: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: "#EEF2FF",
+    borderWidth: 1,
+    borderColor: "#E5E7FF",
   },
-  confirmButton: {
-    backgroundColor: '#a78bfa',
+  suffixPillText: { fontSize: 13, fontWeight: "800", color: "#4F46E5" },
+  helperText: { marginTop: 6, fontSize: 12, color: "#9CA3AF" },
+
+  // 버튼
+  modalButtonRow: { flexDirection: "row", marginTop: 22 },
+  modalButton: { flex: 1, paddingVertical: 13, borderRadius: 12 },
+  btnGhost: {
+    backgroundColor: "#F3F4F6",
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
-  disabledButton: {
-    backgroundColor: '#d1d5db',
+  btnGhostText: { color: "#374151", textAlign: "center", fontWeight: "800" },
+  btnPrimary: {
+    backgroundColor: "#8B5CF6",
+    marginLeft: 8,
+    shadowColor: "#8B5CF6",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 3,
   },
-  cancelButtonText: {
-    color: '#6b7280',
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-  confirmButtonText: {
-    color: 'white',
-    textAlign: 'center',
-    fontWeight: '600',
-  },
+  btnPrimaryText: { color: "#FFF", textAlign: "center", fontWeight: "900" },
+  btnDisabled: { backgroundColor: "#D1D5DB", shadowOpacity: 0 },
 });
