@@ -10,6 +10,17 @@ export type RowItem = {
   requestId?: number; // 요청 id (있으면 Outbox/Inbox)
 };
 
+const isAbortLikeError = (err: any) => {
+  const msg = String(err?.message ?? "").toLowerCase();
+  return (
+    err?.name === "AbortError" ||       // fetch/DOMException
+    err?.__CANCEL__ === true ||         // axios 취소 플래그
+    err?.code === "ERR_CANCELED" ||     // axios 에러 코드
+    msg.includes("aborted") ||          // RN 환경 메시지
+    msg.includes("canceled")            // 기타 취소 메시지
+  );
+};
+
 export function useFriends() {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -107,22 +118,50 @@ export function useFriends() {
   // ──────────────────────────────────────────────
   // 로더들
   // ──────────────────────────────────────────────
+  // const loadFriends = useCallback(async () => {
+  //   const mySeq = ++seqRef.current;
+  //   setLoading(true);
+  //   try {
+  //     const json = await authedGet<any[]>(`/api/v1/friends`);
+  //     if (mySeq === seqRef.current) {
+  //       setData(mapRows(json));
+  //       setPrimaryLabel(undefined); // 기본: 친구 삭제
+  //     }
+  //   } catch (e) {
+  //     if (mySeq === seqRef.current) setData([]);
+  //     console.error("친구 목록 불러오기 실패:", e);
+  //   } finally {
+  //     if (mySeq === seqRef.current) setLoading(false);
+  //   }
+  // }, [authedGet, mapRows]);
   const loadFriends = useCallback(async () => {
-    const mySeq = ++seqRef.current;
-    setLoading(true);
-    try {
-      const json = await authedGet<any[]>(`/api/v1/friends`);
-      if (mySeq === seqRef.current) {
-        setData(mapRows(json));
-        setPrimaryLabel(undefined); // 기본: 친구 삭제
-      }
-    } catch (e) {
-      if (mySeq === seqRef.current) setData([]);
-      console.error("친구 목록 불러오기 실패:", e);
-    } finally {
-      if (mySeq === seqRef.current) setLoading(false);
+  const mySeq = ++seqRef.current;
+  setLoading(true);
+  try {
+    const json = await authedGet<any[]>(`/api/v1/friends`);
+    if (mySeq === seqRef.current) {
+      setData(mapRows(json));
+      setPrimaryLabel(undefined); // 기본: 친구 삭제
     }
-  }, [authedGet, mapRows]);
+  } catch (e: any) {
+    // 최신 호출이 아니라면 조용히 무시
+    if (mySeq !== seqRef.current) return;
+
+    // ✅ 요청 취소(Abort/Canceled)는 에러로 취급하지 않고 조용히 무시
+    if (isAbortLikeError(e)) {
+      // 필요하면 디버그 로그만:
+      // __DEV__ && console.log("[loadFriends] aborted");
+      return;
+    }
+
+    // 그 외 진짜 에러만 처리
+    setData([]);
+    console.error("친구 목록 불러오기 실패:", e);
+  } finally {
+    if (mySeq === seqRef.current) setLoading(false);
+  }
+}, [authedGet, mapRows]);
+
 
   const searchUsers = useCallback(
     async (q: string) => {

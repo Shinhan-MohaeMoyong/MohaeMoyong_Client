@@ -1,7 +1,7 @@
 import { RowItem } from '@/hooks/useFriends';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AddButton from '../components/addPlan/AddButton';
 import AddPlanHeader from '../components/addPlan/AddPlanHeader';
@@ -78,89 +78,101 @@ export default function AddPlanScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: "#fff" }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
-    >
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <AddPlanHeader
-          isPublic={formData.isPublic}
-          onTogglePublic={() => updateFormData({ isPublic: !formData.isPublic })}
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor:'FFFFFF'}]}>
+      <AddPlanHeader
+        isPublic={formData.isPublic}
+        onTogglePublic={() => updateFormData({ isPublic: !formData.isPublic })}
+      />
+
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + 16, // 과도한 120 제거
+        }}
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'} // ✅ 핵심!
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        showsVerticalScrollIndicator={false}
+      >
+        <EventTypeSelector
+          selectedType={formData.eventType}
+          onSelectType={(type) => updateFormData({ eventType: type })}
         />
 
-        <ScrollView
-          style={styles.content}
-          contentContainerStyle={{ paddingBottom: 120 }}
-          showsVerticalScrollIndicator={false}
-        >
-          <EventTypeSelector
-            selectedType={formData.eventType}
-            onSelectType={(type) => updateFormData({ eventType: type })}
-          />
-
-          <PlanInputFields
-            title={formData.title}
-            location={formData.place}
-            content={formData.content}
-            onTitleChange={(title) => updateFormData({ title })}
-            onLocationChange={(place) => updateFormData({ place })}
-            onContentChange={(content) => updateFormData({ content })}
-          />
-
-          <PhotoUpload
-            selectedFiles={formData.files}
-            onPhotoUpload={handlePhotoUpload}
-            onPhotoRemove={handlePhotoRemove}
-          />
-
-          <DateTimeSelector
-            selectedDate={formData.selectedDate}
-            startTime={formData.startTime}
-            endTime={formData.endTime}
-            onDateSelect={(selectedDate) => updateFormData({ selectedDate })}
-            onStartTimeChange={handleStartTimeChange}
-            onEndTimeChange={handleEndTimeChange}
-          />
-
-          <RepeatOption
-            repeatConfig={formData.repeatConfig}
-            onRepeatConfigChange={(repeatConfig) => updateFormData({ repeatConfig })}
-          />
-
-          <SaveOption
-            isEnabled={formData.saveOption}
-            onToggle={() => updateFormData({ saveOption: !formData.saveOption })}
-            withdrawalAccount={formData.withdrawalAccount}
-            depositAccount={formData.depositAccount}
-            savingAmount={formData.savingAmount}
-            onWithdrawalAccountSelect={handleWithdrawalAccountSelect}
-            onDepositAccountSelect={handleDepositAccountSelect}
-            onSavingAmountChange={handleSavingAmountChange}
-          />
-        </ScrollView>
-
-        <AddButton
-          onPress={async () => {
-            const result = await handleAddPlan();
-            if (result?.success) {
-              router.replace("/(tabs)/Mohaeyoung");
-            }
-          }}
-          disabled={isLoading}
+        <PlanInputFields
+          title={formData.title}
+          location={formData.place}
+          content={formData.content}
+          onTitleChange={(title) => updateFormData({ title })}
+          onLocationChange={(place) => updateFormData({ place })}
+          onContentChange={(content) => updateFormData({ content })}
         />
-      </View>
-    </KeyboardAvoidingView>
+
+        <PhotoUpload
+          selectedFiles={formData.files}
+          onPhotoUpload={handlePhotoUpload}
+          onPhotoRemove={handlePhotoRemove}
+        />
+
+        <DateTimeSelector
+          selectedDate={formData.selectedDate}
+          startTime={formData.startTime}
+          endTime={formData.endTime}
+          onDateSelect={(selectedDate) => updateFormData({ selectedDate })}
+          onStartTimeChange={handleStartTimeChange}
+          onEndTimeChange={handleEndTimeChange}
+        />
+
+        <RepeatOption
+          repeatConfig={formData.repeatConfig}
+          onRepeatConfigChange={(repeatConfig) => updateFormData({ repeatConfig })}
+        />
+
+        <SaveOption
+          isEnabled={formData.saveOption}
+          onToggle={() => updateFormData({ saveOption: !formData.saveOption })}
+          withdrawalAccount={formData.withdrawalAccount}
+          depositAccount={formData.depositAccount}
+          savingAmount={formData.savingAmount}
+          onWithdrawalAccountSelect={handleWithdrawalAccountSelect}
+          onDepositAccountSelect={handleDepositAccountSelect}
+          onSavingAmountChange={handleSavingAmountChange}
+        />
+
+        {/* 버튼을 푸터로 */}
+        <View style={[styles.footerCard, { marginBottom: insets.bottom + 8 }]}>
+          <AddButton
+            onPress={async () => {
+              const result = await handleAddPlan();
+              if (result?.success) router.replace("/(tabs)/Mohaeyoung");
+            }}
+            disabled={isLoading}
+            title="추가하기"
+          />
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // ✅ 페이지 배경(연회색) — 흰 바닥이 올라오지 않게
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
   },
+  // ✅ 스크롤뷰는 투명
   content: {
     flex: 1,
     paddingHorizontal: 20,
+    backgroundColor: 'transparent',
+  },
+  // ✅ 카드만 흰색
+  footerCard: {
+    marginTop: 8,
+    marginHorizontal: 12,
+    padding: 12,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
   },
 });

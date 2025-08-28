@@ -91,7 +91,7 @@ export default function MyPage() {
             console.log('친구관리 push');
             router.push('/friends')}} />
         </View>
-        <View style={styles.menuCard}>
+        <View>
             <LogoutBtn />
         </View>
       </ScrollView>
@@ -100,15 +100,15 @@ export default function MyPage() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F6F6F6' },
+  container: { flex: 1, backgroundColor: '#FFF' },
   header: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16,
-    paddingTop: 48, paddingBottom: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eee',
+    paddingTop: 70, paddingBottom: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eee',
   },
   headerTitle: { flex: 1, textAlign: 'center', fontSize: 18, fontWeight: 'bold' },
   content: { padding: 16 },
   profileCard: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#F6F6F6',
     borderRadius: 12, padding: 16, marginBottom: 16, elevation: 1,
   },
   profileImage: { width: 56, height: 56, borderRadius: 28, marginRight: 12 },
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   infoRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   infoText: { marginLeft: 8, fontSize: 15, color: '#222' },
   menuCard: {
-    backgroundColor: '#fff', borderRadius: 12, paddingVertical: 8, marginVertical: 8,
+    backgroundColor: '#F6F6F6', borderRadius: 12, paddingVertical: 8, marginVertical: 8,
     elevation: 1,
   },
   menuItem: {

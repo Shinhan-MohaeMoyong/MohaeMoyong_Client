@@ -53,7 +53,7 @@ export default function EventBlock({ plan, rect, isNew = false, onPress }: Props
 const styles = StyleSheet.create({
   wrap: {
     position: "absolute",
-    borderRadius: 5,
+    borderRadius: 0,
     padding: 8,
     overflow: "hidden",
   },
@@ -63,13 +63,13 @@ const styles = StyleSheet.create({
     marginLeft:-2
   },
   title: {
-    fontSize: 9,
+    fontSize: 13,
     fontWeight: "800",
     color: "#fff",
     includeFontPadding: false,
   },
   meta: {
-    fontSize: 8,
+    fontSize: 10,
     fontWeight: "600",
     color: "rgba(255,255,255,0.9)",
     includeFontPadding: false,

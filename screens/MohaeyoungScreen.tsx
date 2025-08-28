@@ -3,7 +3,7 @@ import MohaeyoungHeader from "@/components/MohaeyoungHeader";
 import PostBottomSheet from "@/components/post/PostBottomSheet";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import FriendsList from "../components/FriendsList";
 import WeekGrid from "../components/WeekGrid";
 import { useUser } from "../contexts/UserContext";
@@ -73,12 +73,13 @@ export default function MohaeyoungScreen() {
         }
     }, [loggedUser]);
 
-    return (
+    const headerWeekLabel = `${weekInfo.dateRange}`;
+
+    return ( 
         <View style={styles.container}>
             <MohaeyoungHeader 
                 onPressAdd={handleAddPlan}
-                name={currentUser?.name}
-                weekLabel={`${weekInfo.weekLabel} (${weekInfo.dateRange})`}
+                name={currentUser?.name} 
             />
             <View>
                 <FriendsList
@@ -91,6 +92,32 @@ export default function MohaeyoungScreen() {
                     setCurrentUserTo={setCurrentUserTo}
                 />
             </View>
+
+            {/* 가운데 주차 네비게이션 (‹ 주차 ›) */}
+            <View style={styles.weekHeader}>
+                <View style={styles.arrowWrapper}>
+                    <TouchableOpacity
+                    style={styles.arrowBtn}
+                    onPress={() => handleWeekChange(-1)}
+                    >
+                    <Text style={styles.arrowText}>‹</Text>
+                    </TouchableOpacity>
+                </View>
+
+                <View style={{ flex: 1, alignItems: "center" }}>
+                    <Text style={styles.weekTitle}>{headerWeekLabel}</Text>
+                </View>
+
+                <View style={styles.arrowWrapper}>
+                    <TouchableOpacity
+                    style={styles.arrowBtn}
+                    onPress={() => handleWeekChange(1)}
+                    >
+                    <Text style={styles.arrowText}>›</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+            
             {currentUser && (
                 <View style={styles.weekGridContainer}>
                     <WeekGrid
@@ -125,11 +152,62 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    padding: 16,
+    padding: 8,
   },
   weekGridContainer: {
-    marginBottom: 10,
     flex: 1,
-    padding: 16,
+    marginTop: 8,
+    marginBottom: 12,
+
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#E6E9EF",
+    borderRadius: 16,
+    overflow: "hidden",
+
+    // iOS shadow
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 10,
+    // Android shadow
+    elevation: 2,
+
+    padding: 5, // Grid 내부 선과 겹치지 않게 최소 패딩
+  },
+  
+    // 가운데 주차 네비게이션
+  weekHeader: {
+    marginTop: 3,
+    marginBottom: 8,
+    paddingHorizontal: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+  weekTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#2F2A45",
+  },
+  arrowBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E6E3F5",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  arrowText: { fontSize: 18, fontWeight: "700", color: "#7C6BD9", marginTop: -2 },
+  arrowWrapper: {
+    width: 40, // 👈 좌/우 화살표 영역 고정
+    alignItems: "center",
   },
 });
