@@ -4,8 +4,7 @@ import { useCallback, useMemo } from 'react';
 export const useEventBlock = (plan: PlanEntity) => {
   // 색상 팔레트 정의
   const palette = useMemo(() => [
-    "#7C3AED", "#2563EB", "#059669", "#EA580C", "#DC2626",
-    "#0EA5E9", "#16A34A", "#9333EA", "#F59E0B", "#EF4444",
+    "#F08676", "#FCAA67", "#A7C970", "#7CD1C1", "#7AA5E9",
   ], []);
 
   // 단순 해시 함수

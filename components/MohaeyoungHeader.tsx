@@ -1,5 +1,5 @@
-import React from "react";
-import { GestureResponderEvent, Pressable, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { GestureResponderEvent, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type Props = {
   title?: string;
@@ -17,66 +17,110 @@ export default function MohaeyoungHeader({
   onPressAdd,
 }: Props) {
   return (
-    <View>
-        <Text style={styles.name}>{name}님의</Text>
-    <View style={styles.row}>
+    <View style={styles.container}>
       <View style={styles.left}>
-        <Text style={styles.title}>{title}</Text>
-        <Pressable onPress={onPressWeek} hitSlop={6}>
-          <Text style={styles.week}>{weekLabel}</Text>
-        </Pressable>
+        <View style={styles.titleRow}>
+          {!!name && (
+            <>
+              <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
+                {name}
+              </Text>
+              <Text style={styles.suffix}>의 {title}</Text>
+            </>
+          )}
+          {!name && (
+            <Text style={styles.titleOnly}>{title}</Text>
+          )}
+        </View>
       </View>
-
-      <Pressable style={styles.addBtn} onPress={onPressAdd} hitSlop={6}>
-        <Text style={styles.plus}>＋</Text>
-      </Pressable>
-    </View>
-    </View>
+      
+      <View style={styles.iconRow}>
+        <TouchableOpacity
+          onPress={onPressAdd}
+          style={styles.addBox}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="add" size={20} color="#fff" />
+        </TouchableOpacity>
+      </View>
+      </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: {
+  container: {
+    paddingHorizontal: 16,
+    paddingBottom: 10,
     flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-    marginLeft: 5,
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    backgroundColor: "#fff",
   },
-  left: {
-    flex: 1,
+  left: { flex: 1 },
+  term: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#8C93FF",
+    marginBottom: 2,
+  },
+  titleRow: {
     flexDirection: "row",
     alignItems: "baseline",
-    gap: 5,
+    flexWrap: "wrap",
   },
   name: {
-    fontSize: 12,
-    fontWeight: "800",
-    marginBottom: 0
-  },
-  title: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "700",
     color: "#111",
+    marginRight: 4,
   },
-  week: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#6E7AFF",
-    paddingTop: 0
+  suffix: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#555",
   },
-  addBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+  titleOnly: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#111",
+  },
+  right: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    marginLeft: 12,
+  },
+  iconBox: {
+    width: 28,
+    height: 28,
+    borderRadius: 7,
     borderWidth: 2,
-    borderColor: "#111",
+    borderColor: "#222",
     alignItems: "center",
     justifyContent: "center",
   },
-  plus: {
-    fontSize: 18,
-    lineHeight: 18,
-    color: "#111",
-    includeFontPadding: false,
+  iconGhost: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  iconGap: {
+    marginLeft: 18,
+  },
+  addBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,            // 동그란 버튼
+    backgroundColor: "#8C93FF",  // 보라색 배경
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
   },
 });
