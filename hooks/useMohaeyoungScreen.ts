@@ -123,7 +123,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
   }, []);
 
   useEffect(() => {
-    console.log('변경됨 plans:', plans);
+    console.log('변경됨 plans:', plans[currentUser?.id || 0]);
   }, [plans]);
 
   const endpointFriends = useMemo(() => `${serverUrl}/api/v1/friends`, [serverUrl]);
