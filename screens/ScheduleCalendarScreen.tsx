@@ -1,9 +1,11 @@
 import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import EventItem from "../components/EventItem";
 import MonthlyCalendar from "../components/MonthlyCalendar";
 import TopTabs, { TopTabKey } from "../components/TopTabs";
+import { SERVER_URL } from "../constants/server";
+import { getToken } from "../contexts/tokenManager";
 import { useUser } from "../contexts/UserContext";
 import { useMohaeyoung } from "../hooks/useMohaeyoungScreen";
 import type { PlanEntity } from "../types";
@@ -13,7 +15,7 @@ import SavingScreen from "./SavingScreen";
 
 export default function ScheduleCalendarScreen() {
   const { loggedUser } = useUser();
-  const { currentUser, plans, setCurrentUserTo } = useMohaeyoung({
+  const { currentUser, plans, setCurrentUserTo, setPlans } = useMohaeyoung({
     currentUser: loggedUser
       ? {
           id: loggedUser.userId,
@@ -31,6 +33,18 @@ export default function ScheduleCalendarScreen() {
   const [activeTab, setActiveTab] = useState<TopTabKey>("일정");
   const [selectedAccount, setSelectedAccount] = useState<any>(null);
   const [showAccountDetail, setShowAccountDetail] = useState(false);
+  
+  // 선택된 날짜의 일정 데이터 상태
+  const [selectedDatePlansData, setSelectedDatePlansData] = useState<PlanEntity[]>([]);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(false);
+  const [plansError, setPlansError] = useState<string | null>(null);
+  
+  // 계좌 관련 상태
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
+  const [showAccountSelector, setShowAccountSelector] = useState(false);
+  const [selectedPlanForAccount, setSelectedPlanForAccount] = useState<PlanEntity | null>(null);
+  const [accountType, setAccountType] = useState<'withdrawal' | 'deposit' | null>(null);
 
   React.useEffect(() => {
     if (loggedUser && setCurrentUserTo) {
@@ -58,25 +72,201 @@ export default function ScheduleCalendarScreen() {
     return map;
   }, [userPlans]);
 
-  // 선택된 날짜의 일정들
-  const selectedDatePlans = useMemo(() => {
-    const selectedKey = toKey(selectedDate);
-    return userPlans.filter((plan) => {
-      const planKey = toKey(new Date(plan.startTime));
-      return planKey === selectedKey;
-    });
-  }, [userPlans, selectedDate]);
+  // 선택된 날짜의 일정들 (새로운 API 응답 사용)
+  const selectedDatePlans = selectedDatePlansData;
+
+  // 계좌 목록 조회 API
+  const fetchAccounts = async () => {
+    try {
+      setIsLoadingAccounts(true);
+      console.log("🏦 계좌 목록 조회 시작");
+      
+      const response = await fetch(`${SERVER_URL}/api/v1/account/simpleList`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${await getToken()}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`계좌 조회 실패: ${response.status}`);
+      }
+
+      const accountsData = await response.json();
+      console.log("✅ 계좌 목록 조회 성공:", accountsData);
+      
+      // API 응답을 EventItem에서 사용할 수 있는 형태로 변환
+      const mappedAccounts = accountsData.map((account: any) => ({
+        accountNo: account.accountNo,
+        accountName: account.accountName,
+        accountBalance: account.accountBalance,
+      }));
+      
+      setAccounts(mappedAccounts);
+      return mappedAccounts;
+    } catch (error) {
+      console.error('❌ 계좌 목록 조회 실패:', error);
+      return [];
+    } finally {
+      setIsLoadingAccounts(false);
+    }
+  };
+
+  // 날짜별 일정 조회 API
+  const fetchPlansByDate = async (date: Date) => {
+    try {
+      setIsLoadingPlans(true);
+      setPlansError(null);
+      
+             const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; // YYYY-MM-DD 형식 (로컬 시간 기준)
+      console.log("📅 날짜별 일정 조회 시작:", dateString);
+      
+      const response = await fetch(`${SERVER_URL}/api/v1/plans/${dateString}/myPlans`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${await getToken()}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`일정 조회 실패: ${response.status}`);
+      }
+
+      const plansData = await response.json();
+      console.log("✅ 날짜별 일정 조회 성공:", plansData);
+      return plansData;
+    } catch (error) {
+      console.error('❌ 날짜별 일정 조회 실패:', error);
+      let errorMessage = '일정을 불러오지 못했습니다.';
+      if (error instanceof Error) {
+        if (error.message.includes('401')) {
+          errorMessage = '인증이 필요합니다. 다시 로그인해 주세요.';
+        } else if (error.message.includes('404')) {
+          errorMessage = '해당 날짜의 일정을 찾을 수 없습니다.';
+        } else if (error.message.includes('500')) {
+          errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+        }
+      }
+      setPlansError(errorMessage);
+      return [];
+    } finally {
+      setIsLoadingPlans(false);
+    }
+  };
 
   // 날짜 선택 시 바텀시트 열기
-  const handleDateSelect = (date: Date) => {
+  const handleDateSelect = async (date: Date) => {
     console.log("🔍 handleDateSelect 호출됨, 날짜:", date.toDateString());
     setSelectedDate(date);
+    
+    // 새로운 API 호출
+    const plansData = await fetchPlansByDate(date);
+    setSelectedDatePlansData(plansData);
   };
 
   // 일정 삭제 핸들러
-  const handleDeletePlan = (planId: string) => {
-    // TODO: 일정 삭제 로직 구현
-    console.log("Delete plan:", planId);
+  const handleDeletePlan = async (planId: string) => {
+    // 삭제 확인 알림창 표시
+    Alert.alert(
+      "일정 삭제",
+      "정말로 이 일정을 삭제하시겠습니까?",
+      [
+        {
+          text: "취소",
+          style: "cancel",
+        },
+        {
+          text: "삭제",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              console.log("🗑️ 일정 삭제 시작:", planId);
+              
+              const response = await fetch(`${SERVER_URL}/api/v1/plans/${planId}`, {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${await getToken()}`,
+                  'Content-Type': 'application/json',
+                },
+              });
+
+              if (!response.ok) {
+                throw new Error(`일정 삭제 실패: ${response.status} ${response.statusText}`);
+              }
+
+              console.log("✅ 일정 삭제 성공:", planId);
+              
+              // 삭제 성공 후 UI 업데이트
+              // plans 상태에서 해당 일정 제거
+              setPlans(prev => {
+                const updatedPlans = { ...prev };
+                Object.keys(updatedPlans).forEach(userId => {
+                  const userIdNum = parseInt(userId);
+                  if (updatedPlans[userIdNum]) {
+                    updatedPlans[userIdNum] = updatedPlans[userIdNum].filter(
+                      (plan: PlanEntity) => String(plan.planId) !== planId
+                    );
+                  }
+                });
+                return updatedPlans;
+              });
+
+              // 삭제 성공 알림
+              Alert.alert('성공', '일정이 삭제되었습니다.');
+
+            } catch (error) {
+              console.error('❌ 일정 삭제 실패:', error);
+              
+              let errorMessage = '일정 삭제에 실패했습니다.';
+              if (error instanceof Error) {
+                if (error.message.includes('401')) {
+                  errorMessage = '인증이 필요합니다. 다시 로그인해 주세요.';
+                } else if (error.message.includes('404')) {
+                  errorMessage = '삭제할 일정을 찾을 수 없습니다.';
+                } else if (error.message.includes('403')) {
+                  errorMessage = '일정을 삭제할 권한이 없습니다.';
+                } else if (error.message.includes('500')) {
+                  errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+                }
+              }
+              
+              // 에러 알림 표시
+              Alert.alert('오류', errorMessage);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // 계좌 선택 핸들러
+  const handleAccountSelect = (plan: PlanEntity, type: 'withdrawal' | 'deposit') => {
+    setSelectedPlanForAccount(plan);
+    setAccountType(type);
+    setShowAccountSelector(true);
+    fetchAccounts(); // 계좌 목록 가져오기
+  };
+
+  // 계좌 선택 완료 핸들러
+  const handleAccountConfirm = (selectedAccount: any) => {
+    if (selectedPlanForAccount && accountType) {
+      // 선택된 계좌 정보를 일정에 업데이트
+      const updatedPlans = selectedDatePlansData.map(plan => {
+        if (plan.planId === selectedPlanForAccount.planId) {
+          return {
+            ...plan,
+            [accountType === 'withdrawal' ? 'withDrawAccountNo' : 'depositAccountNo']: selectedAccount.accountNo
+          };
+        }
+        return plan;
+      });
+      setSelectedDatePlansData(updatedPlans);
+    }
+    setShowAccountSelector(false);
+    setSelectedPlanForAccount(null);
+    setAccountType(null);
   };
 
   // 일정 완료 핸들러
@@ -85,11 +275,7 @@ export default function ScheduleCalendarScreen() {
     console.log("Complete plan:", planId);
   };
 
-  // 일정 수정 핸들러
-  const handleEditPlan = (planId: string) => {
-    // TODO: 일정 수정 로직 구현
-    console.log("Edit plan:", planId);
-  };
+
 
   // 시간 포맷팅 함수
   const formatTime = (date: Date) => {
@@ -157,6 +343,7 @@ export default function ScheduleCalendarScreen() {
 
   // 바텀시트 ref
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const accountSelectorModalRef = useRef<BottomSheetModal>(null);
 
   // snapPoints 계산
   const snapPoints = useMemo(() => {
@@ -185,8 +372,49 @@ export default function ScheduleCalendarScreen() {
         />
       </View>
 
-      {/* 탭에 따른 콘텐츠 렌더링 */}
-      {renderContent()}
+             {/* 탭에 따른 콘텐츠 렌더링 */}
+       {renderContent()}
+
+               {/* 계좌 선택 모달 */}
+        {showAccountSelector && (
+          <BottomSheetModal
+            ref={accountSelectorModalRef}
+            index={0}
+            snapPoints={["60%"]}
+            handleIndicatorStyle={{
+              backgroundColor: "#000000FF",
+              width: 60,
+              height: 6,
+            }}
+            backgroundStyle={styles.bottomSheetBackground}
+          >
+           <BottomSheetView style={styles.listContainer}>
+             <Text style={styles.eventsTitle}>
+               {accountType === 'withdrawal' ? '출금' : '입금'} 계좌 선택
+             </Text>
+             {isLoadingAccounts ? (
+               <View style={styles.loadingContainer}>
+                 <Text style={styles.loadingText}>계좌 목록을 불러오는 중...</Text>
+               </View>
+             ) : accounts.length > 0 ? (
+               accounts.map((account, index) => (
+                 <TouchableOpacity
+                   key={account.accountNo || index}
+                   style={styles.accountItem}
+                   onPress={() => handleAccountConfirm(account)}
+                 >
+                   <Text style={styles.accountName}>{account.accountName || '계좌명 없음'}</Text>
+                   <Text style={styles.accountNumber}>{account.accountNo}</Text>
+                 </TouchableOpacity>
+               ))
+             ) : (
+               <View style={styles.emptyEventsContainer}>
+                 <Text style={styles.emptyEventsText}>등록된 계좌가 없습니다.</Text>
+               </View>
+             )}
+           </BottomSheetView>
+         </BottomSheetModal>
+       )}
 
       {/* 바텀시트 */}
       {activeTab === "일정" && (
@@ -203,45 +431,54 @@ export default function ScheduleCalendarScreen() {
         >
           <ScrollView>
             <BottomSheetView style={styles.listContainer}>
-              {/* 선택된 날짜의 일정들 */}
-              <View style={styles.eventsContainer}>
-                <Text style={styles.eventsTitle}>
-                  {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일
-                  일정
-                </Text>
+                             {/* 선택된 날짜의 일정들 */}
+               <View style={styles.eventsContainer}>
+                 <Text style={styles.eventsTitle}>
+                   {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일
+                   일정
+                 </Text>
 
-                {selectedDatePlans.length > 0 ? (
-                  selectedDatePlans.map((plan, index) => (
-                    <EventItem
-                      key={plan.planId || index}
-                      startTime={formatTime(new Date(plan.startTime))}
-                      endTime={formatTime(new Date(plan.endTime))}
-                      title={plan.title}
-                      location={plan.place || "장소 없음"}
-                      onEdit={() =>
-                        handleEditPlan(String(plan.planId || ""))
-                      }
-                      onDelete={() =>
-                        handleDeletePlan(String(plan.planId || ""))
-                      }
-                      onComplete={() =>
-                        handleCompletePlan(String(plan.planId || ""))
-                      }
-                      withdrawalAccount="신한은행 123-456"
-                      depositAccount="카카오뱅크 789-012"
-                    />
-                  ))
-                ) : (
-                  <View style={styles.emptyEventsContainer}>
-                    <Text style={styles.emptyEventsText}>
-                      이 날의 일정이 없습니다.
-                    </Text>
-                    <Text style={styles.emptyEventsText}>
-                      친구들과 함께 추억을 만들어보세요!
-                    </Text>
-                  </View>
-                )}
-              </View>
+                 {isLoadingPlans ? (
+                   <View style={styles.loadingContainer}>
+                     <Text style={styles.loadingText}>일정을 불러오는 중...</Text>
+                   </View>
+                 ) : plansError ? (
+                   <View style={styles.errorContainer}>
+                     <Text style={styles.errorText}>{plansError}</Text>
+                   </View>
+                                   ) : selectedDatePlans.length > 0 ? (
+                    selectedDatePlans
+                      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                      .map((plan, index) => (
+                     <EventItem
+                       key={plan.planId || index}
+                       startTime={formatTime(new Date(plan.startTime))}
+                       endTime={formatTime(new Date(plan.endTime))}
+                       title={plan.title}
+                       location={plan.place || "장소 없음"}
+                       onDelete={() =>
+                         handleDeletePlan(String(plan.planId || ""))
+                       }
+                       onComplete={() =>
+                         handleCompletePlan(String(plan.planId || ""))
+                       }
+                                               withdrawalAccount={plan.withDrawAccountNo ? { bankName: "은행명", accountNumber: plan.withDrawAccountNo } : null}
+                        depositAccount={plan.depositAccountNo ? { bankName: "은행명", accountNumber: plan.depositAccountNo } : null}
+                        onSelectWithdrawalAccount={() => handleAccountSelect(plan, 'withdrawal')}
+                        onSelectDepositAccount={() => handleAccountSelect(plan, 'deposit')}
+                     />
+                   ))
+                 ) : (
+                   <View style={styles.emptyEventsContainer}>
+                     <Text style={styles.emptyEventsText}>
+                       이 날의 일정이 없습니다.
+                     </Text>
+                     <Text style={styles.emptyEventsText}>
+                       친구들과 함께 추억을 만들어보세요!
+                     </Text>
+                   </View>
+                 )}
+               </View>
             </BottomSheetView>
           </ScrollView>
         </BottomSheetModal>
@@ -313,6 +550,40 @@ const styles = StyleSheet.create({
   emptyEventsText: {
     fontSize: 20,
     fontWeight: "600",
+    color: "#666",
+  },
+  loadingContainer: {
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#666",
+  },
+  errorContainer: {
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#FF4757",
+  },
+  accountItem: {
+    backgroundColor: "#F8F9FA",
+    padding: 16,
+    marginVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E9ECEF",
+  },
+  accountName: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 4,
+  },
+  accountNumber: {
+    fontSize: 14,
     color: "#666",
   },
   topDivider: {

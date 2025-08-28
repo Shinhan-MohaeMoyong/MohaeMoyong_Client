@@ -1,16 +1,22 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+type AccountInfo = {
+  bankName: string;
+  accountNumber: string;
+};
+
 interface EventItemProps {
   startTime: string;
   endTime: string;
   title: string;
   location: string;
-  onEdit: () => void;
   onDelete: () => void;
   onComplete: () => void;
-  withdrawalAccount?: string;
-  depositAccount?: string;
+  withdrawalAccount?: AccountInfo | null;
+  depositAccount?: AccountInfo | null;
+  onSelectWithdrawalAccount?: () => void;
+  onSelectDepositAccount?: () => void;
 }
 
 export default function EventItem({
@@ -18,11 +24,12 @@ export default function EventItem({
   endTime,
   title,
   location,
-  onEdit,
   onDelete,
   onComplete,
   withdrawalAccount,
   depositAccount,
+  onSelectWithdrawalAccount,
+  onSelectDepositAccount,
 }: EventItemProps) {
   return (
     <View style={styles.container}>
@@ -47,9 +54,6 @@ export default function EventItem({
             <Text style={styles.title}>{title}</Text>
           </View>
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.editButton} onPress={onEdit}>
-              <Ionicons name="create" size={16} color="white" />
-            </TouchableOpacity>
             <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
               <Ionicons name="remove" size={16} color="white" />
             </TouchableOpacity>
@@ -74,17 +78,39 @@ export default function EventItem({
             <Text style={styles.location}>{location}</Text>
           </View>
           <View style={styles.accountSection}>
-            {withdrawalAccount && (
+            {withdrawalAccount ? (
               <View style={styles.accountItem}>
                 <Text style={styles.accountLabel}>출금:</Text>
-                <Text style={styles.accountValue}>{withdrawalAccount}</Text>
+                <View style={styles.accountInfo}>
+                  <Text style={styles.bankName}>{withdrawalAccount.bankName}</Text>
+                  <Text style={styles.accountNumber}>{withdrawalAccount.accountNumber}</Text>
+                </View>
               </View>
+            ) : onSelectWithdrawalAccount && (
+              <TouchableOpacity 
+                style={styles.accountSelector}
+                onPress={onSelectWithdrawalAccount}
+              >
+                <Text style={styles.placeholderText}>출금계좌 선택</Text>
+                <Ionicons name="chevron-down" size={16} color="rgba(255, 255, 255, 0.8)" />
+              </TouchableOpacity>
             )}
-            {depositAccount && (
+            {depositAccount ? (
               <View style={styles.accountItem}>
                 <Text style={styles.accountLabel}>입금:</Text>
-                <Text style={styles.accountValue}>{depositAccount}</Text>
+                <View style={styles.accountInfo}>
+                  <Text style={styles.bankName}>{depositAccount.bankName}</Text>
+                  <Text style={styles.accountNumber}>{depositAccount.accountNumber}</Text>
+                </View>
               </View>
+            ) : onSelectDepositAccount && (
+              <TouchableOpacity 
+                style={styles.accountSelector}
+                onPress={onSelectDepositAccount}
+              >
+                <Text style={styles.placeholderText}>입금계좌 선택</Text>
+                <Ionicons name="chevron-down" size={16} color="rgba(255, 255, 255, 0.8)" />
+              </TouchableOpacity>
             )}
           </View>
         </View>
@@ -150,14 +176,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
   },
-  editButton: {
-    width: 28,
-    height: 28,
-    backgroundColor: "#FFA500",
-    borderRadius: 6,
-    justifyContent: "center",
-    alignItems: "center",
-  },
   deleteButton: {
     width: 28,
     height: 28,
@@ -207,5 +225,43 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "white",
     fontWeight: "500",
+  },
+  selectAccountButton: {
+    backgroundColor: "#4A90E2",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    marginVertical: 2,
+  },
+  selectAccountText: {
+    fontSize: 12,
+    color: "white",
+    fontWeight: "500",
+  },
+  accountInfo: {
+    alignItems: "flex-end",
+  },
+  bankName: {
+    fontSize: 12,
+    color: "white",
+    fontWeight: "600",
+  },
+  accountNumber: {
+    fontSize: 11,
+    color: "rgba(255, 255, 255, 0.8)",
+  },
+  accountSelector: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    marginVertical: 2,
+  },
+  placeholderText: {
+    fontSize: 12,
+    color: "rgba(255, 255, 255, 0.8)",
+    marginRight: 4,
   },
 });
