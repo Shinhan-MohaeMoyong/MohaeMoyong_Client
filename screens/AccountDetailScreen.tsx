@@ -60,6 +60,7 @@ export default function AccountDetailScreen({ account, onBackPress, fallbackPath
   const [showAliasEditModal, setShowAliasEditModal] = useState(false);
   const [newAccountAlias, setNewAccountAlias] = useState('');
   const [filteredTransactions, setFilteredTransactions] = useState(transactions);
+  const [currentAccount, setCurrentAccount] = useState<Account>(account);
 
 
   const mapTransactionDTOToTransaction = (dto: TransactionDetailDTO, index: number): Transaction => ({
@@ -237,6 +238,10 @@ export default function AccountDetailScreen({ account, onBackPress, fallbackPath
 
       const accountDetailResponse = await response.json();
       setAccountDetail(accountDetailResponse);
+      setCurrentAccount(prev => ({
+        ...prev,
+        balance: accountDetailResponse.accountBalance
+      }));
 
       const mappedTransactions = (accountDetailResponse.list ?? []).map(
         (t: TransactionDetailDTO, idx: number) => ({
@@ -250,6 +255,7 @@ export default function AccountDetailScreen({ account, onBackPress, fallbackPath
       
       setTransactions(mappedTransactions);
       console.log('🏦 === 거래내역 변환 결과 ===');
+      console.log(accountDetailResponse);
       console.log(JSON.stringify(mappedTransactions, null, 2));
       
 
@@ -353,7 +359,7 @@ export default function AccountDetailScreen({ account, onBackPress, fallbackPath
         {/* 계좌 정보 카드 */}
         <AccountCard
           account={{
-            ...AccountMapper.fromLegacyAccount(account),
+            ...AccountMapper.fromLegacyAccount(currentAccount),
             accountAlias: accountDetail?.accountName || account.accountAlias,
           }}
           onPress={() => {}}
