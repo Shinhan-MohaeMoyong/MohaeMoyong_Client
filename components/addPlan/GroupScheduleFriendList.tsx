@@ -107,12 +107,12 @@ export default function GroupScheduleFriendList({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>친구 리스트</Text>
+      {/* <Text style={styles.title}>친구 리스트</Text>
       {maxSelection && (
         <Text style={styles.subtitle}>
           {selectedFriends.length}/{maxSelection}명 선택됨
         </Text>
-      )}
+      )} */}
       <FlatList
         data={friends}
         renderItem={renderFriendItem}
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: "#3b82f6",
+    backgroundColor: "#8C93FF",
     borderWidth: 2,
     borderColor: "#fff",
   },
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: "#3b82f6",
+    backgroundColor: "#8C93FF",
     alignItems: "center",
     justifyContent: "center",
   },

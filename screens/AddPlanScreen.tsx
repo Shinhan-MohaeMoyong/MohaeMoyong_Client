@@ -104,6 +104,7 @@ export default function AddPlanScreen() {
         keyboardDismissMode="interactive"
         showsVerticalScrollIndicator={false}
       >
+
         <ScrollView
           style={styles.content}
           contentContainerStyle={{ paddingBottom: 120 }}
@@ -205,14 +206,14 @@ const styles = StyleSheet.create({
   // ✅ 스크롤뷰는 투명
   content: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 13,
     backgroundColor: 'transparent',
   },
   // ✅ 카드만 흰색
   footerCard: {
     marginTop: 8,
     marginHorizontal: 12,
-    padding: 12,
+    //padding: 12,
     borderRadius: 20,
     backgroundColor: '#FFFFFF',
   },
