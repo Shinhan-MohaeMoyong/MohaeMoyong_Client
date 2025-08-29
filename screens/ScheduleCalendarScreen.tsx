@@ -3,6 +3,7 @@ import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
+  Image,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -165,27 +166,35 @@ export default function ScheduleCalendarScreen() {
           </View>
         );
       case "일정":
-        return (
-          <ScrollView
-            contentContainerStyle={{ paddingBottom: 24, paddingTop: 8 }}
-          >
-            {/* 월간 달력 */}
-            <MonthlyCalendar
-              monthDate={monthDate}
-              selectedDate={selectedDate}
-              onChangeMonth={setMonthDate}
-              onSelectDate={(d) => {
-                console.log(
-                  "🔍 MonthlyCalendar onSelectDate 호출됨, 날짜:",
-                  d.toDateString()
-                );
-                presentModal();
-                handleDateSelect(d);
-              }}
-              markedDates={marked}
-            />
-          </ScrollView>
-        );
+  return (
+    <ScrollView contentContainerStyle={{ paddingBottom: 24, paddingTop: 8 }}>
+      {/* 월간 달력 */}
+      <MonthlyCalendar
+        monthDate={monthDate}
+        selectedDate={selectedDate}
+        onChangeMonth={setMonthDate}
+        onSelectDate={(d) => {
+          console.log("🔍 MonthlyCalendar onSelectDate 호출됨, 날짜:", d.toDateString());
+          presentModal();
+          handleDateSelect(d);
+        }}
+        markedDates={marked}
+      />
+
+      {/* 날짜 선택 전(바텀시트 안 보일 때) 로고 보여주기 */}
+      {!isBottomSheetVisible && (
+        <View style={styles.logoWrap}>
+          <Image
+            source={require("@/assets/images/MOLI.png")} // ✅ 확장자까지 필요
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.logoText}>날짜를 선택해 일정을 확인하세요</Text>
+        </View>
+      )}
+    </ScrollView>
+  );
+
       case "저축":
         return (
           <View style={{ flex: 1, width: "100%", paddingTop: 8 }}>
@@ -357,4 +366,21 @@ const styles = StyleSheet.create({
     backgroundColor: "#E5E5E5",
     marginBottom: 20,
   },
+  logoWrap: {
+  alignItems: "center",
+  justifyContent: "center",
+  paddingVertical: 40,
+},
+logo: {
+  width: 160,
+  height: 160,
+  marginBottom: 12,
+  opacity: 0.5,
+},
+logoText: {
+  fontSize: 16,
+  color: "#666",
+  fontWeight: "500",
+},
+
 });
