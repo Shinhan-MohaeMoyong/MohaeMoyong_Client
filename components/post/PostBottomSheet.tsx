@@ -44,7 +44,7 @@ export default function PostBottomSheet({
 
   // usePostBottomSheet 훅 사용
   const { comments, isLoadingComments, fetchComments } = usePostBottomSheet();
-  const { fetchPlans } = useMohaeyoung();
+  const { refetch, fetchPlans, refreshUserPlans } = useMohaeyoung();
   const { loggedUser } = useUser();
 
   // 컴포넌트 마운트 시 댓글 가져오기
@@ -87,9 +87,16 @@ export default function PostBottomSheet({
         console.log('📤 === 일정 삭제 완료 ===');
         console.log('응답 데이터:', response.status);
         
-        // 성공 시 로딩 해제
+                // 성공 시 로딩 해제
         console.log('loggedUser?.userId:', loggedUser?.userId);
-        fetchPlans(loggedUser?.userId || 0);
+        
+        // 현재 사용자의 plan 데이터를 새로고침하여 MohaeyoungScreen 재렌더링
+        await refreshUserPlans(loggedUser?.userId || 0);
+        // 잠시 대기 후 전체 데이터도 새로고침
+        setTimeout(() => {
+          refetch();
+        }, 200);
+        
         onClose();
       } catch (error) {
         console.error('❌ 일정 삭제 실패:', error);

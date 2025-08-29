@@ -1,6 +1,7 @@
 // src/screens/MohaeyoungScreen.tsx
 import MohaeyoungHeader from "@/components/MohaeyoungHeader";
 import PostBottomSheet from "@/components/post/PostBottomSheet";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -49,6 +50,8 @@ export default function MohaeyoungScreen() {
     const handlePlanPress = async (plan: PlanEntity) => {
         // usePostBottomSheet 훅에서 모든 로직을 처리하므로 plan만 전달
         openBottomSheet(plan);
+        plan.new = false;
+        await AsyncStorage.setItem(`plan_${plan.planId}_isNew`, "false");
     };
 
     const handleWeekChange = (delta: -1 | 1) => {
@@ -84,6 +87,13 @@ export default function MohaeyoungScreen() {
             setCurrentUserTo(userDTO);
         }
     }, [loggedUser]);
+
+    // plans 상태 변경 감지 및 디버깅
+    useEffect(() => {
+        if (currentUser && plans[currentUser.id]) {
+            console.log(`[MohaeyoungScreen] plans 업데이트 감지:`, plans[currentUser.id].length, '개');
+        }
+    }, [plans, currentUser]);
 
     const headerWeekLabel = `${weekInfo.dateRange}`;
 
@@ -133,6 +143,7 @@ export default function MohaeyoungScreen() {
             {currentUser && (
                 <View style={styles.weekGridContainer}>
                     <WeekGrid
+                        key={`weekgrid-${currentUser.id}-${plans[currentUser.id]?.length || 0}`}
                         plans={[...(plans[currentUser.id] || [])]}
                         startDay={weekInfo.startDay}
                         endDay={weekInfo.endDay}

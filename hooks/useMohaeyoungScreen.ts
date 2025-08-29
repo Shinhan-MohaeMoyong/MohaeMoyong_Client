@@ -1,6 +1,7 @@
 // src/hooks/useMohaeyoung.ts
 import { SERVER_URL } from "@/constants/server";
 import { getToken } from "@/contexts/tokenManager";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { dataFetchFriends } from "../constants/localData/friendsListData";
 import { dataFetchPlans } from "../constants/localData/PlanData";
@@ -42,6 +43,48 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
       fetchPlans(currentUser.id);
     }
   }, [currentUser]);
+
+  const setUserIsNew = async (userId: number, isNew: boolean) => {
+    try {
+      await AsyncStorage.setItem(`user_${userId}_isNew`, isNew.toString());
+    } catch (e) {
+      console.error("AsyncStorage user_isNew 저장 실패", e);
+    }
+  };
+
+  const getUserIsNew = async (userId: number) => {
+    try {
+      const isNew = await AsyncStorage.getItem(`user_${userId}_isNew`);
+      if(isNew === null) {
+        return null;
+      }
+      return isNew === "true";
+    } catch (e) {
+      console.error("AsyncStorage user_isNew 조회 실패", e);
+      return null;
+    }
+  };
+
+  const setPlanIsNew = async (planId: number, isNew: boolean) => {
+    try {
+      await AsyncStorage.setItem(`plan_${planId}_isNew`, isNew.toString());
+    } catch (e) {
+      console.error("AsyncStorage plan_isNew 저장 실패", e);
+    }
+  };
+
+  const getPlanIsNew = async (planId: number) => {
+    try {
+      const isNew = await AsyncStorage.getItem(`plan_${planId}_isNew`);
+      if(isNew === null) {
+        return null;
+      }
+      return isNew === "true";
+    } catch (e) {
+      console.error("AsyncStorage plan_isNew 조회 실패", e);
+      return null;
+    }
+  };
 
   // 현재 주의 시작일과 끝일 계산 (월요일 ~ 일요일)
   const getCurrentWeekRange = useCallback(() => {
@@ -151,7 +194,21 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
         console.log(friendId, ' Id : fetchPlans data:', data);
       }
 
-      setPlans(prev => ({ ...prev, [friendId]: data }));
+      // 각 일정에 대해 isNew 상태 확인 및 설정
+      const plansWithIsNew = await Promise.all(
+        data.map(async (plan) => {
+          const cachedIsNew = await getPlanIsNew(plan.planId);
+          
+          // null이면 아직 클릭하지 않은 것으로 간주 (새로운 일정)
+          const isNew = cachedIsNew === true ? true : false;
+          console.log(plan.title, '의 cachedIsNew:', cachedIsNew);
+          
+          return { ...plan, new: isNew };
+        })
+      );
+
+      // 상태 업데이트를 강제로 새로운 객체로 생성하여 재렌더링 보장
+      setPlans(prev => ({ ...prev, [friendId]: plansWithIsNew }));
     } catch (e) {
       console.error('Failed to fetch plans:', e);
       setError(e);
@@ -191,15 +248,31 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
 
       const mapped: UserDTO[] = await Promise.all(
         data.map(async (u) => {
-          const res = await fetch(`${SERVER_URL}/api/v1/friends/${u.id}/plans/new`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              'Authorization': `Bearer ${await getToken()}`,
-            },
-          });
-          const isNew  = await res.json(); // true/false 응답
-          console.log("isNew:", isNew);
+          // 먼저 로컬에서 isNew 값 확인
+          const cachedIsNew = await getUserIsNew(u.id);
+          
+          let isNew: boolean;
+          
+          // null이거나 false면 서버에서 새로 가져오기
+          if (cachedIsNew === null || cachedIsNew === false) {
+            const res = await fetch(`${SERVER_URL}/api/v1/friends/${u.id}/plans/new`, {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                'Authorization': `Bearer ${await getToken()}`,
+              },
+            });
+            isNew = await res.json(); // true/false 응답
+            console.log("서버에서 가져온 isNew:", isNew);
+            
+            // 새로운 값으로 로컬 저장
+            await setUserIsNew(u.id, isNew);
+          } else {
+            // true면 캐시된 값 사용
+            isNew = cachedIsNew;
+            console.log("캐시된 isNew 사용:", isNew);
+          }
+          
           return { ...u, isNew };
         })
       );
@@ -214,10 +287,12 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
           mapped.map(async (friend) => {
             try {
               let friendPlans: PlanEntity[];
+              let plansWithIsNew: PlanEntity[];
 
               if (useMock) {
                 // 목 데이터 사용
                 friendPlans = await dataFetchPlans();
+                plansWithIsNew = friendPlans;
               } else {
                 // 실제 서버 통신
                 const res = await fetch(`${serverUrl}/api/v1/friends/${friend.id}/plans/week`, {
@@ -231,10 +306,26 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
                 const test = await res.json();
                 console.log('원본 : ', test);
                 friendPlans = (test) as PlanEntity[];
+                
+                // 각 일정에 대해 isNew 상태 확인 및 설정
+                plansWithIsNew = await Promise.all(
+                  friendPlans.map(async (plan) => {
+                    const cachedIsNew = await getPlanIsNew(plan.planId);
+                    if (cachedIsNew === null) {
+                      await setPlanIsNew(plan.planId, plan.new || false);
+                      console.log('처음 등록된 일정, 로컬에 저장 : ', plan.planId, plan.new);
+                    }
+                    
+                    // 기존에 저장된 값이 true면 해당 plan의 new 값을 true로, false면 그대로
+                    const isNew = cachedIsNew === true ? true : plan.new;
+                    
+                    return { ...plan, new: isNew };
+                  })
+                );
               }
 
               // 친구 ID를 키로 해서 일정 저장
-              plansByFriend[friend.id] = friendPlans;
+              plansByFriend[friend.id] = plansWithIsNew;
               console.log('||| plansByFriend:', plansByFriend);
             } catch (e) {
               console.error(`Failed to fetch plans for friend ${friend.id}:`, e);
@@ -253,13 +344,17 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
     }
   }, [endpointFriends, serverUrl, useMock]);
 
+
+
   useEffect(() => {
     fetchDatas();
-    console.log('useEffect currentPlan:', plans[currentUser?.id || 0]);
+    console.log('[MohaeyoungScreen]useEffect');
   }, [fetchDatas]);
 
   const onItemPress = useCallback((u: UserDTO) => {
     console.log("clicked:", u.id, u.name);
+    u.isNew = false;
+    setUserIsNew(u.id, false);
     // 필요 시 여기서 네비게이션/상세로 이동
   }, []);
 
@@ -268,6 +363,24 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
     setCurrentUser(user);
     resetWeekToToday(); // 사용자가 변경되면 오늘 기준으로 주차 리셋
   }, [resetWeekToToday]);
+
+  // 특정 사용자의 plan 데이터를 새로고침하는 함수
+  const refreshUserPlans = useCallback(async (userId: number) => {
+    try {
+      console.log(`사용자 ${userId}의 일정 데이터 새로고침 시작`);
+      
+      // 강제로 상태를 초기화하여 재렌더링 트리거
+      setPlans(prev => ({ ...prev, [userId]: [] }));
+      
+      // 잠시 대기 후 새로운 데이터 가져오기
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      await fetchPlans(userId);
+      console.log(`사용자 ${userId}의 일정 데이터 새로고침 완료`);
+    } catch (e) {
+      console.error(`사용자 ${userId}의 일정 데이터 새로고침 실패:`, e);
+    }
+  }, [fetchPlans]);
 
   return {
     currentUser,
@@ -284,5 +397,6 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
     onItemPress,
     setCurrentUserTo,
     setPlans,
+    refreshUserPlans,
   };
 }
