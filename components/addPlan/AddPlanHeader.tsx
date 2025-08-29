@@ -3,12 +3,14 @@ import { useNavigation } from '@react-navigation/native';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type Props = {
+  isModify: boolean;
   isPublic: boolean;
   onTogglePublic: () => void;
 };
 
-export default function AddPlanHeader({ isPublic, onTogglePublic }: Props) {
+export default function AddPlanHeader({ isModify, isPublic, onTogglePublic }: Props) {
   const navigation = useNavigation();
+  const headerText = isModify == false ? '일정 추가하기' : '일정 수정하기';
 
   return (
     <View style={styles.header}>
@@ -23,7 +25,7 @@ export default function AddPlanHeader({ isPublic, onTogglePublic }: Props) {
 
       {/* 가운데: 제목(절대 배치로 항상 중앙) */}
       <View style={styles.centerTitle} pointerEvents="none">
-        <Text style={styles.title} numberOfLines={1}>일정 추가하기</Text>
+        <Text style={styles.title} numberOfLines={1}>{headerText}</Text>
       </View>
 
       {/* 오른쪽: 공개/비공개 토글 */}

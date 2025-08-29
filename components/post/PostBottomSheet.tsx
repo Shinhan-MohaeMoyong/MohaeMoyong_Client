@@ -12,6 +12,7 @@ import {
   BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
+import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -43,6 +44,7 @@ export default function PostBottomSheet({
   const footerHeightRef = useRef(0);
 
   // usePostBottomSheet 훅 사용
+  const router = useRouter();
   const { comments, isLoadingComments, fetchComments } = usePostBottomSheet();
   const { refetch, fetchPlans, refreshUserPlans } = useMohaeyoung();
   const { loggedUser } = useUser();
@@ -65,8 +67,27 @@ export default function PostBottomSheet({
   }, []);
 
   const handleEdit = () => {
-    if (postData?.planId) {
-      onEdit?.(postData.planId);
+    if (postData) {
+      // PostBottomSheetDTO 정보를 ModifyPlanScreen으로 전달
+      router.push({
+        pathname: '/modify-plan',
+        params: {
+          postData: JSON.stringify(postData),
+          planId: postData.planId,
+          title: postData.title,
+          content: postData.content,
+          place: postData.place,
+          startTime: postData.startTime,
+          endTime: postData.endTime,
+          privacyLevel: postData.privacyLevel,
+          type: postData.type,
+          participantIds: JSON.stringify(postData.participantIds || []),
+          hasSavingsGoal: postData.hasSavingsGoal ? 'true' : 'false',
+          savingsAmount: postData.savingsAmount?.toString() || '',
+          imageUrl: postData.imageUrl || '',
+          photos: JSON.stringify(postData.photos || [])
+        }
+      });
       onClose();
     }
   };

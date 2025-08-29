@@ -30,4 +30,8 @@ export interface PostBottomSheetDTO {
   // 기타 정보
   privacyLevel: string;
   commentCount: number;
+  
+  // 일정 타입 및 참여자 정보
+  type: 'PERSONAL' | 'GROUP';
+  participantIds?: number[];
 }
