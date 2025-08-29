@@ -1,7 +1,7 @@
 // components/addPlan/DateTimeSelector.tsx
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 
@@ -54,6 +54,8 @@ const relativeLabelFromToday = (selected: Date, today: Date) => {
   return delta > 0 ? `오늘에서 ${delta}일 뒤` : `오늘에서 ${Math.abs(delta)}일 전`;
 };
 
+const ITEM_TOTAL_WIDTH = 84; // dateItem width(76) + 좌우 margin(4+4)
+
 export default function DateTimeSelector({
   selectedDate,
   startTime,
@@ -77,7 +79,7 @@ export default function DateTimeSelector({
     return isoToday;
   }, [selectedDate, isoToday]);
 
-  // 날짜 스트립(21일)
+  // 날짜 스트립(오늘부터 기본 시작, 너무 먼 미래 선택 시 선택일 중심으로 당김)
   const selectedDateObj = useMemo(() => parseISO(normalizedDateISO), [normalizedDateISO]);
   const selectedAbsLabel = useMemo(() => formatKoreanDate(selectedDateObj), [selectedDateObj]);
   const selectedRelLabel = useMemo(
@@ -87,8 +89,20 @@ export default function DateTimeSelector({
 
   const dateStrip = useMemo(() => {
     const arr: { iso: string; labelTop: string; labelBottom: string; isToday: boolean }[] = [];
-    const anchor = startOfDay(selectedDateObj);
-    const start = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() - 10); // -10
+
+    const todayStart = startOfDay(today);
+    const deltaFromToday = diffInDays(selectedDateObj, todayStart); // +면 미래, -면 과거
+
+    // 기본 시작: 오늘부터
+    let start = new Date(todayStart);
+
+    // 선택일이 오늘로부터 20일을 훌쩍 넘는 먼 미래라면
+    // 선택일이 리스트 중간쯤에 오도록 선택일-10일부터 시작
+    if (deltaFromToday > 20) {
+      const anchor = startOfDay(selectedDateObj);
+      start = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() - 10);
+    }
+
     for (let i = 0; i < 21; i++) {
       const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
       const iso = toISO(d);
@@ -101,7 +115,26 @@ export default function DateTimeSelector({
       });
     }
     return arr;
-  }, [selectedDateObj, isoToday]);
+  }, [today, selectedDateObj, isoToday]);
+
+  // FlatList 중앙 스크롤 세팅
+  const listRef = useRef<FlatList<any> | null>(null);
+  const getItemLayout = (_: any, index: number) => ({
+    length: ITEM_TOTAL_WIDTH,
+    offset: ITEM_TOTAL_WIDTH * index,
+    index,
+  });
+  const scrollDateToCenter = (iso: string) => {
+    const idx = dateStrip.findIndex((d) => d.iso === iso);
+    if (idx < 0) return;
+    requestAnimationFrame(() => {
+      listRef.current?.scrollToIndex({
+        index: idx,
+        animated: true,
+        viewPosition: 0.5, // 가운데
+      });
+    });
+  };
 
   // 시간 상태(분)
   const [startMin, setStartMin] = useState<number>(() => snap(parseHHmmToMin(startTime)));
@@ -161,6 +194,16 @@ export default function DateTimeSelector({
 
   const [calendarOpen, setCalendarOpen] = useState(false);
 
+  // ✅ 선택 날짜가 바뀔 때마다 중앙 정렬(달력/스트립 모두 대응)
+  useEffect(() => {
+    scrollDateToCenter(normalizedDateISO);
+  }, [normalizedDateISO, dateStrip.length]);
+
+  // ✅ 초기 로드 시에도 오늘을 중앙에 두고 시작하려면 아래 주석 해제
+  // useEffect(() => {
+  //   scrollDateToCenter(isoToday);
+  // }, []);
+
   return (
     <View style={styles.container}>
       <Text style={styles.label}>*날짜</Text>
@@ -182,14 +225,15 @@ export default function DateTimeSelector({
         </TouchableOpacity>
       </View>
 
-      {/* 날짜 스트립 (선택일 중심) */}
       {/* 날짜 스트립 */}
       <FlatList
+        ref={listRef}
         horizontal
         showsHorizontalScrollIndicator={false}
         data={dateStrip}
         keyExtractor={(item) => item.iso}
         contentContainerStyle={{ paddingHorizontal: 4 }}
+        getItemLayout={getItemLayout}
         renderItem={({ item }) => {
           const active = item.iso === normalizedDateISO;
           return (
@@ -221,7 +265,10 @@ export default function DateTimeSelector({
       {calendarOpen && (
         <View style={styles.calendarBox}>
           <Calendar
-            onDayPress={(d) => onDateSelect(d.dateString)}
+            onDayPress={(d) => {
+              onDateSelect(d.dateString);
+              scrollDateToCenter(d.dateString); // ⬅️ 달력에서 날짜 선택 시 중앙 배치
+            }}
             markedDates={{
               [normalizedDateISO]: { selected: true, selectedColor: "#6C5CE7" },
               [isoToday]: { marked: true, dotColor: "#6C5CE7" },

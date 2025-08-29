@@ -20,6 +20,24 @@ interface EventItemProps {
   onSelectDepositAccount?: () => void;
 }
 
+// --- 유틸: 계좌번호 구간별 마스킹 (***-***-9012) ---
+const maskAccountNumber = (accountNumber: string, visibleDigits: number = 4) => {
+  if (!accountNumber) return "";
+  const parts = accountNumber.split("-");
+  return parts
+    .map((part, idx) => {
+      if (idx === parts.length - 1) {
+        if (part.length <= visibleDigits) return part;
+        return (
+          part.slice(0, part.length - visibleDigits).replace(/[0-9]/g, "*") +
+          part.slice(part.length - visibleDigits)
+        );
+      }
+      return part.replace(/[0-9]/g, "*");
+    })
+    .join("-");
+};
+
 export default function EventItem({
   startTime,
   endTime,
@@ -35,237 +53,248 @@ export default function EventItem({
 }: EventItemProps) {
   return (
     <View style={styles.container}>
-      {/* 왼쪽 시간 표시 영역 */}
-      <View style={styles.timeContainer}>
-        <Text style={styles.startTime}>{startTime}</Text>
-        <Text style={styles.tildeSymbol}>~</Text>
-        <Text style={styles.endTime}>{endTime}</Text>
+      {/* 좌측 시간열: 카드와 같은 높이 + 위/아래 정렬 */}
+      <View style={styles.timeColumn}>
+        <Text style={styles.timeTextPrimary}>{startTime}</Text>
+        <Text style={styles.timeDash}>—</Text>
+        <Text style={styles.timeTextSecondary}>{endTime}</Text>
       </View>
 
-      {/* 오른쪽 일정 정보 영역 */}
-      <View style={styles.eventContainer}>
-        {/* 상단 행: 제목과 버튼들 */}
-        <View style={styles.topRow}>
-          <View style={styles.titleSection}>
+      {/* 카드 */}
+      <View style={styles.card}>
+        {/* 제목 + 액션 */}
+        <View style={styles.headerRow}>
+          <View style={styles.titleWrap}>
             <Ionicons
-              name="menu"
-              size={16}
-              color="white"
-              style={styles.hamburgerIcon}
+              name="reorder-three"
+              size={18}
+              color="#BFB3FF"
+              style={styles.dragIcon}
             />
-            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.title} numberOfLines={1}>
+              {title}
+            </Text>
           </View>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
-              <Ionicons name="remove" size={16} color="white" />
-            </TouchableOpacity>
+
+          <View style={styles.actions}>
             <TouchableOpacity
-              style={styles.completeButton}
-              onPress={onComplete}
+              style={[styles.iconBtn, styles.deleteBtn]}
+              onPress={onDelete}
+              activeOpacity={0.8}
             >
-              <Ionicons name="checkmark" size={16} color="white" />
+              <Ionicons name="trash-outline" size={16} color="#fff" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.iconBtn, styles.completeBtn]}
+              onPress={onComplete}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="checkmark" size={16} color="#0A2E16" />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* 하단 행: 위치와 계좌 정보 */}
-        <View style={styles.bottomRow}>
-          <View style={styles.locationSection}>
-            <Ionicons
-              name="location"
-              size={16}
-              color="white"
-              style={styles.locationIcon}
-            />
-            <Text style={styles.location}>{location}</Text>
-          </View>
-          {hasSavingsGoal && (
-            <View style={styles.accountSection}>
-              {withdrawalAccount ? (
-                <View style={styles.accountItem}>
-                  <Text style={styles.accountLabel}>출금:</Text>
-                  <View style={styles.accountInfo}>
-                    <Text style={styles.bankName}>{withdrawalAccount.bankName}</Text>
-                    <Text style={styles.accountNumber}>{withdrawalAccount.accountNumber}</Text>
-                  </View>
-                </View>
-              ) : onSelectWithdrawalAccount && (
-                <TouchableOpacity 
-                  style={styles.accountSelector}
-                  onPress={onSelectWithdrawalAccount}
-                >
-                  <Text style={styles.placeholderText}>출금계좌 선택</Text>
-                  <Ionicons name="chevron-down" size={16} color="rgba(255, 255, 255, 0.8)" />
-                </TouchableOpacity>
-              )}
-              {depositAccount ? (
-                <View style={styles.accountItem}>
-                  <Text style={styles.accountLabel}>입금:</Text>
-                  <View style={styles.accountInfo}>
-                    <Text style={styles.bankName}>{depositAccount.bankName}</Text>
-                    <Text style={styles.accountNumber}>{depositAccount.accountNumber}</Text>
-                  </View>
-                </View>
-              ) : onSelectDepositAccount && (
-                <TouchableOpacity 
-                  style={styles.accountSelector}
-                  onPress={onSelectDepositAccount}
-                >
-                  <Text style={styles.placeholderText}>입금계좌 선택</Text>
-                  <Ionicons name="chevron-down" size={16} color="rgba(255, 255, 255, 0.8)" />
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
+        {/* 위치 */}
+        <View style={styles.locationRow}>
+          <Ionicons
+            name="location-outline"
+            size={16}
+            color="#DCD6FF"
+            style={styles.locationIcon}
+          />
+        <Text style={styles.location} numberOfLines={1}>
+            {location}
+          </Text>
         </View>
+
+        {/* 계좌 영역 */}
+        {hasSavingsGoal && (
+          <View style={styles.accountsWrap}>
+            {/* 출금 */}
+            {withdrawalAccount ? (
+              <View style={styles.chipLarge}>
+                <Text style={styles.chipLabelLarge}>출금</Text>
+                <Text style={styles.chipTextLarge}>
+                  {withdrawalAccount.bankName} {withdrawalAccount.accountNumber}
+                </Text>
+              </View>
+            ) : onSelectWithdrawalAccount ? (
+              <TouchableOpacity
+                style={[styles.chipLarge, styles.chipGhost]}
+                onPress={onSelectWithdrawalAccount}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.chipGhostTextLarge}>출금계좌 선택</Text>
+                <Ionicons name="chevron-down" size={16} color="#CFC6FF" />
+              </TouchableOpacity>
+            ) : null}
+
+            {/* 입금 */}
+            {depositAccount ? (
+              <View style={styles.chipLarge}>
+                <Text style={styles.chipLabelLarge}>입금</Text>
+                <Text style={styles.chipTextLarge}>
+                  {depositAccount.bankName}{" "}
+                  {maskAccountNumber(depositAccount.accountNumber, 4)}
+                </Text>
+              </View>
+            ) : onSelectDepositAccount ? (
+              <TouchableOpacity
+                style={[styles.chipLarge, styles.chipGhost]}
+                onPress={onSelectDepositAccount}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.chipGhostTextLarge}>입금계좌 선택</Text>
+                <Ionicons name="chevron-down" size={16} color="#CFC6FF" />
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        )}
       </View>
     </View>
   );
 }
 
+const PURPLE = "#8A6EEF";
+const CARD_BG = "#6F58E6";
+const CARD_PADDING_V = 14; // ↔ timeColumn과 카드 위/아래 패딩 일치
+
 const styles = StyleSheet.create({
+  /** 두 열이 같은 높이로 늘어나도록 */
   container: {
     flexDirection: "row",
-    marginBottom: 16,
-    alignItems: "center", // flex-start에서 center로 변경
+    alignItems: "stretch", // ✅ 중요: 자식 높이를 서로 맞춤
+    marginBottom: 14,
   },
-  timeContainer: {
-    width: 60,
-    marginRight: 12,
-    alignItems: "center", // flex-start에서 center로 변경
-  },
-  startTime: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#8A6EEF",
-    marginBottom: 2,
-  },
-  tildeSymbol: {
-    fontSize: 20,
-    color: "#666666",
-    textAlign: "center",
-    marginVertical: 2,
-  },
-  endTime: {
-    fontSize: 20,
-    color: "#666666",
-  },
-  eventContainer: {
-    flex: 1,
-    backgroundColor: "#8A6EEF",
-    borderRadius: 12,
-    padding: 16,
-  },
-  topRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+
+  /** 시간열: 카드와 같은 상/하 패딩 + 공간 분배 */
+  timeColumn: {
+    width: 68,
     alignItems: "center",
-    marginBottom: 12,
+    alignSelf: "stretch",
+    paddingTop: CARD_PADDING_V,     // ✅ 카드와 동일
+    paddingBottom: CARD_PADDING_V,  // ✅ 카드와 동일
+    justifyContent: "space-between", // ✅ 시작은 맨 위, 끝은 맨 아래
   },
-  titleSection: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
+  timeTextPrimary: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: PURPLE,
   },
-  hamburgerIcon: {
-    marginRight: 8,
-  },
-  title: {
+  timeDash: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "white",
-    flex: 1,
+    lineHeight: 18,
+    color: "#9AA1A9",
   },
-  buttonContainer: {
+  timeTextSecondary: {
+    fontSize: 16,
+    color: "#8C8F95",
+  },
+
+  /** 카드 */
+  card: {
+    flex: 1,
+    backgroundColor: CARD_BG,
+    borderRadius: 14,
+    paddingVertical: CARD_PADDING_V, // ↔ 시간열과 동일
+    paddingHorizontal: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+  },
+
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  titleWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    minHeight: 24,
+  },
+  dragIcon: { marginRight: 6 },
+  title: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+
+  actions: {
     flexDirection: "row",
     gap: 8,
+    marginLeft: 10,
   },
-  deleteButton: {
-    width: 28,
-    height: 28,
-    backgroundColor: "#FF4757",
-    borderRadius: 6,
+  iconBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
   },
-  completeButton: {
-    width: 28,
-    height: 28,
-    backgroundColor: "#2ED573",
-    borderRadius: 6,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  bottomRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  locationSection: {
+  deleteBtn: { backgroundColor: "#FF4757" },
+  completeBtn: { backgroundColor: "#9CF6B3" },
+
+  locationRow: {
     flexDirection: "row",
     alignItems: "center",
+    marginTop: 2,
+    marginBottom: 10,
   },
-  locationIcon: {
-    marginRight: 6,
-  },
+  locationIcon: { marginRight: 6 },
   location: {
+    flex: 1,
+    fontSize: 13,
+    color: "#EEE9FF",
+  },
+
+  /** 계좌 칩(더 크게) */
+  accountsWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    justifyContent: "flex-end",
+  },
+  chipLarge: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: "#7357E7",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.14)",
+  },
+  chipLabelLarge: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#EDE7FF",
+    marginRight: 8,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: 6,
+    backgroundColor: "rgba(255,255,255,0.1)",
+  },
+  chipTextLarge: {
     fontSize: 14,
-    color: "white",
-  },
-  accountSection: {
-    alignItems: "flex-end",
-  },
-  accountItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 2,
-  },
-  accountLabel: {
-    fontSize: 12,
-    color: "rgba(255, 255, 255, 0.8)",
-    marginRight: 4,
-  },
-  accountValue: {
-    fontSize: 12,
-    color: "white",
-    fontWeight: "500",
-  },
-  selectAccountButton: {
-    backgroundColor: "#4A90E2",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginVertical: 2,
-  },
-  selectAccountText: {
-    fontSize: 12,
-    color: "white",
-    fontWeight: "500",
-  },
-  accountInfo: {
-    alignItems: "flex-end",
-  },
-  bankName: {
-    fontSize: 12,
-    color: "white",
     fontWeight: "600",
+    color: "#FFFFFF",
   },
-  accountNumber: {
-    fontSize: 11,
-    color: "rgba(255, 255, 255, 0.8)",
+  chipGhost: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.25)",
   },
-  accountSelector: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginVertical: 2,
-  },
-  placeholderText: {
-    fontSize: 12,
-    color: "rgba(255, 255, 255, 0.8)",
-    marginRight: 4,
+  chipGhostTextLarge: {
+    fontSize: 14,
+    color: "#EDE7FF",
+    marginRight: 6,
   },
 });

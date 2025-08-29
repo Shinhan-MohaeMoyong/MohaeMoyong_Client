@@ -1,6 +1,7 @@
 import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
+  Alert,
   Animated,
   Dimensions,
   Image,
@@ -8,9 +9,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  View,
-  TouchableOpacity,
-  Alert
+  View
 } from "react-native";
 import EventItem from "../components/EventItem";
 import MonthlyCalendar from "../components/MonthlyCalendar";
@@ -23,6 +22,8 @@ import type { PlanEntity } from "../types";
 import AccountDetailScreen from "./AccountDetailScreen";
 import AccountScreen from "./AccountScreen";
 import SavingScreen from "./SavingScreen";
+// 맨 위 import들 사이에
+import AccountSelectionModal, { Account } from '@/components/AccountSelectionModal';
 
 const { height: screenHeight } = Dimensions.get("window");
 const BOTTOM_SHEET_HEIGHT = screenHeight * 0.6; // 60% - 초기상태
@@ -276,7 +277,6 @@ export default function ScheduleCalendarScreen() {
     setSelectedPlanForAccount(plan);
     setAccountType(type);
     setShowAccountSelector(true);
-    fetchAccounts(); // 계좌 목록 가져오기
   };
 
   // 계좌 선택 완료 핸들러
@@ -431,48 +431,36 @@ export default function ScheduleCalendarScreen() {
       )}
 
              {/* 탭에 따른 콘텐츠 렌더링 */}
-       {renderContent()}
-
-               {/* 계좌 선택 모달 */}
-        {showAccountSelector && (
-          <BottomSheetModal
-            ref={accountSelectorModalRef}
-            index={0}
-            snapPoints={["60%"]}
-            handleIndicatorStyle={{
-              backgroundColor: "#000000FF",
-              width: 60,
-              height: 6,
-            }}
-            backgroundStyle={styles.bottomSheetBackground}
-          >
-           <BottomSheetView style={styles.listContainer}>
-             <Text style={styles.eventsTitle}>
-               {accountType === 'withdrawal' ? '출금' : '입금'} 계좌 선택
-             </Text>
-             {isLoadingAccounts ? (
-               <View style={styles.loadingContainer}>
-                 <Text style={styles.loadingText}>계좌 목록을 불러오는 중...</Text>
-               </View>
-             ) : accounts.length > 0 ? (
-               accounts.map((account, index) => (
-                 <TouchableOpacity
-                   key={account.accountNo || index}
-                   style={styles.accountItem}
-                   onPress={() => handleAccountConfirm(account)}
-                 >
-                   <Text style={styles.accountName}>{account.accountName || '계좌명 없음'}</Text>
-                   <Text style={styles.accountNumber}>{account.accountNo}</Text>
-                 </TouchableOpacity>
-               ))
-             ) : (
-               <View style={styles.emptyEventsContainer}>
-                 <Text style={styles.emptyEventsText}>등록된 계좌가 없습니다.</Text>
-               </View>
-             )}
-           </BottomSheetView>
-         </BottomSheetModal>
-       )}
+       {renderContent()}   
+       
+{/* 계좌 선택 모달 (단일 Modal 컴포넌트 사용) */}
+<AccountSelectionModal
+  visible={showAccountSelector}
+  type={accountType ?? 'deposit'}
+  onClose={() => {
+    setShowAccountSelector(false);
+    setSelectedPlanForAccount(null);
+    setAccountType(null);
+  }}
+  onAccountSelect={(acc: Account) => {
+    if (!selectedPlanForAccount || !accountType) return;
+    // 선택된 계좌를 현재 선택된 일정에 반영
+    setSelectedDatePlansData(prev =>
+      prev.map(plan =>
+        plan.planId === selectedPlanForAccount.planId
+          ? {
+              ...plan,
+              [accountType === 'withdrawal' ? 'withDrawAccountNo' : 'depositAccountNo']: acc.accountNumber,
+            }
+          : plan
+      )
+    );
+    // 닫기
+    setShowAccountSelector(false);
+    setSelectedPlanForAccount(null);
+    setAccountType(null);
+  }}
+/>
 
       {/* 바텀시트 */}
       {activeTab === "일정" && (
