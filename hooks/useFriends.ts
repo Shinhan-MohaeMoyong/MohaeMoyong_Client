@@ -297,5 +297,6 @@ export function useFriends() {
     sendFriendRequest,
     cancelFriendRequest,
     deleteFriend,
+    loadFriends,
   };
 }

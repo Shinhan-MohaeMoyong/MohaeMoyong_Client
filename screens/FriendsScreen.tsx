@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
   FlatList,
@@ -19,6 +19,7 @@ import HeaderBar from "@/components/ui/HeaderBar";
 import NoticeModal from "@/components/ui/NoticeModal";
 import SearchBox from "@/components/ui/SearchBox";
 import { RowItem, useFriends } from "@/hooks/useFriends";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function FriendsScreen() {
   const router = useRouter();
@@ -33,6 +34,7 @@ export default function FriendsScreen() {
     sendFriendRequest,
     cancelFriendRequest,
     deleteFriend,
+    loadFriends,
   } = useFriends();
 
   // 메시지 입력 모달
@@ -124,6 +126,12 @@ export default function FriendsScreen() {
       setTarget(null);
     }
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadFriends();
+    }, [])
+  )
 
   return (
     <SafeAreaView style={styles.container}>
