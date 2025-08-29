@@ -82,7 +82,7 @@ export default function AddPlanScreen() {
     } else {
       // 새로운 친구 선택
       updateFormData({ 
-        selectedFriends: [...formData.selectedFriends, friend] 
+        selectedFriends: [...formData.selectedFriends, friend]
       });
     }
   };

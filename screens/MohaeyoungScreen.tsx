@@ -17,6 +17,8 @@ export default function MohaeyoungScreen() {
     const { 
         currentUser, 
         friends, 
+
+        
         plans, 
         loading, 
         error, 

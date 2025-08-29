@@ -106,7 +106,7 @@ export default function AccountScreen({ onAccountPress, visibleHeader }: Account
   const handleProductSelect = (product: any) => {
     // 상품 선택 완료 후 AddAccountScreen 닫기
     setShowAddAccount(false);
-
+    visibleHeader(true);
     // 계좌 목록 새로고침 (새로 생성된 계좌 반영)
     fetchAccounts();
   };
