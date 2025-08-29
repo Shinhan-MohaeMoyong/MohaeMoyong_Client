@@ -4,6 +4,7 @@ import { AccountDTO } from "../types/dto/AccountDTO";
 interface AccountCardProps {
   account: AccountDTO;
   onPress: () => void;
+  onAliasEdit?: () => void;
 }
 
 const BANK_LOGOS: Record<string, ImageSourcePropType> = {
@@ -16,7 +17,7 @@ const formatCurrency = (n?: string | number) => {
   return num.toLocaleString("ko-KR");
 };
 
-export default function AccountCard({ account, onPress }: AccountCardProps) {
+export default function AccountCard({ account, onPress, onAliasEdit }: AccountCardProps) {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
       {/* 왼쪽: 로고 */}

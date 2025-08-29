@@ -6,7 +6,6 @@ import {
 } from 'react-native';
 import SavingViewModel from '../components/SavingViewModel';
 import { SavingStateDTO } from '../types/dto/SavingDTO';
-import AccountDetailScreen from './AccountDetailScreen';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -48,9 +47,6 @@ export default function SavingScreen() {
   console.log('📱 [SavingScreen] SavingViewModel 렌더링');
   
   // 계좌 상세 화면이 표시되는 경우
-  if (showAccountDetail && selectedAccount) {
-    return <AccountDetailScreen account={selectedAccount} onBack={handleBackFromAccountDetail} />;
-  }
 
   return (
     <View style={styles.container}>
