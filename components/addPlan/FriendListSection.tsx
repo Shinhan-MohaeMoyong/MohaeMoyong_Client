@@ -36,9 +36,6 @@ export default function FriendListSection({ selectedFriends, onFriendToggle, onE
   }, []);
 
   const renderFriendItem = ({ item }: { item: any }) => {
-    const isSelected = selectedFriends.some(selected => selected.id === item.id);
-    toUserDTO(item)
-    if(!isSelected) return null;
     return (
       <UserProfile
         user={toUserDTO(item)}
@@ -89,14 +86,13 @@ export default function FriendListSection({ selectedFriends, onFriendToggle, onE
 
       <View style={styles.listContainer}>
         <FlatList
-          data={friends}
+          data={friends.filter(friend => selectedFriends.some(selected => selected.id === friend.id))}
           renderItem={renderFriendItem}
           keyExtractor={(item) => item.id.toString()}
           horizontal={true}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           style={styles.list}
           nestedScrollEnabled={true}
-        
         />
       </View>
     </View>

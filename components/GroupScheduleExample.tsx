@@ -1,7 +1,7 @@
 // components/GroupScheduleExample.tsx
 import { useGroupScheduleSelection } from "@/hooks/useGroupScheduleSelection";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import GroupScheduleSelectionScreen from "./GroupScheduleSelectionScreen";
+import GroupScheduleSelectionScreen from "./addPlan/GroupScheduleSelectionScreen";
 
 export default function GroupScheduleExample() {
   const {
