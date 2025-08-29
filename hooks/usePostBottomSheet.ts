@@ -18,6 +18,7 @@ export const usePostBottomSheet = () => {
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const { friends } = useMohaeyoung();
+  
 
 
 

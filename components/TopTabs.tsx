@@ -1,4 +1,3 @@
-import React from "react";
 import { Pressable, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 export type TopTabKey = "계좌" | "일정" | "저축";

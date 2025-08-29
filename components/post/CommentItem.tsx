@@ -33,8 +33,12 @@ export default function CommentItem({ id, userDTO, comment, time, text, isAfterP
           </Text>
           {comment.photos &&
             comment.photos.length > 0 &&
-            comment.photos.map((photo) => (
-              <Image source={{ uri: photo }} style={{ width: 100, height: 100 }} />
+            comment.photos.map((photo, index) => (
+              <Image 
+                key={`photo-${index}`}
+                source={{ uri: photo }} 
+                style={{ width: 100, height: 100 }} 
+              />
             ))}
           <Text>{text}</Text>
         </View>

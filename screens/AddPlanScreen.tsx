@@ -6,7 +6,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AddButton from '../components/addPlan/AddButton';
 import AddPlanHeader from '../components/addPlan/AddPlanHeader';
 import DateTimeSelector from '../components/addPlan/DateTimeSelector';
+import DepositAccountSelection from '../components/addPlan/DepositAccountSelection';
 import EventTypeSelector from '../components/addPlan/EventTypeSelector';
+import FriendListSection from '../components/addPlan/FriendListSection';
+import GroupScheduleSelectionScreen from '../components/addPlan/GroupScheduleSelectionScreen';
 import PhotoUpload from '../components/addPlan/PhotoUpload';
 import PlanInputFields from '../components/addPlan/PlanInputFields';
 import RepeatOption from '../components/addPlan/RepeatOption';
@@ -17,7 +20,7 @@ export default function AddPlanScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [showFriendSelection, setShowFriendSelection] = useState(false);
-  const [selectedFriends, setSelectedFriends] = useState<RowItem[]>([]);
+  const [showDepositAccountSelection, setShowDepositAccountSelection] = useState(false);
   const { 
     formData, 
     isLoading,
@@ -38,8 +41,18 @@ export default function AddPlanScreen() {
   };
 
   const handleDepositAccountPress = () => {
-    // 입금계좌 선택 화면으로 이동
-    //router.push('/account-select?type=deposit');
+    setShowDepositAccountSelection(true);
+  };
+
+  const handleDepositAccountSelection = (account: any) => {
+    updateFormData({ 
+      depositAccount: {
+        id: account.id,
+        bankName: account.bankName,
+        accountNumber: account.accountNumber,
+        accountType: '입금계좌'
+      }
+    });
   };
 
   const handleEventTypeChange = (type: 'group' | 'personal') => {
@@ -48,13 +61,10 @@ export default function AddPlanScreen() {
 
   const handleFriendSelectionConfirm = (selectedFriends: RowItem[]) => {
     updateFormData({ selectedFriends });
-    setSelectedFriends(selectedFriends);
-    console.log('selectedFriends', selectedFriends);
     setShowFriendSelection(false);
   };
 
   const handleFriendSelectionClose = () => {
-    // 모달을 닫을 때는 선택된 친구 목록을 유지
     setShowFriendSelection(false);
   };
 
@@ -99,59 +109,95 @@ export default function AddPlanScreen() {
           onSelectType={(type) => updateFormData({ eventType: type })}
         />
 
-        <PlanInputFields
-          title={formData.title}
-          location={formData.place}
-          content={formData.content}
-          onTitleChange={(title) => updateFormData({ title })}
-          onLocationChange={(place) => updateFormData({ place })}
-          onContentChange={(content) => updateFormData({ content })}
-        />
-
-        <PhotoUpload
-          selectedFiles={formData.files}
-          onPhotoUpload={handlePhotoUpload}
-          onPhotoRemove={handlePhotoRemove}
-        />
-
-        <DateTimeSelector
-          selectedDate={formData.selectedDate}
-          startTime={formData.startTime}
-          endTime={formData.endTime}
-          onDateSelect={(selectedDate) => updateFormData({ selectedDate })}
-          onStartTimeChange={handleStartTimeChange}
-          onEndTimeChange={handleEndTimeChange}
-        />
-
-        <RepeatOption
-          repeatConfig={formData.repeatConfig}
-          onRepeatConfigChange={(repeatConfig) => updateFormData({ repeatConfig })}
-        />
-
-        <SaveOption
-          isEnabled={formData.saveOption}
-          onToggle={() => updateFormData({ saveOption: !formData.saveOption })}
-          withdrawalAccount={formData.withdrawalAccount}
-          depositAccount={formData.depositAccount}
-          savingAmount={formData.savingAmount}
-          onWithdrawalAccountSelect={handleWithdrawalAccountSelect}
-          onDepositAccountSelect={handleDepositAccountSelect}
-          onSavingAmountChange={handleSavingAmountChange}
-        />
-
-        {/* 버튼을 푸터로 */}
-        <View style={[styles.footerCard, { marginBottom: insets.bottom + 8 }]}>
-          <AddButton
-            onPress={async () => {
-              const result = await handleAddPlan();
-              if (result?.success) router.replace("/(tabs)/Mohaeyoung");
-            }}
-            disabled={isLoading}
-            title="추가하기"
+        <ScrollView
+          style={styles.content}
+          contentContainerStyle={{ paddingBottom: 120 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <EventTypeSelector
+            selectedType={formData.eventType}
+            onSelectType={(type) => updateFormData({ eventType: type })}
           />
-        </View>
-      </ScrollView>
-    </View>
+
+          {/* 단체일정일 때만 FriendListSection 표시 */}
+          {formData.eventType === 'group' && (
+            <FriendListSection
+              selectedFriends={formData.selectedFriends}
+              onFriendToggle={handleFriendToggle}
+              onEditPress={handleEditFriends}
+            />
+          )}
+
+          <PlanInputFields
+            title={formData.title}
+            location={formData.place}
+            content={formData.content}
+            onTitleChange={(title) => updateFormData({ title })}
+            onLocationChange={(place) => updateFormData({ place })}
+            onContentChange={(content) => updateFormData({ content })}
+          />
+
+          <PhotoUpload
+            selectedFiles={formData.files}
+            onPhotoUpload={handlePhotoUpload}
+          />
+
+          <DateTimeSelector
+            selectedDate={formData.selectedDate}
+            startTime={formData.startTime}
+            endTime={formData.endTime}
+            onDateSelect={(selectedDate) => updateFormData({ selectedDate })}
+            onStartTimeChange={handleStartTimeChange}
+            onEndTimeChange={handleEndTimeChange}
+          />
+
+          
+
+          <RepeatOption
+            repeatConfig={formData.repeatConfig}
+            onRepeatConfigChange={(repeatConfig) => updateFormData({ repeatConfig })}
+          />
+
+          <SaveOption
+            isEnabled={formData.saveOption}
+            onToggle={() => updateFormData({ saveOption: !formData.saveOption })}
+            withdrawalAccount={formData.withdrawalAccount}
+            depositAccount={formData.depositAccount}
+            savingAmount={formData.savingAmount}
+            onWithdrawalAccountSelect={handleWithdrawalAccountPress}
+            onDepositAccountSelect={handleDepositAccountPress}
+            onSavingAmountChange={handleSavingAmountChange}
+          />
+        </ScrollView>
+
+        <AddButton
+          onPress={async () => {
+            const result = await handleAddPlan();
+            if (result?.success) {
+              router.replace("/(tabs)/Mohaeyoung");
+            }
+          }}
+          disabled={isLoading}
+        />
+
+        {/* GroupScheduleSelectionScreen 모달 */}
+        <GroupScheduleSelectionScreen
+          visible={showFriendSelection}
+          onClose={handleFriendSelectionClose}
+          onConfirm={handleFriendSelectionConfirm}
+          maxSelection={100}
+          initialSelectedFriends={formData.selectedFriends}
+        />
+
+        {/* DepositAccountSelection 모달 */}
+        <DepositAccountSelection
+          visible={showDepositAccountSelection}
+          onClose={() => setShowDepositAccountSelection(false)}
+          onAccountSelect={handleDepositAccountSelection}
+        />
+        </ScrollView>
+
+      </View>
   );
 }
 
