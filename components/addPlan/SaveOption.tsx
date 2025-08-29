@@ -42,7 +42,7 @@ export default function SaveOption({
       {isEnabled && (
         <View style={styles.settingsContainer}>
           {/* 출금 계좌 */}
-          {/* <View style={styles.fieldContainer}>
+          <View style={styles.fieldContainer}>
             <Text style={styles.fieldLabel}>출금계좌</Text>
             <TouchableOpacity style={styles.accountSelector} onPress={onWithdrawalAccountSelect}>
               {withdrawalAccount ? (
@@ -55,7 +55,7 @@ export default function SaveOption({
               )}
               <Ionicons name="chevron-down" size={20} color="#999" />
             </TouchableOpacity>
-          </View> */}
+          </View>
 
           {/* 입금 계좌 */}
           <View style={styles.fieldContainer}>

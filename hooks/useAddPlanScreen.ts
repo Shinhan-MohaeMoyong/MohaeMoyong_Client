@@ -246,8 +246,8 @@ export function useAddPlanScreen() {
       endTime: formatToLocalISOString(endDateTime),
       hasSavingsGoal: formData.saveOption,
       savingsAmount: formData.saveOption && formData.savingAmount ? parseInt(formData.savingAmount) : null,
-      depositAccountNo: formData.saveOption && formData.depositAccount ? formData.depositAccount.accountNumber : null,
-      withdrawalAccountNo: formData.saveOption && formData.withdrawalAccount ? formData.withdrawalAccount.accountNumber : null,
+      depositAccountNo: formData.saveOption && formData.depositAccount ? formData.depositAccount.accountNumber : undefined,
+      withdrawalAccountNo: formData.saveOption && formData.withdrawalAccount ? formData.withdrawalAccount.accountNumber : undefined,
       participantIds: formData.eventType === 'group' ? formData.selectedFriends.map(friend => friend.id.toString()) : null,
       photos: imageUrls.slice(1), // 첫 번째 URL을 제외한 나머지를 photos 배열에
       recurrence: recurrenceConfig

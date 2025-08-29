@@ -105,16 +105,11 @@ export default function ScheduleCalendarScreen() {
     setShowAccountDetail(true);
   };
 
-  const handleBack = () => {
-    setShowAccountDetail(false);
-    setSelectedAccount(null);
-  };
-
   const renderContent = () => {
     switch (activeTab) {
       case "계좌":
         if (showAccountDetail && selectedAccount) {
-          return <AccountDetailScreen account={selectedAccount} onBack={handleBack} />;
+          return <AccountDetailScreen account={selectedAccount} />;
         }
         return (
           <View style={{ flex: 1, width: "100%", paddingTop: 8 }}>

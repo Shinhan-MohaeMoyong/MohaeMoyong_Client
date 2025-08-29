@@ -26,8 +26,8 @@ export interface AddPlanRequestEntity {
   endTime: string; // ISO 8601 날짜 문자열
   hasSavingsGoal: boolean;
   savingsAmount?: number | null;
-  depositAccountNo?: string | null; // 입금계좌번호 (hasSavingsGoal이 true일 때)
-  withdrawalAccountNo?: string | null; // 출금계좌번호 (hasSavingsGoal이 true일 때)
+  depositAccountNo?: string; // 입금계좌번호 (hasSavingsGoal이 true일 때)
+  withdrawalAccountNo?: string; // 출금계좌번호 (hasSavingsGoal이 true일 때)
   participantIds?: string[] | null; // 참여자 ID 배열
   photos?: string[]; // 사진 URL 배열 (최대 5개)
   recurrence: RecurrenceConfig;

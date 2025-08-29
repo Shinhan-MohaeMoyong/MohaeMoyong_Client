@@ -122,10 +122,6 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
     setCurrentWeekOffset(0);
   }, []);
 
-  useEffect(() => {
-    console.log('변경됨 plans:', plans[currentUser?.id || 0]);
-  }, [plans]);
-
   const endpointFriends = useMemo(() => `${serverUrl}/api/v1/friends`, [serverUrl]);
 
   const fetchPlans = useCallback(async (friendId: number) => {
@@ -148,7 +144,7 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         data = (await res.json()) as PlanEntity[];
-        console.log(friendId, ' Id : fetchPlans data:', data);
+        //console.log('fetchPlans data:', data);
       }
 
       setPlans(prev => ({ ...prev, [friendId]: data }));

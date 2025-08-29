@@ -3,23 +3,11 @@ import type { PostBottomSheetDTO } from "@/types/dto/PostBottomSheetDTO";
 import { Ionicons } from "@expo/vector-icons";
 import { MapPin } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
-import {
-  ActionSheetIOS,
-  Alert,
-  FlatList,
-  Image,
-  Platform,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
-} from "react-native";
+import { FlatList, Image, Platform, StyleSheet, Text, View } from "react-native";
 import UserProfile from "../ui/UserProfile";
 
 type Props = {
   postData: PostBottomSheetDTO;
-  onEdit?: () => void;
-  onDelete?: () => void;
 };
 
 const PALETTE = {
@@ -58,12 +46,11 @@ function toRelativeTime(input?: string | number | Date): string | null {
   return `${y}년 전`;
 }
 
-export default function PostHeader({ postData, onEdit, onDelete }: Props) {
+export default function PostHeader({ postData }: Props) {
   const { loggedUser } = useUser();
   const [current, setCurrent] = useState(0);
   const [imageWidth, setImageWidth] = useState(0);
   const [errorSet, setErrorSet] = useState<Set<number>>(new Set());
-  
 
   // 대표 이미지 + 추가 사진
   const images = useMemo(() => {
@@ -90,47 +77,6 @@ export default function PostHeader({ postData, onEdit, onDelete }: Props) {
     // console.log('[PostHeader] postData : ', postData);
   }, [postData]);
 
-  const handleMorePress = () => {
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: ['취소', '수정', '삭제'],
-          cancelButtonIndex: 0,
-          destructiveButtonIndex: 2,
-        },
-        (buttonIndex) => {
-          if (buttonIndex === 1) {
-            onEdit?.();
-          } else if (buttonIndex === 2) {
-            handleDelete();
-          }
-        }
-      );
-    } else {
-      // Android용 Alert
-      Alert.alert(
-        '게시물 관리',
-        '원하는 작업을 선택하세요',
-        [
-          { text: '취소', style: 'cancel' },
-          { text: '수정', onPress: () => onEdit?.() },
-          { text: '삭제', style: 'destructive', onPress: handleDelete },
-        ]
-      );
-    }
-  };
-
-  const handleDelete = () => {
-    Alert.alert(
-      '게시물 삭제',
-      '정말로 이 게시물을 삭제하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        { text: '삭제', style: 'destructive', onPress: () => onDelete?.() },
-      ]
-    );
-  };
-
   const renderPlaceholderCell = () => (
     <View style={[styles.postImage, styles.placeholderBox, { width: imageWidth || "100%" }]}>
       <Image
@@ -155,9 +101,7 @@ export default function PostHeader({ postData, onEdit, onDelete }: Props) {
         </View>
 
         {postData.authorDTO.id === loggedUser?.userId && (
-          <TouchableOpacity onPress={handleMorePress} style={styles.moreButton}>
-            <Ionicons name="ellipsis-horizontal" size={22} color="#333" />
-          </TouchableOpacity>
+          <Ionicons name="ellipsis-horizontal" size={22} color="#333" />
         )}
       </View>
 
@@ -293,9 +237,6 @@ const styles = StyleSheet.create({
   writerRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   name: { fontWeight: "700", fontSize: 14, color: PALETTE.text },
   time: { fontSize: 11, color: PALETTE.sub, marginTop: 2 },
-  moreButton: {
-    padding: 5,
-  },
 
   // 본문 (2열 고정)
   contentRow: { flexDirection: "row", gap: 12 },

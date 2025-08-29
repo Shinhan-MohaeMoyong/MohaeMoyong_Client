@@ -1,6 +1,6 @@
 // src/components/schedule/WeekGrid.tsx
 import type { PlanEntity, PlanGridDTO } from "@/types";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Animated,
   LayoutChangeEvent,
@@ -143,10 +143,6 @@ export default function WeekGrid({
     [atLeftEdge, atRightEdge, onChangeWeek, pullProgress]
   );
 
-  useEffect(() => {
-    console.log('WeekGrid rendering! :', plans);
-  }, [plans]);
-
   
 
   const indicatorOpacity = pullProgress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
@@ -178,6 +174,8 @@ export default function WeekGrid({
       
       // isNew 속성 추가 (PlanEntity의 new 필드 사용)
       const isNew = p.new || false;
+
+      console.log('p:', p);
       
       return { plan: p, rect: { top, left, width, height }, isNew };
     });

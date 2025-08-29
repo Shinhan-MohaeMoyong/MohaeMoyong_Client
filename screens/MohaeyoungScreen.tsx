@@ -43,6 +43,7 @@ export default function MohaeyoungScreen() {
     } = usePostBottomSheet();
 
     const weekInfo = getCurrentWeekInfo();
+    console.log('weekInfo:', weekInfo);
 
     const handlePlanPress = async (plan: PlanEntity) => {
         // usePostBottomSheet 훅에서 모든 로직을 처리하므로 plan만 전달
@@ -56,17 +57,6 @@ export default function MohaeyoungScreen() {
 
     const handleAddPlan = () => {
         router.push('/add-plan');
-    };
-
-    const handleEditPlan = (planId: number) => {
-        // 수정 화면으로 이동 (임시로 add-plan으로 이동)
-        router.push('/add-plan');
-    };
-
-    const handleDeletePlan = (planId: number) => {
-        // 삭제 로직 구현
-        console.log('삭제할 planId:', planId);
-        // TODO: 실제 삭제 API 호출
     };
 
     // loggedUser가 변경될 때마다 currentUser 업데이트
@@ -131,7 +121,7 @@ export default function MohaeyoungScreen() {
             {currentUser && (
                 <View style={styles.weekGridContainer}>
                     <WeekGrid
-                        plans={[...(plans[currentUser.id] || [])]}
+                        plans={plans[currentUser.id] || []}
                         startDay={weekInfo.startDay}
                         endDay={weekInfo.endDay}
                         startHour={5}
@@ -150,10 +140,7 @@ export default function MohaeyoungScreen() {
                          plan={selectedPlan || undefined}
                          postData={postBottomSheetData || undefined}
                          friends={friends}
-                         onClose={closeBottomSheet}
-                         onEdit={handleEditPlan}
-                         onDelete={handleDeletePlan}
-                     />
+                         onClose={closeBottomSheet}/>
                  )
              }
             

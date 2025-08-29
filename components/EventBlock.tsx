@@ -28,6 +28,7 @@ export default function EventBlock({ plan, rect, isNew = false, onPress }: Props
     onPress?.(plan, e);
   };
 
+  console.log('EventBlock : ', plan);
 
   return (
     <Pressable 
