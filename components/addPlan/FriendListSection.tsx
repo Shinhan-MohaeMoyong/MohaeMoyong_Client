@@ -3,9 +3,11 @@ import { SERVER_URL } from '@/constants/server';
 import { getToken } from '@/contexts/tokenManager';
 import { toUserDTO } from '@/mappers/userMapper';
 import { FriendEntity } from '@/types';
+import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import UserProfile from '../ui/UserProfile';
+
 
 interface FriendListSectionProps {
   selectedFriends: { id: number; name: string; avatar: string }[];
@@ -16,6 +18,7 @@ interface FriendListSectionProps {
 export default function FriendListSection({ selectedFriends, onFriendToggle, onEditPress }: FriendListSectionProps) {
   const [friends, setFriends] = useState<FriendEntity[]>([]);
   const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     const loadFriends = async () => {
       try {
@@ -35,12 +38,17 @@ export default function FriendListSection({ selectedFriends, onFriendToggle, onE
     loadFriends();
   }, []);
 
-  const renderFriendItem = ({ item }: { item: any }) => {
+  // 👉 Gap 크기 정의
+  const GAP = 16;
+
+  const renderFriendItem = ({ item, index }: { item: any; index: number }) => {
+    const isSelected = selectedFriends.some(selected => selected.id === item.id);
+    if (!isSelected) return null;
+
     return (
-      <UserProfile
-        user={toUserDTO(item)}
-        size={46}
-      />
+      <View style={{ marginRight: index === friends.length - 1 ? 0 : GAP }}>
+        <UserProfile user={toUserDTO(item)} size={46} />
+      </View>
     );
   };
 
@@ -66,7 +74,7 @@ export default function FriendListSection({ selectedFriends, onFriendToggle, onE
     <View style={styles.container}>
       <View style={styles.header}>
         {/* 왼쪽 */}
-        <Text style={styles.label}>함께 참여하는 친구</Text>
+        <Text style={styles.label}>*함께 참여하는 친구</Text>
 
         {/* 오른쪽 묶음 */}
         <View style={styles.rightGroup}>
@@ -79,20 +87,20 @@ export default function FriendListSection({ selectedFriends, onFriendToggle, onE
             style={styles.editButtonContainer}
             onPress={onEditPress}
           >
-            <Text style={styles.editText}>✏️ 수정</Text>
+              <Ionicons name="person-add-outline" size={20} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
 
       <View style={styles.listContainer}>
         <FlatList
-          data={friends.filter(friend => selectedFriends.some(selected => selected.id === friend.id))}
+          data={friends}
           renderItem={renderFriendItem}
           keyExtractor={(item) => item.id.toString()}
-          horizontal={true}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          horizontal
+          // ItemSeparatorComponent 제거 → margin 방식으로 간격 관리
           style={styles.list}
-          nestedScrollEnabled={true}
+          nestedScrollEnabled
         />
       </View>
     </View>
@@ -120,15 +128,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   selectedCount: {
-    fontSize: 14,
-    color: '#6C5CE7',
-    fontWeight: '500',
+    fontSize: 12,
+    color: '#6f6f6fff',
+    fontWeight: '400',
   },
   listContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f8f8',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: '#e0e0e0',
     maxHeight: 200,
     padding: 10,
   },
@@ -141,7 +149,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     backgroundColor: '#fff',
-    
   },
   selectedFriendRow: {
     backgroundColor: '#f0f9ff',
@@ -176,11 +183,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
-  separator: {
-    height: 1,
-    backgroundColor: '#e5e7eb',
-    marginLeft: 72,
-  },
   loadingText: {
     textAlign: 'center',
     padding: 20,
@@ -188,7 +190,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   editButtonContainer: {
-    backgroundColor: '#6C5CE7',
+    backgroundColor: '#8C93FF',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 30,
@@ -197,10 +199,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
