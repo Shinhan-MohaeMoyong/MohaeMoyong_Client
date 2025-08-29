@@ -116,16 +116,7 @@ export default function ProductCard({
               </View>
             )}
 
-            <TouchableOpacity
-              style={styles.helpGhost}
-              onPress={(e) => {
-                e.stopPropagation();
-                openHelp();
-              }}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Text style={styles.helpGhostText}>?</Text>
-            </TouchableOpacity>
+            
           </View>
 
           {/* 본문 */}
@@ -159,10 +150,19 @@ export default function ProductCard({
           )}
 
           {/* 하단 큐 */}
+          <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation();
+                openHelp();
+              }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+            
           <View style={styles.bottomRow}>
             <Text style={styles.bottomHint}>자세히 보기</Text>
             <Text style={styles.chevron}>›</Text>
           </View>
+          </TouchableOpacity>
         </View>
       </Pressable>
 
