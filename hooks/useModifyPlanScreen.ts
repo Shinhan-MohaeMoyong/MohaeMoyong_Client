@@ -3,7 +3,7 @@ import { PostBottomSheetDTO } from '@/types/dto/PostBottomSheetDTO';
 import { useEffect, useState } from 'react';
 import type { RepeatConfig } from '../components/addPlan/RepeatOption';
 import { SERVER_URL } from '../constants/server';
-import type { AddPlanRequestEntity, RecurrenceConfig } from '../types/entity/AddPlanRequestEntity';
+import type { AddPlanRequestEntity, PhotoInfo, RecurrenceConfig } from '../types/entity/AddPlanRequestEntity';
 
 export type ImageFileInfo = {
   uri: string;
@@ -13,6 +13,9 @@ export type ImageFileInfo = {
   photoId?: number | null; // 기존 사진의 ID (새로 업로드된 사진은 undefined)
   isExisting?: boolean; // 기존 사진인지 여부
   isCover?: boolean; // 커버 이미지인지 여부
+  width?: number; // 사진 너비
+  height?: number; // 사진 높이
+  orderNo?: number; // 사진 순서 번호
 };
 
 export type AccountInfo = {
@@ -67,7 +70,11 @@ export type AddPlanFormData = {
   savingAmount: string;
 };
 
-export function useModifyPlanScreen(planId?: number, postData?: PostBottomSheetDTO) {
+export function useModifyPlanScreen(
+  planId?: number, 
+  postData?: PostBottomSheetDTO,
+  onModifySuccess?: () => void
+) {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<AddPlanFormData>({
     title: '',
@@ -101,48 +108,59 @@ export function useModifyPlanScreen(planId?: number, postData?: PostBottomSheetD
     console.log('formData', formData);
   }, [formData]);
 
-    // planId와 postData가 있을 때 기존 일정 데이터 가져오기
-  useEffect(() => {
-    if (planId && postData) {
-      console.log('useModifyPlanScreen: postData로 기존 일정 데이터 설정:', postData);
-      
-      // 기존 사진들을 formData.files에 매핑
-      const existingPhotos: any[] = [];
-      
-      // 첫 번째 이미지는 imageUrl에서 로드 (커버 이미지)
-      if (postData.imageUrl) {
-        existingPhotos.push({
-          id: 'cover_image',
-          uri: postData.imageUrl,
-          type: 'image/jpeg',
-          name: 'cover_image.jpg',
-          size: 0,
-          isCover: true,
-          isExisting: true // 기존 이미지 표시
-        });
-      }
-      
-      // 두 번째부터는 photos 배열의 url에서 로드
-      if (postData.photos && postData.photos.length > 0) {
-        postData.photos.forEach((photo: any, index: number) => {
-          existingPhotos.push({
-            id: `photo_${photo.photoId || index}`,
-            uri: photo.url,
-            type: 'image/jpeg',
-            name: `photo_${index}.jpg`,
-            size: 0,
-            isCover: false,
-            photoId: photo.photoId, // 기존 photoId 보존
-            isExisting: true // 기존 이미지 표시
-          });
-        });
-      }
-      
-      // formData.files 업데이트
-      updateFormData({ files: existingPhotos });
-      console.log('useModifyPlanScreen: 기존 사진 매핑 완료:', existingPhotos);
-    }
-  }, [planId, postData]);
+         // planId와 postData가 있을 때 기존 일정 데이터 가져오기
+   useEffect(() => {
+     if (planId && postData) {
+       console.log('useModifyPlanScreen: postData로 기존 일정 데이터 설정:', postData);
+       
+       // 기존 사진들을 formData.files에 매핑
+       const existingPhotos: any[] = [];
+       
+       // imageUrl과 photos를 통합하여 중복 제거
+       const allPhotos = [];
+       
+       // 첫 번째 이미지는 imageUrl에서 로드 (커버 이미지)
+       if (postData.imageUrl) {
+         allPhotos.push({
+           url: postData.imageUrl,
+           photoId: null,
+           width: 0,
+           height: 0,
+           isCover: true
+         });
+       }
+       
+       // photos 배열 추가
+       if (postData.photos && postData.photos.length > 0) {
+         allPhotos.push(...postData.photos);
+       }
+       
+       // 중복 제거 후 순서대로 매핑
+       const uniquePhotos = allPhotos.filter((photo, index, self) => 
+         index === self.findIndex(p => p.url === photo.url)
+       );
+       
+       uniquePhotos.forEach((photo: any, index: number) => {
+         existingPhotos.push({
+           id: photo.isCover ? 'cover_image' : `photo_${photo.photoId || index}`,
+           uri: photo.url,
+           type: 'image/jpeg',
+           name: photo.isCover ? 'cover_image.jpg' : `photo_${index}.jpg`,
+           size: 0,
+           isCover: photo.isCover || false,
+           photoId: photo.photoId, // 기존 photoId 보존
+           isExisting: true, // 기존 이미지 표시
+           orderNo: index, // 순서 번호 (0부터 시작)
+           width: photo.width || 0, // 기존 사진 크기 정보
+           height: photo.height || 0
+         });
+       });
+       
+       // formData.files 업데이트
+       updateFormData({ files: existingPhotos });
+       console.log('useModifyPlanScreen: 기존 사진 매핑 완료 (중복 제거):', existingPhotos);
+     }
+   }, [planId, postData]);
 
   const updateFormData = (updates: Partial<AddPlanFormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
@@ -212,7 +230,7 @@ export function useModifyPlanScreen(planId?: number, postData?: PostBottomSheetD
         if (file.isExisting && file.uri.startsWith('http')) {
           // 기존 이미지: URL을 그대로 사용하고 photoId 정보 보존
           imageUrls.push(file.uri);
-          console.log(`기존 이미지 ${index + 1}: ${file.uri} (photoId: ${file.photoId})`);
+          console.log(`기존 이미지 ${index + 1}: ${file.uri} (photoId: ${file.photoId}, orderNo: ${index})`);
         } else if (!file.isExisting) {
           // 새로 추가된 이미지: 업로드 대상에 추가
           newFiles.push(file);
@@ -296,15 +314,59 @@ export function useModifyPlanScreen(planId?: number, postData?: PostBottomSheetD
       return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
     };
     
-    // 반복 설정을 RecurrenceConfig 형식으로 변환
-    const recurrenceConfig: RecurrenceConfig = {
-      enabled: formData.repeatConfig.enabled,
-      freq: formData.repeatConfig.freq as any,
-      interval: formData.repeatConfig.interval,
-      byDays: formData.repeatConfig.byDays as any,
-      count: formData.repeatConfig.count || undefined,
-      exceptions: formData.repeatConfig.exceptions || undefined
-    };
+         // 반복 설정을 RecurrenceConfig 형식으로 변환
+     let count: number | undefined = formData.repeatConfig.count || undefined;
+     
+     // 반복 옵션이 활성화되어 있고 count가 설정되지 않은 경우, 종료일을 기준으로 자동 계산
+     if (formData.repeatConfig.enabled && !count && formData.repeatConfig.until) {
+       try {
+         const startDate = new Date(formData.selectedYear, formData.selectedMonth - 1, parseInt(formData.selectedDate));
+         const endDate = new Date(formData.repeatConfig.until);
+         
+         if (endDate > startDate) {
+           // 반복 주기와 간격에 따라 count 계산
+           const timeDiff = endDate.getTime() - startDate.getTime();
+           const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+           
+           switch (formData.repeatConfig.freq) {
+             case 'DAILY':
+               count = Math.floor(daysDiff / formData.repeatConfig.interval) + 1;
+               break;
+             case 'WEEKLY':
+               count = Math.floor(daysDiff / (7 * formData.repeatConfig.interval)) + 1;
+               break;
+             case 'MONTHLY':
+               count = Math.floor(daysDiff / (30 * formData.repeatConfig.interval)) + 1;
+               break;
+             case 'YEARLY':
+               count = Math.floor(daysDiff / (365 * formData.repeatConfig.interval)) + 1;
+               break;
+             default:
+               count = 1;
+           }
+           
+           console.log('📅 반복 횟수 자동 계산:', {
+             startDate: startDate.toISOString(),
+             endDate: endDate.toISOString(),
+             freq: formData.repeatConfig.freq,
+             interval: formData.repeatConfig.interval,
+             calculatedCount: count
+           });
+         }
+       } catch (error) {
+         console.error('반복 횟수 계산 오류:', error);
+         count = 1; // 오류 시 기본값
+       }
+     }
+     
+     const recurrenceConfig: RecurrenceConfig = {
+       enabled: formData.repeatConfig.enabled,
+       freq: formData.repeatConfig.freq as any,
+       interval: formData.repeatConfig.interval,
+       byDays: formData.repeatConfig.byDays as any,
+       count: count,
+       exceptions: formData.repeatConfig.exceptions || undefined
+     };
     
     // 이미지 업로드 처리
     let imageUrls: string[] = [];
@@ -317,26 +379,48 @@ export function useModifyPlanScreen(planId?: number, postData?: PostBottomSheetD
       }
     }
 
-    // AddPlanRequestEntity 생성
-    const requestEntity: AddPlanRequestEntity = {
-      type: formData.eventType === 'group' ? 'GROUP' : 'PERSONAL',
-      privacyLevel: formData.eventType === 'group' 
-        ? (formData.isPublic ? 'GROUP_PUBLIC' : 'GROUP_PRIVATE')
-        : (formData.isPublic ? 'PERSONAL_PUBLIC' : 'PERSONAL_PRIVATE'),
-      title: formData.title || '',
-      content: formData.content || '',
-      place: formData.place || '',
-      imageUrl: imageUrls.length > 0 ? imageUrls[0] : undefined, // 첫 번째 URL을 대표 이미지로
-      startTime: formatToLocalISOString(startDateTime),
-      endTime: formatToLocalISOString(endDateTime),
-      hasSavingsGoal: formData.saveOption,
-      savingsAmount: formData.saveOption && formData.savingAmount ? parseInt(formData.savingAmount) : null,
-      depositAccountNo: formData.saveOption && formData.depositAccount ? formData.depositAccount.accountNumber : null,
-      withdrawalAccountNo: formData.saveOption && formData.withdrawalAccount ? formData.withdrawalAccount.accountNumber : null,
-      participantIds: formData.eventType === 'group' ? formData.selectedFriends.map(friend => friend.id.toString()) : null,
-      photos: imageUrls.slice(1), // 첫 번째 URL을 제외한 나머지를 photos 배열에
-      recurrence: recurrenceConfig
-    };
+                                       // 사진 정보를 올바른 구조로 구성 (커버 이미지 제외)
+       const photos: PhotoInfo[] = formData.files
+         .filter((file, index) => index > 1) // 0번째(커버 이미지) 제외
+         .map((file, index) => {
+           if (file.isExisting && file.photoId) {
+             // 기존 사진: photoId, url, width, height, orderNo 포함
+             return {
+               photoId: file.photoId,
+               url: file.uri,
+               width: file.width || 0,
+               height: file.height || 0,
+               orderNo: index // 원래 인덱스 유지
+             };
+           } else {
+             // 새로 업로드된 사진: url, orderNo만 포함 (photoId 없음)
+             return {
+               url: file.uri,
+               orderNo: index // 원래 인덱스 유지
+             };
+           }
+         });
+
+     // AddPlanRequestEntity 생성
+     const requestEntity: AddPlanRequestEntity = {
+       type: formData.eventType === 'group' ? 'GROUP' : 'PERSONAL',
+       privacyLevel: formData.eventType === 'group' 
+         ? (formData.isPublic ? 'GROUP_PUBLIC' : 'GROUP_PRIVATE')
+         : (formData.isPublic ? 'PERSONAL_PUBLIC' : 'PERSONAL_PRIVATE'),
+       title: formData.title || '',
+       content: formData.content || '',
+       place: formData.place || '',
+       imageUrl: imageUrls.length > 0 ? imageUrls[0] : undefined, // 첫 번째 URL을 대표 이미지로
+       startTime: formatToLocalISOString(startDateTime),
+       endTime: formatToLocalISOString(endDateTime),
+       hasSavingsGoal: formData.saveOption,
+       savingsAmount: formData.saveOption && formData.savingAmount ? parseInt(formData.savingAmount) : null,
+       depositAccountNo: formData.saveOption && formData.depositAccount ? formData.depositAccount.accountNumber : null,
+       withdrawalAccountNo: formData.saveOption && formData.withdrawalAccount ? formData.withdrawalAccount.accountNumber : null,
+       participantIds: formData.eventType === 'group' ? formData.selectedFriends.map(friend => friend.id.toString()) : null,
+       photos: photos, // 구조화된 사진 정보 배열
+       recurrence: recurrenceConfig
+     };
     
     return requestEntity;
   };
@@ -500,13 +584,19 @@ export function useModifyPlanScreen(planId?: number, postData?: PostBottomSheetD
         throw new Error(`일정 추가 실패: ${response.status} ${response.statusText}`);
       }
       
-      const responseData = await response.json();
-      console.log('📤 === 일정 추가 완료 ===');
-      console.log('응답 데이터:', responseData);
-      
-      // 성공 시 로딩 해제
-      setIsLoading(false);
-      return { success: true, data: responseData };
+             const responseData = await response.json();
+       console.log('📤 === 일정 수정 완료 ===');
+       console.log('응답 데이터:', responseData);
+       
+       // 성공 시 로딩 해제
+       setIsLoading(false);
+       
+       // 수정 성공 시 PostBottomSheet refresh 콜백 호출
+       if (onModifySuccess) {
+         onModifySuccess();
+       }
+       
+       return { success: true, data: responseData };
     } catch (error) {
       console.error('❌ 일정 추가 실패:', error);
       setIsLoading(false);

@@ -36,7 +36,13 @@ export default function ModifyPlanScreen() {
     handleModifyPlan 
   } = useModifyPlanScreen(
     params.planId ? parseInt(params.planId as string) : undefined, 
-    params.postData ? JSON.parse(params.postData as string) : undefined
+    params.postData ? JSON.parse(params.postData as string) : undefined,
+    () => {
+      // PostBottomSheet refresh를 위한 콜백
+      console.log('ModifyPlanScreen: 일정 수정 완료, PostBottomSheet refresh 필요');
+      // TODO: PostBottomSheet refresh 로직 구현
+      // 예: router.back() 또는 특정 상태 업데이트
+    }
   );
 
     // URL 파라미터에서 받은 데이터를 formData에 매핑
@@ -282,6 +288,8 @@ export default function ModifyPlanScreen() {
           onPress={async () => {
             const result = await handleModifyPlan();
             if (result?.success) {
+              // 수정 완료 후 MohaeyoungScreen으로 돌아가기
+              // PostBottomSheet가 자동으로 refresh됨
               router.replace("/(tabs)/Mohaeyoung");
             }
           }}

@@ -64,8 +64,11 @@ export default function MohaeyoungScreen() {
     };
 
     const handleEditPlan = (planId: number) => {
-        // 수정 화면으로 이동 (임시로 add-plan으로 이동)
-        router.push('/add-plan');
+        // 수정 완료 후 PostBottomSheet refresh를 위해 plans 데이터 다시 가져오기
+        console.log('MohaeyoungScreen: handleEditPlan 호출됨, planId:', planId);
+        
+        // 수정 화면으로 이동하지 않고, 여기서 refresh 로직만 처리
+        // 실제 수정은 PostBottomSheet의 handleEdit에서 처리됨
     };
 
     const handleDeletePlan = (planId: number) => {

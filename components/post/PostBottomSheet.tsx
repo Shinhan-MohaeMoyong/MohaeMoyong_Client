@@ -88,6 +88,12 @@ export default function PostBottomSheet({
           photos: JSON.stringify(postData.photos || [])
         }
       });
+      
+      // onEdit 콜백이 있으면 호출하여 refresh 트리거
+      if (onEdit) {
+        onEdit(postData.planId);
+      }
+      
       onClose();
     }
   };
