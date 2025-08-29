@@ -2,7 +2,7 @@ import { useUser } from "@/contexts/UserContext";
 import type { PostBottomSheetDTO } from "@/types/dto/PostBottomSheetDTO";
 import { Ionicons } from "@expo/vector-icons";
 import { MapPin } from "lucide-react-native";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActionSheetIOS,
   Alert,
@@ -12,7 +12,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import UserProfile from "../ui/UserProfile";
 
@@ -26,23 +26,20 @@ const PALETTE = {
   text: "#111827",
   sub: "#6b7280",
   line: "#E5E7EB",
-  cardInfo: "#E9E8FF",
-  cardInfoDone: "#F5F5F5",
-  descBg: "#F3F6FA",
-  dot: "#D1D5DB",
-  dotActive: "#6C5CE7",
   badge: "rgba(0,0,0,0.55)",
+  chipBg: "#F2F4FF",
+  chipFg: "#6C5CE7",
+  white: "#FFFFFF",
 };
 
-const IMAGE_HEIGHT = 200;
+const DEFAULT_RATIO = 3 / 2; // 가로:세로 비율 기본값(1.5)
 
-/** 간단한 상대시간 포맷터 */
 function toRelativeTime(input?: string | number | Date): string | null {
   if (!input) return null;
   const d = new Date(input);
-  if (isNaN(d.getTime())) return null;
-  const diffMs = Date.now() - d.getTime();
-  const s = Math.floor(diffMs / 1000);
+  if (Number.isNaN(d.getTime())) return null;
+  const diff = Date.now() - d.getTime();
+  const s = Math.floor(diff / 1000);
   if (s < 60) return "방금 전";
   const m = Math.floor(s / 60);
   if (m < 60) return `${m}분 전`;
@@ -58,24 +55,29 @@ function toRelativeTime(input?: string | number | Date): string | null {
   return `${y}년 전`;
 }
 
+type ImgItem = { url: string; ratio?: number };
+
 export default function PostHeader({ postData, onEdit, onDelete }: Props) {
   const { loggedUser } = useUser();
   const [current, setCurrent] = useState(0);
-  const [imageWidth, setImageWidth] = useState(0);
+  const [imgW, setImgW] = useState(0);
+  const [expanded, setExpanded] = useState(false);
   const [errorSet, setErrorSet] = useState<Set<number>>(new Set());
-  
 
-  // 대표 이미지 + 추가 사진
-  const images = useMemo(() => {
-    const arr: string[] = [];
-    if (postData.imageUrl) arr.push(postData.imageUrl);
-    if (postData.photos?.length) arr.push(...postData.photos.map((p) => p.url));
-    return arr;
+  // 이미지 리스트(대표 + 추가사진) + 비율 계산
+  const images: ImgItem[] = useMemo(() => {
+    const list: ImgItem[] = [];
+    if (postData.imageUrl) list.push({ url: postData.imageUrl }); // 대표 이미지(비율 정보 없을 수 있음)
+    if (postData.photos?.length) {
+      const sorted = [...postData.photos].sort((a, b) => (a.orderNo ?? 0) - (b.orderNo ?? 0));
+      for (const p of sorted) {
+        const ratio = p.width && p.height ? p.width / p.height : undefined;
+        list.push({ url: p.url, ratio });
+      }
+    }
+    return list;
   }, [postData.imageUrl, postData.photos]);
 
-  const hasImages = images.length > 0;
-
-  // time label: createdAt -> startTime -> updatedAt
   const timeLabel = useMemo(() => {
     // @ts-ignore
     const createdAt = (postData as any).createdAt;
@@ -86,348 +88,228 @@ export default function PostHeader({ postData, onEdit, onDelete }: Props) {
     return toRelativeTime(createdAt || startTime || updatedAt);
   }, [postData]);
 
-  useEffect(() => {
-    // console.log('[PostHeader] postData : ', postData);
-  }, [postData]);
+  const currRatio = images[current]?.ratio ?? DEFAULT_RATIO;
+  const imgH = imgW > 0 ? Math.round(imgW / currRatio) : 0;
 
   const handleMorePress = () => {
-    if (Platform.OS === 'ios') {
+    if (Platform.OS === "ios") {
       ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: ['취소', '수정', '삭제'],
-          cancelButtonIndex: 0,
-          destructiveButtonIndex: 2,
-        },
-        (buttonIndex) => {
-          if (buttonIndex === 1) {
-            onEdit?.();
-          } else if (buttonIndex === 2) {
-            handleDelete();
-          }
-        }
+        { options: ["취소", "수정", "삭제"], cancelButtonIndex: 0, destructiveButtonIndex: 2 },
+        (idx) => { if (idx === 1) onEdit?.(); else if (idx === 2) handleDelete(); }
       );
     } else {
-      // Android용 Alert
-      Alert.alert(
-        '게시물 관리',
-        '원하는 작업을 선택하세요',
-        [
-          { text: '취소', style: 'cancel' },
-          { text: '수정', onPress: () => onEdit?.() },
-          { text: '삭제', style: 'destructive', onPress: handleDelete },
-        ]
-      );
+      Alert.alert("게시물 관리", "원하는 작업을 선택하세요", [
+        { text: "취소", style: "cancel" },
+        { text: "수정", onPress: () => onEdit?.() },
+        { text: "삭제", style: "destructive", onPress: handleDelete },
+      ]);
     }
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      '게시물 삭제',
-      '정말로 이 게시물을 삭제하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        { text: '삭제', style: 'destructive', onPress: () => onDelete?.() },
-      ]
-    );
+    Alert.alert("게시물 삭제", "정말로 이 게시물을 삭제하시겠습니까?", [
+      { text: "취소", style: "cancel" },
+      { text: "삭제", style: "destructive", onPress: () => onDelete?.() },
+    ]);
   };
 
-  const renderPlaceholderCell = () => (
-    <View style={[styles.postImage, styles.placeholderBox, { width: imageWidth || "100%" }]}>
+  const renderImage = ({ item, index }: { item: ImgItem; index: number }) =>
+    errorSet.has(index) ? (
+      <View style={[styles.image, { width: imgW, height: imgH }, styles.placeholder]}>
+        <Ionicons name="image-outline" size={40} color="#9CA3AF" />
+        <Text style={styles.placeholderText}>이미지를 불러오지 못했어요</Text>
+      </View>
+    ) : (
       <Image
-        source={require("../../assets/images/logo.png")}
-        style={styles.placeholderLogo}
-        resizeMode="contain"
+        source={{ uri: item.url }}
+        style={[styles.image, { width: imgW, height: imgH }]}
+        resizeMode="cover"
+        onError={() =>
+          setErrorSet((prev) => {
+            const next = new Set(prev);
+            next.add(index);
+            return next;
+          })
+        }
+        accessibilityIgnoresInvertColors
       />
-      <Text style={styles.placeholderText}>이미지를 추가해보세요!</Text>
-    </View>
-  );
+    );
 
   return (
-    <View style={styles.wrapper}>
-      {/* 작성자 */}
+    <View style={styles.card}>
+      {/* 헤더 */}
       <View style={styles.headerRow}>
-        <View style={styles.writerRow}>
-          <UserProfile user={postData.authorDTO} size={40} showName={false} />
+        <View style={styles.writer}>
+          <UserProfile user={postData.authorDTO} size={36} showName={false} />
           <View>
             <Text style={styles.name}>{postData.authorDTO.name}</Text>
             {!!timeLabel && <Text style={styles.time}>{timeLabel}</Text>}
           </View>
         </View>
-
         {postData.authorDTO.id === loggedUser?.userId && (
-          <TouchableOpacity onPress={handleMorePress} style={styles.moreButton}>
-            <Ionicons name="ellipsis-horizontal" size={22} color="#333" />
+          <TouchableOpacity onPress={handleMorePress} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="ellipsis-horizontal" size={20} color="#111" />
           </TouchableOpacity>
         )}
       </View>
 
-      {/* 본문 */}
-      <View style={styles.contentRow}>
-        {/* 왼쪽: 이미지/플레이스홀더 */}
-        <View style={styles.leftCol}>
-          <View style={styles.imageBox} onLayout={(e) => setImageWidth(e.nativeEvent.layout.width)}>
-            {hasImages ? (
-              <>
-                <FlatList
-                  data={images}
-                  keyExtractor={(_, idx) => String(idx)}
-                  renderItem={({ item, index }) =>
-                    errorSet.has(index) ? (
-                      renderPlaceholderCell()
-                    ) : (
-                      <Image
-                        source={{ uri: item }}
-                        style={[styles.postImage, { width: imageWidth }]}
-                        resizeMode="cover"
-                        onError={() =>
-                          setErrorSet((prev) => {
-                            const next = new Set(prev);
-                            next.add(index);
-                            return next;
-                          })
-                        }
-                        accessibilityIgnoresInvertColors
-                      />
-                    )
-                  }
-                  horizontal
-                  pagingEnabled
-                  showsHorizontalScrollIndicator={false}
-                  nestedScrollEnabled
-                  onMomentumScrollEnd={(e) => {
-                    const x = e.nativeEvent.contentOffset.x;
-                    const idx = Math.round(imageWidth > 0 ? x / imageWidth : 0);
-                    if (idx !== current) setCurrent(idx);
-                  }}
-                />
-
-                {images.length > 1 && (
-                  <>
-                    <View style={styles.carouselBadge}>
-                      <Text style={styles.carouselBadgeText}>{`${current + 1}/${
-                        images.length
-                      }`}</Text>
-                    </View>
-                    <View style={styles.dotsRow}>
-                      {images.map((_, i) => (
-                        <View key={i} style={[styles.dot, i === current && styles.dotActive]} />
-                      ))}
-                    </View>
-                  </>
-                )}
-              </>
-            ) : (
-              renderPlaceholderCell()
-            )}
-          </View>
-        </View>
-
-        {/* 오른쪽: 일정 카드 + 설명 카드 */}
-        <View style={styles.rightCol}>
-          <View
-            style={[
-              styles.card,
-              styles.cardInfo,
-              postData.isCompleted && styles.cardInfoDone,
-              styles.rightTop,
-            ]}
-          >
-            {postData.isCompleted && (
-              <View style={styles.doneBadge}>
-                <Text style={styles.doneBadgeText}>종료된 일정</Text>
-              </View>
-            )}
-            <Text
-              style={[styles.cardTitle, postData.isCompleted && styles.cardTitleDone]}
-              numberOfLines={2}
-            >
-              {postData.title}
-            </Text>
-            <View style={styles.placeRow}>
-              <MapPin size={16} color={postData.isCompleted ? "#9CA3AF" : "#374151"} />
-              <Text
-                style={[styles.placeText, postData.isCompleted && styles.placeTextDone]}
-                numberOfLines={1}
-              >
-                {postData.place}
-              </Text>
-            </View>
-          </View>
-
-          <View style={[styles.card, styles.descCard, styles.rightBottom]}>
-            <Text style={styles.descText} numberOfLines={5}>
-              {postData.content || "설명 없음"}
+      {/* 제목 + 위치 (위) */}
+      <View style={styles.metaBox}>
+        <Text style={styles.title} numberOfLines={2}>
+          {postData.title}
+        </Text>
+        {!!postData.place && (
+          <View style={styles.placeChip}>
+            <MapPin size={14} color={PALETTE.chipFg} />
+            <Text style={styles.placeText} numberOfLines={1}>
+              {postData.place}
             </Text>
           </View>
-        </View>
+        )}
       </View>
 
-      {/* 댓글 섹션 */}
-      <View style={styles.commentHeader}>
-        <View style={styles.separator} />
-        {/* <View style={styles.commentRow}>
-          <View style={styles.commentCenter}>
-            <Text style={styles.commentLabel}>댓글</Text>
+      {/* 이미지(캐러셀, 비율 기반 높이) */}
+      <View
+        style={[styles.imageBox, imgH ? { height: imgH } : undefined]}
+        onLayout={(e) => setImgW(e.nativeEvent.layout.width)}
+      >
+        {images.length > 0 ? (
+          <>
+            <FlatList
+              data={images}
+              keyExtractor={(_, i) => String(i)}
+              renderItem={renderImage}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={(e) => {
+                const x = e.nativeEvent.contentOffset.x;
+                const idx = Math.round(imgW ? x / imgW : 0);
+                if (idx !== current) setCurrent(idx);
+              }}
+            />
+            <View style={styles.counterBadge}>
+              <Text style={styles.counterText}>{`${current + 1}/${images.length}`}</Text>
+            </View>
+          </>
+        ) : (
+          <View style={[styles.image, { width: imgW, height: Math.round(imgW / DEFAULT_RATIO) }, styles.placeholder]}>
+            <Ionicons name="image-outline" size={44} color="#9CA3AF" />
+            <Text style={styles.placeholderText}>이미지를 추가해보세요!</Text>
           </View>
+        )}
+      </View>
 
-          <View style={styles.commentCountRow}>
-            <Text style={styles.commentEmoji}>💬</Text>
-            <Text style={styles.commentCountText}>{postData.commentCount}</Text>
-          </View>
-        </View> */}
-        <View style={styles.commentRow}>
-          <Text style={styles.commentEmoji}>💬</Text>
-          <Text style={styles.commentLabel}>댓글</Text>
-          <Text style={styles.commentCountText}>{postData.commentCount}</Text>
+      {/* 내용 (아래) */}
+      {!!postData.content && (
+        <View style={styles.contentBox}>
+          <Text
+            style={styles.content}
+            numberOfLines={expanded ? undefined : 3}
+            ellipsizeMode="tail"
+          >
+            {postData.content}
+          </Text>
+          {postData.content.length > 60 && (
+            <TouchableOpacity onPress={() => setExpanded((v) => !v)}>
+              <Text style={styles.moreText}>{expanded ? "접기" : "더보기"}</Text>
+            </TouchableOpacity>
+          )}
         </View>
+      )}
+
+      {/* 구분선 + 댓글 헤더 */}
+      <View style={styles.sep} />
+      <View style={styles.commentRow}>
+        <Text style={styles.commentIcon}>💬</Text>
+        <Text style={styles.commentLabel}>댓글</Text>
+        <Text style={styles.commentCount}>{postData.commentCount}</Text>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: { marginVertical: 8, gap: 10 },
-
-  // 작성자 헤더
-  headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  writerRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  name: { fontWeight: "700", fontSize: 14, color: PALETTE.text },
-  time: { fontSize: 11, color: PALETTE.sub, marginTop: 2 },
-  moreButton: {
-    padding: 5,
-  },
-
-  // 본문 (2열 고정)
-  contentRow: { flexDirection: "row", gap: 12 },
-  leftCol: { flex: 1.35 },
-  rightCol: { flex: 1, gap: 12, height: IMAGE_HEIGHT }, // 오른쪽 전체 높이 고정
-
-  // 이미지 컨테이너
-  imageBox: {
-    borderRadius: 14,
-    overflow: "hidden",
-    backgroundColor: "#eee",
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOpacity: 0.08,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 4 },
-      },
-      android: { elevation: 2 },
-    }),
-  },
-  postImage: { width: "100%", height: IMAGE_HEIGHT, resizeMode: "cover" },
-
-  // 플레이스홀더
-  placeholderBox: {
-    height: IMAGE_HEIGHT,
-    backgroundColor: "#f5f5f5",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  placeholderLogo: { width: 72, height: 72, marginBottom: 8, opacity: 0.85 },
-  placeholderText: { fontSize: 13, color: "#888" },
-
-  // 캐러셀 보조 UI
-  carouselBadge: {
-    position: "absolute",
-    right: 8,
-    top: 8,
-    backgroundColor: PALETTE.badge,
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  carouselBadgeText: { color: "#fff", fontSize: 12, fontWeight: "600" },
-  dotsRow: {
-    position: "absolute",
-    bottom: 8,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 6,
-  },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: PALETTE.dot },
-  dotActive: { backgroundColor: PALETTE.dotActive },
-
-  // 카드
   card: {
-    borderRadius: 14,
-    padding: 12,
+    backgroundColor: PALETTE.white,
+    paddingHorizontal: 10,
+    paddingTop: 14,
+    paddingBottom: 6,
+  },
+
+  // 헤더
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  writer: { flexDirection: "row", alignItems: "center", gap: 10 },
+  name: { fontSize: 16, fontWeight: "800", color: PALETTE.text },
+  time: { fontSize: 12, color: PALETTE.sub, marginTop: 2 },
+
+  // 제목+위치
+  metaBox: {
+    marginBottom: 10,
+    paddingTop: 12,
+    paddingLeft: 4,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: PALETTE.line,       // "#E5E7EB"
+  },
+
+  title: { fontSize: 20, fontWeight: "700", color: PALETTE.text },
+  placeChip: {
+    marginTop: 6,
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: PALETTE.chipBg,
+  },
+  placeText: { fontSize: 10, color: PALETTE.chipFg, fontWeight: "600" },
+
+  // 이미지
+  imageBox: {
+    width: "100%",
+    borderRadius: 0,
+    overflow: "hidden",
+    backgroundColor: "#F3F4F6",
     ...Platform.select({
       ios: {
         shadowColor: "#000",
         shadowOpacity: 0.06,
         shadowRadius: 10,
-        shadowOffset: { width: 0, height: 4 },
+        shadowOffset: { width: 0, height: 5 },
       },
-      android: { elevation: 1 },
+      android: { elevation: 2 },
     }),
   },
-  cardInfo: { backgroundColor: PALETTE.cardInfo },
-  cardInfoDone: { backgroundColor: PALETTE.cardInfoDone },
-  doneBadge: {
+  image: { width: "100%", height: "100%" },
+  placeholder: { alignItems: "center", justifyContent: "center", gap: 8 },
+  placeholderText: { fontSize: 12, color: "#9CA3AF" },
+  counterBadge: {
     position: "absolute",
-    top: 8,
-    right: 8,
-    backgroundColor: "#FF3B30",
+    top: 10,
+    right: 10,
+    backgroundColor: PALETTE.badge,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 10,
+    borderRadius: 12,
   },
-  doneBadgeText: { color: "#fff", fontSize: 11, fontWeight: "700" },
-  cardTitle: { fontSize: 18, fontWeight: "800", color: PALETTE.text, marginBottom: 8 },
-  cardTitleDone: { color: "#9CA3AF" },
+  counterText: { color: "#fff", fontSize: 12, fontWeight: "700" },
 
-  placeRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  placeText: { fontSize: 12, color: "#374151" },
-  placeTextDone: { color: PALETTE.sub },
-
-  // 오른쪽 상/하 비율
-  rightTop: { flex: 0.55, justifyContent: "space-between" },
-  rightBottom: { flex: 0.45 },
-
-  // 설명 카드
-  descCard: { backgroundColor: PALETTE.descBg },
-  descText: { fontSize: 13, color: "#374151", lineHeight: 20 },
+  // 내용
+  contentBox: { paddingVertical: 14,     paddingLeft: 4, },
+  content: { fontSize: 17, color: "#111827", lineHeight: 22 },
+  moreText: { marginTop: 6, fontSize: 12, fontWeight: "700", color: PALETTE.chipFg },
 
   // 댓글 헤더
-  commentHeader: { marginTop: 12 },
-  separator: { height: StyleSheet.hairlineWidth, backgroundColor: PALETTE.line, marginBottom: 8 },
-
-  commentRow: {
-    flexDirection: "row", // 가로 배치
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-  },
-
-  commentEmoji: { fontSize: 18 },
-  commentLabel: { fontSize: 15, fontWeight: "600", color: PALETTE.text },
-  commentCountText: { color: PALETTE.sub, fontSize: 15, fontWeight: "600" },
-  commentCenter: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    alignItems: "center",
-    justifyContent: "center",
-    pointerEvents: "none",
-  },
-
-  commentCountRow: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    gap: 6,
-    paddingRight: 0,
-    paddingVertical: 4,
-  },
-
-  placeEmoji: { fontSize: 15, marginRight: 4 },
+  sep: { height: StyleSheet.hairlineWidth, backgroundColor: PALETTE.line, marginTop: 8 },
+  commentRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 10 },
+  commentIcon: { fontSize: 18 },
+  commentLabel: { fontSize: 14, fontWeight: "700", color: PALETTE.text },
+  commentCount: { fontSize: 14, fontWeight: "700", color: PALETTE.sub },
 });
