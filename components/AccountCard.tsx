@@ -86,8 +86,8 @@ const styles = StyleSheet.create({
 
   leftCol: { marginRight: 12 },
   bankLogo: {
-    width: 53,
-    height: 53,
+    width: 50,
+    height: 50,
     borderRadius: 24,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     overflow: "hidden",
   },
-  bankLogoImg: { width: 50, height: 50 },
+  bankLogoImg: { width: 70, height: 70 },
   bankLogoText: { fontSize: 16, color: "#6C5CE7", fontWeight: "800" },
 
   rightCol: { flex: 1, minWidth: 0 },
