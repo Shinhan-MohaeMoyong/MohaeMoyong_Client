@@ -1,17 +1,15 @@
 import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import EventItem from "../components/EventItem";
 import {
   Animated,
   Dimensions,
-  PanResponder,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
-  View,
+  View
 } from "react-native";
+import EventItem from "../components/EventItem";
 import MonthlyCalendar from "../components/MonthlyCalendar";
 import TopTabs, { TopTabKey } from "../components/TopTabs";
 import { useUser } from "../contexts/UserContext";
@@ -156,7 +154,7 @@ export default function ScheduleCalendarScreen() {
     switch (activeTab) {
       case "계좌":
         if (showAccountDetail && selectedAccount) {
-          return <AccountDetailScreen account={selectedAccount}/>;  // onBack={handleDetailBackPress} />;
+          return <AccountDetailScreen account={selectedAccount} onBackPress={handleDetailBackPress}/>;  // onBack={handleDetailBackPress} />;
         }
         return (
           <View style={{ flex: 1, width: "100%", paddingTop: 8 }}>

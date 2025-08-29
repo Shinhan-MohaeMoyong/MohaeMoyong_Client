@@ -104,11 +104,6 @@ export default function AddPlanScreen() {
         keyboardDismissMode="interactive"
         showsVerticalScrollIndicator={false}
       >
-        <EventTypeSelector
-          selectedType={formData.eventType}
-          onSelectType={(type) => updateFormData({ eventType: type })}
-        />
-
         <ScrollView
           style={styles.content}
           contentContainerStyle={{ paddingBottom: 120 }}

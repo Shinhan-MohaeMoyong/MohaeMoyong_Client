@@ -4,8 +4,8 @@ import { AccountDTO } from "../types/dto/AccountDTO";
 interface AccountCardProps {
   account: AccountDTO;
   onPress: () => void;
-  onAliasEdit?: () => void;
 }
+
 const BANK_LOGOS: Record<string, ImageSourcePropType> = {
   신한은행: require("@/assets/images/shinhanlogo.png"),
 };
@@ -16,12 +16,7 @@ const formatCurrency = (n?: string | number) => {
   return num.toLocaleString("ko-KR");
 };
 
-export default function AccountCard({
-  account,
-  onPress,
-  onAliasEdit
-}: AccountCardProps) {
-
+export default function AccountCard({ account, onPress }: AccountCardProps) {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
       {/* 왼쪽: 로고 */}
@@ -49,28 +44,8 @@ export default function AccountCard({
         <Text style={styles.accountNumber} numberOfLines={1}>
           {account.maskedAccountNumber}
         </Text>
-        
-        {/* 잔액 */}
-        <Text style={styles.balance}>
-          {account.balance}
-        </Text>
-        
-        {/* 계좌 별칭 */}
-        <View style={styles.aliasContainer}>
-          <Text style={styles.accountAlias}>
-            {account.accountAlias}
-          </Text>
-          {onAliasEdit && (
-            <TouchableOpacity
-              style={styles.aliasEditButton}
-              onPress={onAliasEdit}
-            >
-              <Text style={styles.aliasEditButtonText}>수정</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-        
-        {/* 새 계좌 표시 */}
+
+        {/* NEW 배지 (원하면 유지) */}
         {account.isNew && (
           <View style={styles.newBadge}>
             <Text style={styles.newBadgeText}>NEW</Text>
@@ -132,34 +107,6 @@ const styles = StyleSheet.create({
     fontVariant: ["tabular-nums"],
     letterSpacing: 0.2,
   },
-  balance: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 8,
-  },
-  accountAlias: {
-    fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '500',
-    flex: 1,
-  },
-  aliasContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  aliasEditButton: {
-    backgroundColor: '#A78BFA',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginLeft: 8,
-  },
-  aliasEditButtonText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '600',
 
   // 큰 금액
   bigBalance: {

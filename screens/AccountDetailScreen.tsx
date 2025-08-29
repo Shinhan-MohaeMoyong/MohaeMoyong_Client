@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import { Href, useRouter } from "expo-router";
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
+  FlatList,
   Modal,
   RefreshControl,
   ScrollView,
@@ -8,7 +10,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  FlatList,
   View
 } from 'react-native';
 import AccountCard from '../components/AccountCard';
@@ -17,7 +18,6 @@ import { SERVER_URL } from '../constants/server';
 import { getToken } from '../contexts/tokenManager';
 import { AccountMapper } from '../mappers/AccountMapper';
 import { AccountDetailDTO, TransactionDetailDTO } from '../types/dto/AccountDetailDTO';
-import { Href, useRouter } from "expo-router";
 
 interface Transaction {
   id: string;
@@ -59,6 +59,8 @@ export default function AccountDetailScreen({ account, onBackPress, fallbackPath
   const [newTargetAmount, setNewTargetAmount] = useState('');
   const [showAliasEditModal, setShowAliasEditModal] = useState(false);
   const [newAccountAlias, setNewAccountAlias] = useState('');
+  const [filteredTransactions, setFilteredTransactions] = useState(transactions);
+
 
   const mapTransactionDTOToTransaction = (dto: TransactionDetailDTO, index: number): Transaction => ({
     id: `${dto.transactionDate}_${dto.transactionTime}_${index}`,
@@ -266,7 +268,12 @@ export default function AccountDetailScreen({ account, onBackPress, fallbackPath
     }
   };
 
-  const filteredTransactions = transactions.filter((t) => (filterType === "all" ? true : t.type === filterType));
+  useEffect(() => {
+    const next = transactions.filter((t) =>
+      filterType === "all" ? true : t.type === filterType
+    );
+    setFilteredTransactions(next);
+  }, [transactions, filterType]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -282,10 +289,6 @@ export default function AccountDetailScreen({ account, onBackPress, fallbackPath
   const handleBack = () => {
   if (onBackPress) {
     onBackPress();
-  } else if (fallbackPath) {
-    router.replace(fallbackPath);
-  } else {
-    router.back();
   }
 };
 
@@ -334,7 +337,8 @@ export default function AccountDetailScreen({ account, onBackPress, fallbackPath
           onPress={handleBack}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} // ✅ 터치 영역 확장
         >
-          <Text style={styles.backButtonText}>← 뒤로</Text>
+          <Text style={styles.backButtonText}>←</Text>
+
         </TouchableOpacity>
         <Text style={styles.headerTitle}>계좌 상세</Text>
         <View style={styles.headerPlaceholder} />
@@ -356,20 +360,7 @@ export default function AccountDetailScreen({ account, onBackPress, fallbackPath
           onAliasEdit={handleAliasEdit}
         />
 
-        {/* 목표 금액 */}
-        {accountDetail && (
-          <View style={styles.targetAmountContainer}>
-            <View style={styles.targetAmountRow}>
-              <Text style={styles.targetAmountTitle}>목표 금액: {accountDetail.targetAmount.toLocaleString()}원</Text>
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={handleTargetAmountEdit}
-              >
-                <Text style={styles.editButtonText}>수정</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
+        
 
         {/* 내역 구분 필터 */}
         <View style={styles.filterContainer}>
@@ -653,10 +644,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     zIndex: 1, // ✅ 제목과 겹침 방지
   },
-  backButtonText: {
-    fontSize: 14,
-    color: "#6B7280",
-  },
+  backButtonText: { fontSize: 22, color: "black" },
+
   headerTitle: {
     fontSize: 18,
     fontWeight: "600",
