@@ -1,6 +1,14 @@
 import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Animated,
+  Dimensions,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
+} from "react-native";
 import EventItem from "../components/EventItem";
 import MonthlyCalendar from "../components/MonthlyCalendar";
 import TopTabs, { TopTabKey } from "../components/TopTabs";
@@ -10,6 +18,14 @@ import type { PlanEntity } from "../types";
 import AccountDetailScreen from "./AccountDetailScreen";
 import AccountScreen from "./AccountScreen";
 import SavingScreen from "./SavingScreen";
+
+const { height: screenHeight } = Dimensions.get("window");
+const BOTTOM_SHEET_HEIGHT = screenHeight * 0.6; // 60% - 초기상태
+const MIDDLE_SNAP_HEIGHT = screenHeight * 0.3; // 30% - 중간 snap
+const FULL_SCREEN_HEIGHT = screenHeight * 0.95; // 95% - 전체화면
+const DRAG_THRESHOLD = 50; // 드래그 임계값을 낮춰 더 민감하게
+const EXPAND_THRESHOLD = -80; // 확장 임계값도 낮춰 더 쉽게 확장되도록
+const MIDDLE_THRESHOLD = -30; // 중간 snap 임계값
 
 export default function ScheduleCalendarScreen() {
   const { loggedUser } = useUser();
@@ -31,6 +47,16 @@ export default function ScheduleCalendarScreen() {
   const [activeTab, setActiveTab] = useState<TopTabKey>("일정");
   const [selectedAccount, setSelectedAccount] = useState<any>(null);
   const [showAccountDetail, setShowAccountDetail] = useState(false);
+  const [showHeader, setShowHeader] = useState(true);
+
+  // 바텀시트 관련 상태
+  const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [snapPosition, setSnapPosition] = useState<"bottom" | "middle" | "full">("bottom");
+
+  // 바텀시트 애니메이션
+  const pan = useRef(new Animated.ValueXY()).current;
+  const currentPosition = useRef(0);
 
   React.useEffect(() => {
     if (loggedUser && setCurrentUserTo) {
@@ -105,20 +131,37 @@ export default function ScheduleCalendarScreen() {
     setShowAccountDetail(true);
   };
 
-  const handleBack = () => {
+  // AddAccountScreen에서 헤더 보이기/숨기기 처리 함수
+  const handleAddAccountScreenVisibleHeader = (visible: boolean) => {
+    setShowHeader(visible);
+  };
+
+  // AccountDetailScreen에서 뒤로 가기 처리 함수
+  const handleDetailBackPress = () => {
+    // AccountDetailScreen에서 벗어나면 Header 다시 보이기
+    setShowHeader(true);
     setShowAccountDetail(false);
     setSelectedAccount(null);
   };
+
+  React.useEffect(() => {
+    if (showAccountDetail && selectedAccount) {
+      setShowHeader(false);
+    }
+  }, [showAccountDetail, selectedAccount]);
 
   const renderContent = () => {
     switch (activeTab) {
       case "계좌":
         if (showAccountDetail && selectedAccount) {
-          return <AccountDetailScreen account={selectedAccount} onBack={handleBack} />;
+          return <AccountDetailScreen account={selectedAccount} onBackPress={handleDetailBackPress}/>;  // onBack={handleDetailBackPress} />;
         }
         return (
           <View style={{ flex: 1, width: "100%", paddingTop: 8 }}>
-            <AccountScreen onAccountPress={handleAccountPress} />
+            <AccountScreen
+              onAccountPress={handleAccountPress}
+              visibleHeader={handleAddAccountScreenVisibleHeader}
+            />
           </View>
         );
       case "일정":
@@ -175,14 +218,12 @@ export default function ScheduleCalendarScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        {/* TopTabs 추가 */}
-        <TopTabs
-          active={activeTab}
-          onChange={handleTabChange}
-          style={styles.tabsRow}
-        />
-      </View>
+      {showHeader && (
+        <View style={styles.header}>
+          {/* TopTabs 추가 */}
+          <TopTabs active={activeTab} onChange={handleTabChange} style={styles.tabsRow} />
+        </View>
+      )}
 
       {/* 탭에 따른 콘텐츠 렌더링 */}
       {renderContent()}

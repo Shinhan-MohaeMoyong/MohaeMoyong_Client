@@ -28,7 +28,7 @@ export default function TopTabs({ active, onChange, style }: Props) {
 const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "flex-end", flex: 1 },
   item: { alignItems: "center", flex: 1 },
-  text: { fontSize: 14, fontWeight: "800" },
+  text: { fontSize: 20, fontWeight: "900" },
   textActive: { color: "#222" },
   textInactive: { color: "#B8BDC3" },
   underline: { marginTop: 4, height: 2, backgroundColor: "#222", width: 28, borderRadius: 1 },

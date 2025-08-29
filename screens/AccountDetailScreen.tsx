@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import { Href, useRouter } from "expo-router";
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
+  FlatList,
   Modal,
   RefreshControl,
   ScrollView,
@@ -21,7 +23,7 @@ interface Transaction {
   id: string;
   message: string;
   amount: number;
-  type: 'deposit' | 'withdrawal';
+  type: "deposit" | "withdrawal";
   date: string;
 }
 
@@ -41,11 +43,13 @@ interface AccountDetailProps {
 
 interface AccountDetailScreenProps {
   account: Account;
-  onBack?: () => void;
+  onBackPress?: () => void;
+  fallbackPath?: Href;
 }
 
-export default function AccountDetailScreen({ account, onBack }: AccountDetailScreenProps) {
-  const [filterType, setFilterType] = useState<'all' | 'deposit' | 'withdrawal'>('all');
+export default function AccountDetailScreen({ account, onBackPress, fallbackPath = "/account-list" as Href }: AccountDetailScreenProps) {
+  const router = useRouter(); 
+  const [filterType, setFilterType] = useState<"all" | "deposit" | "withdrawal">("all");
   const [refreshing, setRefreshing] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -55,26 +59,23 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
   const [newTargetAmount, setNewTargetAmount] = useState('');
   const [showAliasEditModal, setShowAliasEditModal] = useState(false);
   const [newAccountAlias, setNewAccountAlias] = useState('');
+  const [filteredTransactions, setFilteredTransactions] = useState(transactions);
 
-  // API 응답을 내부 Transaction 타입으로 변환하는 함수
-  const mapTransactionDTOToTransaction = (dto: TransactionDetailDTO, index: number): Transaction => {
-    return {
-      id: `${dto.transactionDate}_${dto.transactionTime}_${index}`,
-      message: dto.transactionSummary,
-      amount: dto.transactionBalance,
-      type: dto.transactionType === '1' ? 'deposit' : 'withdrawal',
-      date: formatTransactionDate(dto.transactionDate, dto.transactionTime),
-    };
-  };
 
-  // 거래일자와 시간을 포맷팅하는 함수
+  const mapTransactionDTOToTransaction = (dto: TransactionDetailDTO, index: number): Transaction => ({
+    id: `${dto.transactionDate}_${dto.transactionTime}_${index}`,
+    message: dto.transactionSummary,
+    amount: dto.transactionBalance,
+    type: dto.transactionType === "1" ? "deposit" : "withdrawal",
+    date: formatTransactionDate(dto.transactionDate, dto.transactionTime),
+  });
+
   const formatTransactionDate = (date: string, time: string): string => {
     const year = date.substring(0, 4);
     const month = date.substring(4, 6);
     const day = date.substring(6, 8);
     const hour = time.substring(0, 2);
     const minute = time.substring(2, 4);
-    
     return `${year}-${month}-${day} ${hour}:${minute}`;
   };
 
@@ -213,8 +214,8 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
       const response = await fetch(`${SERVER_URL}/api/v1/account/detail`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${await getToken()}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${await getToken()}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(requestBody),
       });
@@ -235,14 +236,16 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
       }
 
       const accountDetailResponse = await response.json();
-      console.log('🏦 === 계좌 상세 정보 응답 ===');
-      console.log(JSON.stringify(accountDetailResponse, null, 2));
-      
       setAccountDetail(accountDetailResponse);
-      
-      // 거래내역을 내부 타입으로 변환
-      const mappedTransactions = accountDetailResponse.list.map((transaction: TransactionDetailDTO, index: number) => 
-        mapTransactionDTOToTransaction(transaction, index)
+
+      const mappedTransactions = (accountDetailResponse.list ?? []).map(
+        (t: TransactionDetailDTO, idx: number) => ({
+          id: `${t.transactionDate}_${t.transactionTime}_${idx}`,
+          message: t.transactionSummary,
+          amount: t.transactionBalance,
+          type: t.transactionType === "1" ? "deposit" : "withdrawal",
+          date: `${t.transactionDate.slice(0, 4)}-${t.transactionDate.slice(4, 6)}-${t.transactionDate.slice(6, 8)} ${t.transactionTime.slice(0, 2)}:${t.transactionTime.slice(2, 4)}`,
+        })
       );
       
       setTransactions(mappedTransactions);
@@ -252,33 +255,26 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
 
       
     } catch (e) {
-      console.error('❌ 계좌 상세 정보 조회 실패:', e);
-      
-      let errorMessage = '계좌 상세 정보를 불러오지 못했습니다.';
-      
+      console.error("❌ 계좌 상세 정보 조회 실패:", e);
+      let msg = "계좌 상세 정보를 불러오지 못했습니다.";
       if (e instanceof Error) {
-        if (e.message.includes('401')) {
-          errorMessage = '인증이 필요합니다. 다시 로그인해 주세요.';
-        } else if (e.message.includes('404')) {
-          errorMessage = '계좌 정보를 찾을 수 없습니다.';
-        } else if (e.message.includes('500')) {
-          errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
-        }
+        if (e.message.includes("401")) msg = "인증이 필요합니다. 다시 로그인해 주세요.";
+        else if (e.message.includes("404")) msg = "계좌 정보를 찾을 수 없습니다.";
+        else if (e.message.includes("500")) msg = "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
       }
-      
-      setError(errorMessage);
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  // 필터링된 거래내역
-  const filteredTransactions = transactions.filter(transaction => {
-    if (filterType === 'all') return true;
-    return transaction.type === filterType;
-  });
+  useEffect(() => {
+    const next = transactions.filter((t) =>
+      filterType === "all" ? true : t.type === filterType
+    );
+    setFilteredTransactions(next);
+  }, [transactions, filterType]);
 
-  // 새로고침 처리
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchDetail();
@@ -289,22 +285,26 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
     fetchDetail();
   }, []);
 
-  // 필터 버튼 렌더링
-  const renderFilterButton = (type: 'all' | 'deposit' | 'withdrawal', label: string) => {
+
+  const handleBack = () => {
+  if (onBackPress) {
+    onBackPress();
+  }
+};
+
+// 내부 함수: 버튼 렌더
+  function renderFilterButton(type: "all" | "deposit" | "withdrawal", label: string) {
     const isActive = filterType === type;
     return (
       <TouchableOpacity
         style={[styles.filterButton, isActive && styles.filterButtonActive]}
         onPress={() => setFilterType(type)}
       >
-        <Text style={[styles.filterButtonText, isActive && styles.filterButtonTextActive]}>
-          {label}
-        </Text>
+        <Text style={[styles.filterButtonText, isActive && styles.filterButtonTextActive]}>{label}</Text>
       </TouchableOpacity>
     );
-  };
+  }
 
-  // 로딩 상태 표시
   if (loading && !accountDetail) {
     return (
       <View style={styles.container}>
@@ -315,7 +315,6 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
     );
   }
 
-  // 에러 상태 표시
   if (error && !accountDetail) {
     return (
       <View style={styles.container}>
@@ -335,9 +334,11 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={onBack}
+          onPress={handleBack}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} // ✅ 터치 영역 확장
         >
-          <Text style={styles.backButtonText}>← 뒤로</Text>
+          <Text style={styles.backButtonText}>←</Text>
+
         </TouchableOpacity>
         <Text style={styles.headerTitle}>계좌 상세</Text>
         <View style={styles.headerPlaceholder} />
@@ -346,9 +347,7 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         showsVerticalScrollIndicator={false}
       >
         {/* 계좌 정보 카드 */}
@@ -361,47 +360,55 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
           onAliasEdit={handleAliasEdit}
         />
 
-        {/* 목표 금액 */}
-        {accountDetail && (
-          <View style={styles.targetAmountContainer}>
-            <View style={styles.targetAmountRow}>
-              <Text style={styles.targetAmountTitle}>목표 금액: {accountDetail.targetAmount.toLocaleString()}원</Text>
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={handleTargetAmountEdit}
-              >
-                <Text style={styles.editButtonText}>수정</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
+        
 
         {/* 내역 구분 필터 */}
         <View style={styles.filterContainer}>
           <Text style={styles.filterTitle}>내역 구분</Text>
           <View style={styles.filterButtons}>
-            {renderFilterButton('all', '전체')}
-            {renderFilterButton('deposit', '입금')}
-            {renderFilterButton('withdrawal', '출금')}
+            {renderFilterButton("all", "전체")}
+            {renderFilterButton("deposit", "입금")}
+            {renderFilterButton("withdrawal", "출금")}
           </View>
         </View>
 
-        {/* 거래내역 목록 */}
-        <View style={styles.transactionsContainer}>
-          <Text style={styles.transactionsTitle}>
-            거래내역 ({filteredTransactions.length}건)
-          </Text>
-          
-          {filteredTransactions.map((transaction) => (
-            <TransactionItem
-              key={transaction.id}
-              message={transaction.message}
-              amount={transaction.amount}
-              type={transaction.type}
-              date={transaction.date}
-            />
-          ))}
+       {/* 거래내역 목록 */}
+<View style={styles.transactionsContainer}>
+  <View style={styles.transactionsHeaderRow}>
+    <Text style={styles.transactionsTitleRowText}>거래내역</Text>
+    <Text style={styles.transactionsCount}>{filteredTransactions.length}건</Text>
+  </View>
+
+  <FlatList
+    data={filteredTransactions}
+    keyExtractor={(item) => item.id}
+    renderItem={({ item }) => (
+      <TransactionItem
+        message={item.message}
+        amount={item.amount}
+        type={item.type}
+        date={item.date}
+      />
+    )}
+    ItemSeparatorComponent={() => <View style={styles.itemDivider} />}
+    ListEmptyComponent={
+      <View style={styles.emptyWrap}>
+        <Text style={styles.emptyEmoji}>🫧</Text>
+        <Text style={styles.emptyTitle}>표시할 거래내역이 없어요</Text>
+        <Text style={styles.emptyDesc}>
+          상단에서 필터를 변경하거나 새로고침하여 최신 거래내역을 불러와 보세요.
+        </Text>
+
+        <View style={styles.emptyActions}>
+          <TouchableOpacity style={styles.emptyPrimaryBtn} onPress={onRefresh}>
+            <Text style={styles.emptyPrimaryBtnText}>새로고침</Text>
+          </TouchableOpacity>
         </View>
+      </View>
+    }
+    scrollEnabled={false} // 상단 ScrollView와 스크롤 충돌 방지
+  />
+</View>
       </ScrollView>
 
       {/* 목표 금액 수정 모달 */}
@@ -486,10 +493,12 @@ export default function AccountDetailScreen({ account, onBack }: AccountDetailSc
    );
  }
 
+  
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: "#fff",
   },
   scrollView: {
     flex: 1,
@@ -500,33 +509,33 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: "#6B7280",
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   errorText: {
     fontSize: 16,
-    color: '#EF4444',
-    textAlign: 'center',
+    color: "#EF4444",
+    textAlign: "center",
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#A78BFA',
+    backgroundColor: "#A78BFA",
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
   },
   retryButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 14,
     fontWeight: '600',
   },
@@ -565,11 +574,11 @@ const styles = StyleSheet.create({
   },
 
   filterContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -577,12 +586,12 @@ const styles = StyleSheet.create({
   },
   filterTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
+    fontWeight: "600",
+    color: "#111827",
     marginBottom: 16,
   },
   filterButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
   },
   filterButton: {
@@ -590,25 +599,25 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
+    backgroundColor: "#F3F4F6",
+    alignItems: "center",
   },
   filterButtonActive: {
-    backgroundColor: '#A78BFA',
+    backgroundColor: "#A78BFA",
   },
   filterButtonText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#6B7280',
+    fontWeight: "500",
+    color: "#6B7280",
   },
   filterButtonTextActive: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   transactionsContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -616,32 +625,31 @@ const styles = StyleSheet.create({
   },
   transactionsTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
+    fontWeight: "600",
+    color: "#111827",
     marginBottom: 16,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: "#E5E7EB",
   },
   backButton: {
     paddingVertical: 8,
     paddingHorizontal: 12,
+    zIndex: 1, // ✅ 제목과 겹침 방지
   },
-  backButtonText: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
+  backButtonText: { fontSize: 22, color: "black" },
+
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
+    fontWeight: "600",
+    color: "#111827",
   },
   headerPlaceholder: {
     width: 50,
@@ -712,4 +720,88 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+
+  transactionsHeaderRow: {
+    flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  marginBottom: 8,
+  },
+  transactionsCount: {
+    marginLeft: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+    backgroundColor: "#F3F4F6",
+    color: "#6B7280",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  itemDivider: {
+    height: 1,
+    backgroundColor: "#F3F4F6",
+    marginVertical: 8,
+  },
+
+  // 🫧 빈 상태
+  emptyWrap: {
+    marginTop: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E8EBFF",
+    backgroundColor: "#F7F8FF",
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    alignItems: "center",
+  },
+  emptyEmoji: {
+    fontSize: 40,
+    marginBottom: 8,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#111827",
+    marginBottom: 6,
+  },
+  emptyDesc: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: "#6B7280",
+    textAlign: "center",
+  },
+  emptyActions: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 16,
+  },
+  emptyPrimaryBtn: {
+    backgroundColor: "#A78BFA",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+  },
+  emptyPrimaryBtnText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  emptyGhostBtn: {
+    backgroundColor: "#EEF0F6",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+  },
+  emptyGhostBtnText: {
+    color: "#4B5563",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  transactionsTitleRowText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#111827",
+    marginBottom: 0,   // ✅ 행 안에서 줄바꿈 방지
+    flexShrink: 1,     // ✅ 화면 좁아도 줄바꿈 안 되도록
+  }
 });
