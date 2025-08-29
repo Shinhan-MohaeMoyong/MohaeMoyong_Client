@@ -1,6 +1,7 @@
 import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
+  Alert,
   Animated,
   Dimensions,
   Image,
@@ -8,9 +9,8 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  View,
   TouchableOpacity,
-  Alert
+  View
 } from "react-native";
 import EventItem from "../components/EventItem";
 import MonthlyCalendar from "../components/MonthlyCalendar";

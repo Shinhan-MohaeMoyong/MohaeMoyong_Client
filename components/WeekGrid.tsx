@@ -152,7 +152,6 @@ export default function WeekGrid({
   const indicatorOpacity = pullProgress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
   const indicatorScale = pullProgress.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1.15] });
 
-  console.log('total plans:', plans);
   const rects: PlanGridDTO[] = useMemo(() => {
     // 날짜 범위 필터링
     const filteredPlans = plans.filter((p) => {
