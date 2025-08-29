@@ -5,4 +5,11 @@ export type PlanEntity = {
     startTime: string;
     endTime: string;
     new?: boolean;
+    authorId: number;
+    hasSavingsGoal: boolean;
+    savingsAmount: number | null;
+    privacyLevel: string;
+    withDrawAccountNo: string | null;
+    depositAccountNo: string | null;
+    completed: boolean;
 };

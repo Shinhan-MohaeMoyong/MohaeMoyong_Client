@@ -283,5 +283,6 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
     fetchPlans,
     onItemPress,
     setCurrentUserTo,
+    setPlans,
   };
 }
