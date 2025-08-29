@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
   Modal,
   RefreshControl,
   ScrollView,
@@ -8,6 +9,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import CustomAlert from "../components/CustomAlert";
@@ -77,6 +79,7 @@ function AccountCreationInputModal({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View style={styles.overlay}>
         <View style={styles.modalCard}>
           <View style={styles.handleBar} />
@@ -138,6 +141,7 @@ function AccountCreationInputModal({
           </View>
         </View>
       </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 }
