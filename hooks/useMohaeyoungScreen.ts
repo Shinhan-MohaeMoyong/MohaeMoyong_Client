@@ -2,6 +2,7 @@
 import { SERVER_URL } from "@/constants/server";
 import { getToken } from "@/contexts/tokenManager";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { dataFetchFriends } from "../constants/localData/friendsListData";
 import { dataFetchPlans } from "../constants/localData/PlanData";
@@ -346,10 +347,11 @@ export function useMohaeyoung({ serverUrl = SERVER_URL, useMock = false, token, 
 
 
 
-  useEffect(() => {
-    fetchDatas();
-    console.log('[MohaeyoungScreen]useEffect');
-  }, [fetchDatas]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchDatas();
+    }, [fetchDatas])
+  );
 
   const onItemPress = useCallback((u: UserDTO) => {
     console.log("clicked:", u.id, u.name);
