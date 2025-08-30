@@ -219,7 +219,7 @@ export function useAddPlanScreen() {
     // 반복 옵션이 활성화되어 있고 count가 설정되지 않은 경우, 종료일을 기준으로 자동 계산
     if (formData.repeatConfig.enabled && !count && formData.repeatConfig.until) {
       try {
-        const startDate = new Date(formData.selectedYear, formData.selectedMonth - 1, parseInt(formData.selectedDate));
+        const startDate = new Date(formData.selectedDate);
         const endDate = new Date(formData.repeatConfig.until);
         console.log('start, end',startDate, endDate);
         if (endDate > startDate) {
