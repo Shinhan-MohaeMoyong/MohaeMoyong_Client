@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   bankLogoImg: { width: 70, height: 70 },
-  bankLogoText: { fontSize: 16, color: "#6C5CE7", fontWeight: "800" },
+  bankLogoText: { fontSize: 16, color: "#8C93FF", fontWeight: "800" },
 
   rightCol: { flex: 1, minWidth: 0 },
   accountAlias: { marginTop: 5, fontSize: 18, fontWeight: "800", color: "#111827" },
@@ -129,5 +129,5 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 8,
   },
-  newBadgeText: { color: "#7C3AED", fontSize: 10, fontWeight: "800", letterSpacing: 0.2 },
+  newBadgeText: { color: "#8C93FF", fontSize: 10, fontWeight: "800", letterSpacing: 0.2 },
 });

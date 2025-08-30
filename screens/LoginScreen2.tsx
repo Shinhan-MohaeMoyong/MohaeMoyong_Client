@@ -470,7 +470,7 @@ export default function LoginScreen2({ onLoginSuccess }: LoginScreen2Props) {
   );
 }
 
-const PURPLE = '#6C5CE7';
+const PURPLE = '#8C93FF';
 
 const styles = StyleSheet.create({
   screen: {

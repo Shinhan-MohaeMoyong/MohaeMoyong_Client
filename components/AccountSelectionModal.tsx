@@ -6,16 +6,16 @@ import { AccountMapper } from '@/mappers/AccountMapper';
 import AddAccountScreen from '@/screens/AddAccountScreen';
 import { useEffect, useState } from 'react';
 import {
-    Alert,
-    Modal,
-    Platform,
-    RefreshControl,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Modal,
+  Platform,
+  RefreshControl,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 export type Account = {
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F9FAFB' },
   loadingText: { fontSize: 16, color: '#6B7280' },
   addAccountButton: {
-    backgroundColor: '#A78BFA', borderRadius: 12, paddingVertical: 16, paddingHorizontal: 20,
+    backgroundColor: '#8C93FF', borderRadius: 12, paddingVertical: 16, paddingHorizontal: 20,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2,
     marginTop: 8,

@@ -158,8 +158,8 @@ export default function EventItem({
   );
 }
 
-const PURPLE = "#8A6EEF";
-const CARD_BG = "#6F58E6";
+const PURPLE = "#8C93FF";
+const CARD_BG = "#8C93FF";
 const CARD_PADDING_V = 14; // ↔ timeColumn과 카드 위/아래 패딩 일치
 
 const styles = StyleSheet.create({

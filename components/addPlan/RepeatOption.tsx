@@ -342,7 +342,76 @@ export default function RepeatOption({
                   <Ionicons name="close-circle" size={20} color="#FF3B30" />
                 </TouchableOpacity>
               </View>
-            ))}
+            )}
+
+            {/* 횟수 입력 */}
+            {localConfig.count !== null && (
+              <View style={styles.countInputContainer}>
+                <Text style={styles.countInputLabel}>반복 횟수:</Text>
+                <TextInput
+                  style={styles.countTextInput}
+                  value={localConfig.count?.toString() ?? ""}  // null이면 빈 문자열
+                  onChangeText={(text) => {
+                    // 1) 입력 중엔 빈 문자열 허용 (지우는 과정)
+                    if (text === "") {
+                      // 화면에 빈 문자열 유지하려면 count를 null로 두세요
+                      updateConfig({ count: null });
+                      return;
+                    }
+                    // 2) 숫자만 추출 후 숫자 아니면 무시
+                    const num = parseInt(text.replace(/[^\d]/g, ""), 10);
+                    if (Number.isNaN(num)) return;
+
+                    // 3) 입력 중에도 대략적인 범위는 묶어주되, 즉시 1로 되돌리지 않음
+                    // (원하면 상한/하한 조정: 예 1~99)
+                    const clamped = Math.max(1, Math.min(99, num));
+                    updateConfig({ count: clamped });
+                  }}
+                  onBlur={() => {
+                    // 포커스 빠질 때 최종 보정: null이면 기본 1로 확정
+                    if (localConfig.count === null) {
+                      updateConfig({ count: 1 });
+                    }
+                  }}
+                  keyboardType="number-pad"
+                  placeholder="1"
+                  placeholderTextColor="#999"
+                />
+              </View>
+            )}
+
+          </View>
+
+          {/* 예외일 설정 */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>예외일 설정</Text>
+            <View style={styles.exceptionContainer}>
+              <Text style={styles.exceptionLabel}>반복하지 않을 날짜:</Text>
+              <View style={styles.exceptionDatesContainer}>
+                {localConfig.exceptions?.map((date, index) => (
+                  <View key={index} style={styles.exceptionDateItem}>
+                    <Text style={styles.exceptionDateText}>{date}</Text>
+                    <TouchableOpacity
+                      style={styles.removeDateButton}
+                      onPress={() => {
+                        const newExceptions =
+                          localConfig.exceptions?.filter((_, i) => i !== index) || [];
+                        updateConfig({ exceptions: newExceptions });
+                      }}
+                    >
+                      <Ionicons name="close-circle" size={20} color="#FF3B30" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+              <TouchableOpacity
+                style={styles.addExceptionButton}
+                onPress={() => setShowExceptionDatePicker(true)}
+              >
+                <Ionicons name="add-circle-outline" size={20} color="#8C93FF" />
+                <Text style={styles.addExceptionButtonText}>예외일 추가</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           <TouchableOpacity
             style={styles.addExceptionButton}
@@ -352,7 +421,107 @@ export default function RepeatOption({
             <Text style={styles.addExceptionButtonText}>예외일 추가</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      )}
+
+      {/* 종료일 날짜 선택 모달 */}
+      <Modal
+        visible={showEndDatePicker}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowEndDatePicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>종료일 선택</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowEndDatePicker(false)}
+              >
+                <Ionicons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+            <Calendar
+              onDayPress={handleEndDatePickerChange}
+              markedDates={{
+                [localConfig.until || ""]: {
+                  selected: true,
+                  selectedColor: "#8C93FF",
+                },
+              }}
+              theme={{
+                selectedDayBackgroundColor: "#8C93FF",
+                selectedDayTextColor: "#ffffff",
+                todayTextColor: "#8C93FF",
+                dayTextColor: "#2d4150",
+                textDisabledColor: "#d9e1e8",
+                arrowColor: "#8C93FF",
+                monthTextColor: "#8C93FF",
+                indicatorColor: "#8C93FF",
+                textDayFontWeight: "300",
+                textMonthFontWeight: "bold",
+                textDayHeaderFontWeight: "300",
+                textDayFontSize: 16,
+                textMonthFontSize: 16,
+                textDayHeaderFontSize: 13,
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* 예외일 날짜 선택 모달 */}
+      <Modal
+        visible={showExceptionDatePicker}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowExceptionDatePicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>예외일 선택</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowExceptionDatePicker(false)}
+              >
+                <Ionicons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+            <Calendar
+              onDayPress={handleExceptionDatePickerChange}
+              markedDates={{
+                ...(localConfig.exceptions?.reduce(
+                  (acc, date) => ({
+                    ...acc,
+                    [date]: {
+                      selected: true,
+                      selectedColor: "#FF3B30",
+                    },
+                  }),
+                  {}
+                ) || {}),
+              }}
+              theme={{
+                selectedDayBackgroundColor: "#FF3B30",
+                selectedDayTextColor: "#ffffff",
+                todayTextColor: "#8C93FF",
+                dayTextColor: "#2d4150",
+                textDisabledColor: "#d9e1e8",
+                arrowColor: "#8C93FF",
+                monthTextColor: "#8C93FF",
+                indicatorColor: "#8C93FF",
+                textDayFontWeight: "300",
+                textMonthFontWeight: "bold",
+                textDayHeaderFontWeight: "300",
+                textDayFontSize: 16,
+                textMonthFontSize: 16,
+                textDayHeaderFontSize: 13,
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   )}
 
@@ -536,8 +705,8 @@ const styles = StyleSheet.create({
     borderColor: "#e0e0e0",
   },
   freqButtonActive: {
-    backgroundColor: "#6C5CE7",
-    borderColor: "#6C5CE7",
+    backgroundColor: "#8C93FF",
+    borderColor: "#8C93FF",
   },
   freqButtonText: {
     fontSize: 14,
@@ -590,8 +759,8 @@ const styles = StyleSheet.create({
     borderColor: "#e0e0e0",
   },
   dayButtonActive: {
-    backgroundColor: "#6C5CE7",
-    borderColor: "#6C5CE7",
+    backgroundColor: "#8C93FF",
+    borderColor: "#8C93FF",
   },
   dayButtonText: {
     fontSize: 14,
@@ -619,8 +788,8 @@ const styles = StyleSheet.create({
     borderColor: "#e0e0e0",
   },
   endConditionButtonActive: {
-    backgroundColor: "#6C5CE7",
-    borderColor: "#6C5CE7",
+    backgroundColor: "#8C93FF",
+    borderColor: "#8C93FF",
   },
   endConditionButtonText: {
     fontSize: 14,
@@ -730,7 +899,7 @@ const styles = StyleSheet.create({
   },
   addExceptionButtonText: {
     fontSize: 16,
-    color: "#6C5CE7",
+    color: "#8C93FF",
     fontWeight: "500",
   },
 

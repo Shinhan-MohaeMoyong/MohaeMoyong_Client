@@ -144,7 +144,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadingComplete }) => {
     <View style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>뭐해모여</Text>
-        <ActivityIndicator size="large" color="#6C5CE7" style={styles.spinner} />
+        <ActivityIndicator size="large" color="#8C93FF" style={styles.spinner} />
         <Text style={styles.loadingText}>{loadingText}</Text>
       </View>
     </View>

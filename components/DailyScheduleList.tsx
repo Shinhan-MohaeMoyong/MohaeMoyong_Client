@@ -1,4 +1,3 @@
-import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import type { PlanEntity } from "../types";
 
@@ -41,7 +40,7 @@ function PlanCard({ plan }: { plan: PlanEntity }) {
 const styles = StyleSheet.create({
   listWrap: { paddingHorizontal: 16, marginTop: 12, gap: 12 },
   emptyText: { color: "#9AA0A6", textAlign: "center", marginTop: 24 },
-  card: { flexDirection: "row", backgroundColor: "#7C5CFA", borderRadius: 16, padding: 16, alignItems: "center" },
+  card: { flexDirection: "row", backgroundColor: "#8C93FF", borderRadius: 16, padding: 16, alignItems: "center" },
   timeCol: { width: 56 },
   timeText: { color: "#5E6B7D", fontSize: 12 },
   timeTo: { color: "#5E6B7D", fontSize: 12, textAlign: "center" },

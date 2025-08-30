@@ -384,6 +384,6 @@ indicatorRow: {
   },
   dots: { flexDirection: 'row', gap: 8, marginBottom: 4 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#D1D5DB' },
-  dotActive: { backgroundColor: '#A78BFA' },
+  dotActive: { backgroundColor: '#8C93FF' },
   pageText: { fontSize: 12, color: '#6B7280', fontWeight: '600' },
 });

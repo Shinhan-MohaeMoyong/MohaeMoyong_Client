@@ -116,7 +116,7 @@ export default function SavingInfo({
                         styles.bar,
                         {
                           height: (saving.amount / maxAmount) * 240,
-                          backgroundColor: "#A78BFA",
+                          backgroundColor: "#8C93FF",
                         },
                       ]}
                     />
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: "100%",
-    backgroundColor: "#A78BFA",
+    backgroundColor: "#8C93FF",
     borderRadius: 4,
   },
   achievementRate: {
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
   confirmButton: {
-    backgroundColor: "#A78BFA",
+    backgroundColor: "#8C93FF",
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: "center",

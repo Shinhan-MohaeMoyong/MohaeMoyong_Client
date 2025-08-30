@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
   },
   btnPrimary: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#8C93FF',
   },
   btnGhostText: {
     fontSize: 16,

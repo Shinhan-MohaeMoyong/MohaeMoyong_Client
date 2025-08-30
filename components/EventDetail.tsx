@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     paddingTop: 0,
   },
   eventCard: {
-    backgroundColor: '#A78BFA',
+    backgroundColor: '#8C93FF',
     borderRadius: 16,
     padding: 20,
     shadowColor: '#000',

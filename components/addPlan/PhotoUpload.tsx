@@ -151,7 +151,7 @@ export default function PhotoUpload({ selectedFiles, onPhotoUpload }: Props) {
         style={[styles.coverBadge, item.isCover && styles.coverBadgeActive]}
         onPress={() => item.id && setCover(item.id)}
       >
-        <Ionicons name="star" size={14} color={item.isCover ? "#fff" : "#6C5CE7"} />
+        <Ionicons name="star" size={14} color={item.isCover ? "#fff" : "#8C93FF"} />
         <Text style={[styles.coverText, item.isCover && { color: "#fff" }]}>
           {item.isCover ? "대표" : "대표로"}
         </Text>
@@ -182,11 +182,11 @@ export default function PhotoUpload({ selectedFiles, onPhotoUpload }: Props) {
 
       <View style={styles.actions}>
         <TouchableOpacity style={styles.actionBtn} onPress={pickFromLibrary}>
-          <Ionicons name="images-outline" size={18} color="#6C5CE7" />
+          <Ionicons name="images-outline" size={18} color="#8C93FF" />
           <Text style={styles.actionText}>앨범에서 선택</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionBtn} onPress={takePhoto}>
-          <Ionicons name="camera-outline" size={18} color="#6C5CE7" />
+          <Ionicons name="camera-outline" size={18} color="#8C93FF" />
           <Text style={styles.actionText}>카메라</Text>
         </TouchableOpacity>
         <Text style={styles.countText}>
@@ -274,10 +274,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderWidth: 1,
-    borderColor: "#6C5CE7",
+    borderColor: "#8C93FF",
   },
-  coverBadgeActive: { backgroundColor: "#6C5CE7" },
-  coverText: { fontSize: 11, color: "#6C5CE7", fontWeight: "700" },
+  coverBadgeActive: { backgroundColor: "#8C93FF" },
+  coverText: { fontSize: 11, color: "#8C93FF", fontWeight: "700" },
 
   removeBtn: { position: "absolute", right: 6, top: 6, backgroundColor: "#fff", borderRadius: 999 },
 

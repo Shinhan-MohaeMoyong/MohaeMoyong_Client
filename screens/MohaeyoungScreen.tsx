@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 1,
   },
-  arrowText: { fontSize: 18, fontWeight: "700", color: "#7C6BD9", marginTop: -2 },
+  arrowText: { fontSize: 18, fontWeight: "700", color: "#8C93FF", marginTop: -2 },
   arrowWrapper: {
     width: 40, // 👈 좌/우 화살표 영역 고정
     alignItems: "center",
