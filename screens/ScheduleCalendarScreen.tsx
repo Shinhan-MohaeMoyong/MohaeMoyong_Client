@@ -580,8 +580,8 @@ export default function ScheduleCalendarScreen() {
                             onComplete={() =>
                               handleCompletePlan(plan)
                             }
-                            withdrawalAccount={plan.withDrawAccountNo ? { bankName: "은행명", accountNumber: plan.withDrawAccountNo } : null}
-                            depositAccount={plan.depositAccountNo ? { bankName: "은행명", accountNumber: plan.depositAccountNo } : null}
+                            withdrawalAccount={plan.withDrawAccountNo ? { bankName: "신한", accountNumber: plan.withDrawAccountNo } : null}
+                            depositAccount={plan.depositAccountNo ? { bankName: "신한", accountNumber: plan.depositAccountNo } : null}
                             onSelectWithdrawalAccount={() => handleAccountSelect(plan, 'withdrawal')}
                             onSelectDepositAccount={() => handleAccountSelect(plan, 'deposit')}
                           />

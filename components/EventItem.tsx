@@ -270,8 +270,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: "#7357E7",
-    borderWidth: 1,
+    backgroundColor: "#8C93FF",
+    borderWidth: 2,
     borderColor: "rgba(255,255,255,0.14)",
   },
   chipLabelLarge: {

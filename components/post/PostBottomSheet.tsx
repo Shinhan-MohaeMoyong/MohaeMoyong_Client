@@ -167,11 +167,12 @@ export default function PostBottomSheet({
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingText}>댓글을 불러오는 중...</Text>
           </View>
-        ) : comments && comments.length > 0 ? (
+        ) : postData && comments && comments.length > 0 ? (
           [...comments]
             .reverse()
             .map((item, index) => (
               <CommentItem
+                planId={postData.planId}
                 key={item.id}
                 id={item.id}
                 comment={item}
