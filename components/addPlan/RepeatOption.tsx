@@ -266,7 +266,7 @@ export default function RepeatOption({
             )}
             
             {/* 횟수 입력 */}
-            {localConfig.count !== null && (
+            {(
               <View style={styles.countInputContainer}>
                 <Text style={styles.countInputLabel}>반복 횟수:</Text>
                 <TextInput
@@ -286,18 +286,7 @@ export default function RepeatOption({
                       updateConfig({ count: clamped });
                     }
                   }}
-                  onBlur={() => {
-                    // 빈 채로 나가면 기본 1로 확정
-                    if (countText === "" || localConfig.count === null) {
-                      setCountText("1");
-                      updateConfig({ count: 1 });
-                    } else {
-                      const num = parseInt(countText, 10);
-                      const clamped = Number.isNaN(num) ? 1 : Math.max(1, Math.min(99, num));
-                      setCountText(String(clamped));
-                      updateConfig({ count: clamped });
-                    }
-                  }}
+                  
                   keyboardType="number-pad"
                   placeholder="1"
                   placeholderTextColor="#999"
