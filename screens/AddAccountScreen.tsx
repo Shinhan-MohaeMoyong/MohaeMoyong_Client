@@ -15,7 +15,7 @@ import {
 import CustomAlert from "../components/CustomAlert";
 import ProductCard from "../components/ProductCard";
 import { SERVER_URL } from "../constants/server";
-import { getToken } from "../contexts/tokenManager";
+import { clearCreateAccountNo, getCreateAccountNo, getToken, saveCreateAccountNo } from "../contexts/tokenManager";
 
 interface Product {
   id: string;
@@ -41,7 +41,7 @@ interface ProductListItemDTO {
 interface AccountCreationInputModalProps {
   visible: boolean;
   productName: string;
-  onConfirm: (accountName: string, targetAmount: string) => void;
+  onConfirm: (accountName: string, targetAmount: string, accountNo: string) => void;
   onCancel: () => void;
 }
 
@@ -53,6 +53,7 @@ function AccountCreationInputModal({
 }: AccountCreationInputModalProps) {
   const [accountName, setAccountName] = useState("");
   const [targetAmount, setTargetAmount] = useState("");
+  const [accountNo, setAccountNo] = useState("");
   const [isValid, setIsValid] = useState(false);
 
   const formatNumberWithCommas = (value: string): string => {
@@ -68,13 +69,14 @@ function AccountCreationInputModal({
     const nameOk = accountName.trim().length > 0 && accountName.trim().length <= 20;
     const numeric = targetAmount.replace(/[^0-9]/g, "");
     const amountOk = numeric.length > 0 && parseInt(numeric, 10) > 0;
-    setIsValid(nameOk && amountOk);
-  }, [accountName, targetAmount]);
+    const accountNoOk = accountNo.trim().length > 0;
+    setIsValid(nameOk && amountOk && accountNoOk);
+  }, [accountName, targetAmount, accountNo]);
 
   const handleConfirm = () => {
     if (!isValid) return;
     const numeric = targetAmount.replace(/[^0-9]/g, "");
-    onConfirm(accountName.trim(), numeric);
+    onConfirm(accountName.trim(), numeric, accountNo.trim());
   };
 
   return (
@@ -122,6 +124,19 @@ function AccountCreationInputModal({
             <Text style={styles.helperText}>숫자만 입력하면 자동으로 쉼표가 들어가요</Text>
           </View>
 
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>1원 송금 인증 계좌</Text>
+            <TextInput
+              style={styles.input}
+              value={accountNo}
+              onChangeText={setAccountNo}
+              placeholder="인증 받을 다른 계좌번호"
+              keyboardType="number-pad"
+              placeholderTextColor="#9CA3AF"
+            />
+            <Text style={styles.helperText}>계좌 생성 인증에 사용할 본인 계좌번호를 입력하세요</Text>
+          </View>
+
           <View style={styles.modalButtonRow}>
             <TouchableOpacity
               style={[styles.modalButton, styles.btnGhost]}
@@ -155,6 +170,9 @@ export default function AddAccountScreen({ onProductSelect, onBackPress }: AddAc
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showInputModal, setShowInputModal] = useState(false);
   const [query, setQuery] = useState("");
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authCode, setAuthCode] = useState("");
+  const [authSubmitting, setAuthSubmitting] = useState(false);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -191,7 +209,7 @@ export default function AddAccountScreen({ onProductSelect, onBackPress }: AddAc
     setRefreshing(false);
   };
 
-  const createAccount = async (product: Product, accountName: string, targetAmount: string) => {
+  const createAccount = async (product: Product, accountName: string, targetAmount: string, accountNo: string) => {
     const response = await fetch(`${SERVER_URL}/api/v1/account`, {
       method: "POST",
       headers: {
@@ -202,6 +220,7 @@ export default function AddAccountScreen({ onProductSelect, onBackPress }: AddAc
         accountName,
         accountTypeUniqueNo: product.id,
         targetAmount: Number(targetAmount),
+        accountNo,
       }),
     });
     if (!response.ok) throw new Error("계좌 생성 실패");
@@ -212,17 +231,74 @@ export default function AddAccountScreen({ onProductSelect, onBackPress }: AddAc
     setShowInputModal(true);
   };
 
-  const handleInputConfirm = async (accountName: string, targetAmount: string) => {
+  const handleInputConfirm = async (accountName: string, targetAmount: string, accountNo: string) => {
     setShowInputModal(false);
     if (!selectedProduct) return;
     try {
-      await createAccount(selectedProduct, accountName, targetAmount);
-      setAlertMessage("계좌가 성공적으로 생성되었습니다!");
-      setShowCustomAlert(true);
-      onProductSelect(selectedProduct);
+      await createAccount(selectedProduct, accountName, targetAmount, accountNo);
+      await saveCreateAccountNo(accountNo);
+      // 생성 요청 후 인증 코드 입력 모달 표시
+      setShowAuthModal(true);
     } catch {
       setAlertMessage("계좌 생성 실패");
       setShowCustomAlert(true);
+    }
+  };
+
+  const handleConfirmCreateAuth = async () => {
+    const code = authCode.trim();
+    if (code.length !== 4) {
+      setAlertMessage("4자리 인증코드를 입력해주세요.");
+      setShowCustomAlert(true);
+      return;
+    }
+    setAuthSubmitting(true);
+    try {
+      const accountNo = await getCreateAccountNo();
+      if (!accountNo) throw new Error("세션에 계좌번호가 없습니다.");
+
+      const response = await fetch(`${SERVER_URL}/api/v1/account/auth/create`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${await getToken()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ accountNo, authCode: code }),
+      });
+
+      const contentType = response.headers.get("content-type") || "";
+      let payload: any = null;
+      if (contentType.includes("application/json")) {
+        try { payload = await response.json(); } catch {}
+      } else {
+        try { payload = await response.text(); } catch {}
+      }
+
+      if (!response.ok) {
+        const message = payload?.responseMessage || "인증에 실패했습니다.";
+        setAlertMessage(message);
+        setShowCustomAlert(true);
+        return;
+      }
+
+      if (payload && payload.responseCode === "E002") {
+        setAlertMessage(payload.responseMessage || "인증 코드가 틀렸습니다.");
+        setShowCustomAlert(true);
+        return;
+      }
+
+      await clearCreateAccountNo();
+      setShowAuthModal(false);
+      setAuthCode("");
+      setAlertMessage("인증에 성공하였습니다.");
+      setShowCustomAlert(true);
+      // 성공 시 상위에서 목록 갱신을 유도
+      if (selectedProduct) onProductSelect(selectedProduct);
+    } catch (e) {
+      setAlertMessage("인증 처리 중 오류가 발생했습니다.");
+      setShowCustomAlert(true);
+    } finally {
+      setAuthSubmitting(false);
     }
   };
 
@@ -278,7 +354,7 @@ export default function AddAccountScreen({ onProductSelect, onBackPress }: AddAc
         showsVerticalScrollIndicator={false}
       >
         {loading ? (
-          <ActivityIndicator size="small" color="#8C93FF" style={{ marginTop: 40 }} />
+          <ActivityIndicator size="small" color="#8B5CF6" style={{ marginTop: 40 }} />
         ) : filtered.length > 0 ? (
           filtered.map((product) => (
             <ProductCard
@@ -309,6 +385,50 @@ export default function AddAccountScreen({ onProductSelect, onBackPress }: AddAc
         />
       )}
 
+      {/* 생성 인증 코드 입력 모달 */}
+      <Modal
+        visible={showAuthModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowAuthModal(false)}
+      >
+        <View style={styles.overlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.handleBar} />
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>인증 코드 입력</Text>
+              <Text style={styles.modalSubtitle}>문자로 받은 4자리 코드를 입력하세요</Text>
+            </View>
+            <TextInput
+              style={styles.input}
+              value={authCode}
+              onChangeText={(t) => setAuthCode(t.replace(/[^0-9]/g, '').slice(0, 4))}
+              placeholder="4자리 코드"
+              keyboardType="number-pad"
+              maxLength={4}
+              placeholderTextColor="#9CA3AF"
+            />
+            <View style={styles.modalButtonRow}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.btnGhost]}
+                onPress={() => setShowAuthModal(false)}
+                activeOpacity={0.9}
+              >
+                <Text style={styles.btnGhostText}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.btnPrimary]}
+                onPress={handleConfirmCreateAuth}
+                disabled={authSubmitting}
+                activeOpacity={0.9}
+              >
+                <Text style={styles.btnPrimaryText}>{authSubmitting ? '확인 중...' : '확인'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {showCustomAlert && (
         <CustomAlert
           visible={showCustomAlert}
@@ -321,6 +441,7 @@ export default function AddAccountScreen({ onProductSelect, onBackPress }: AddAc
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFF" },

@@ -109,3 +109,59 @@ export const saveToken = TokenManager.saveToken;
 export const removeToken = TokenManager.removeToken;
 export const isTokenValid = TokenManager.isTokenValid;
 export const checkAuthStatus = TokenManager.checkAuthStatus;
+
+// ====== 계좌 불러오기 세션 관리 ======
+const FETCH_ACCOUNT_NO_KEY = 'fetch_account_no_session_key';
+
+export const saveFetchAccountNo = async (accountNo: string): Promise<void> => {
+  try {
+    await StorageManager.setItem(FETCH_ACCOUNT_NO_KEY, accountNo);
+  } catch (e) {
+    console.error('계좌번호 세션 저장 실패:', e);
+  }
+};
+
+// ====== 계좌 생성 인증 세션 관리 ======
+const CREATE_ACCOUNT_NO_KEY = 'create_account_no_session_key';
+
+export const saveCreateAccountNo = async (accountNo: string): Promise<void> => {
+  try {
+    await StorageManager.setItem(CREATE_ACCOUNT_NO_KEY, accountNo);
+  } catch (e) {
+    console.error('계좌생성 계좌번호 세션 저장 실패:', e);
+  }
+};
+
+export const getCreateAccountNo = async (): Promise<string | null> => {
+  try {
+    return await StorageManager.getItem(CREATE_ACCOUNT_NO_KEY);
+  } catch (e) {
+    console.error('계좌생성 계좌번호 세션 조회 실패:', e);
+    return null;
+  }
+};
+
+export const clearCreateAccountNo = async (): Promise<void> => {
+  try {
+    await StorageManager.removeItem(CREATE_ACCOUNT_NO_KEY);
+  } catch (e) {
+    console.error('계좌생성 계좌번호 세션 삭제 실패:', e);
+  }
+};
+
+export const getFetchAccountNo = async (): Promise<string | null> => {
+  try {
+    return await StorageManager.getItem(FETCH_ACCOUNT_NO_KEY);
+  } catch (e) {
+    console.error('계좌번호 세션 조회 실패:', e);
+    return null;
+  }
+};
+
+export const clearFetchAccountNo = async (): Promise<void> => {
+  try {
+    await StorageManager.removeItem(FETCH_ACCOUNT_NO_KEY);
+  } catch (e) {
+    console.error('계좌번호 세션 삭제 실패:', e);
+  }
+};

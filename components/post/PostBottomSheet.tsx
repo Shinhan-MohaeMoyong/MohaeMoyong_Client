@@ -26,6 +26,7 @@ type Props = {
   onClose: () => void;
   onEdit?: (planId: number) => void;
   onDelete?: (planId: number) => void;
+  refreshUserPlans?: (userId: number) => void;
 };
 
 export default function PostBottomSheet({ 
@@ -34,7 +35,8 @@ export default function PostBottomSheet({
   friends = [], 
   onClose,
   onEdit,
-  onDelete 
+  onDelete,
+  refreshUserPlans
 }: Props) {
   const sheetRef = useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => ["40%", "75%", "95%"], []);
