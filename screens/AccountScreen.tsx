@@ -1,13 +1,15 @@
 import { SERVER_URL } from "@/constants/server";
-import { getToken } from "@/contexts/tokenManager";
+import { clearFetchAccountNo, getFetchAccountNo, getToken, saveFetchAccountNo } from "@/contexts/tokenManager";
 import AddAccountScreen from "@/screens/AddAccountScreen";
 import { useEffect, useState } from "react";
 import {
   Alert,
+  Modal,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -32,6 +34,12 @@ export default function AccountScreen({ onAccountPress, visibleHeader }: Account
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showAddAccount, setShowAddAccount] = useState(false);
+  const [showFetchModal, setShowFetchModal] = useState(false);
+  const [inputAccountNo, setInputAccountNo] = useState("");
+  const [fetchingCert, setFetchingCert] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authCode, setAuthCode] = useState("");
+  const [authSubmitting, setAuthSubmitting] = useState(false);
 
   // 백엔드 응답 DTO
   interface SimpleAccountDTO {
@@ -94,6 +102,101 @@ export default function AccountScreen({ onAccountPress, visibleHeader }: Account
   const handleAddAccount = () => {
     visibleHeader(false);
     setShowAddAccount(true);
+  };
+
+  // 계좌 불러오기 플로우 시작
+  const handleFetchAccount = () => {
+    setInputAccountNo("");
+    setShowFetchModal(true);
+  };
+
+  // 1원 송금 인증 받기
+  const handleRequestFetchCert = async () => {
+    const trimmed = inputAccountNo.trim();
+    if (!trimmed) {
+      Alert.alert("오류", "계좌번호를 입력해주세요.");
+      return;
+    }
+    setFetchingCert(true);
+    try {
+      const response = await fetch(`${SERVER_URL}/api/v1/account/fetch`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${await getToken()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ accountNo: trimmed }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`요청 실패: ${response.status} ${response.statusText} ${text}`);
+      }
+
+      await saveFetchAccountNo(trimmed);
+      setShowFetchModal(false);
+      setShowAuthModal(true);
+    } catch (e) {
+      console.error("❌ 계좌 불러오기 요청 실패:", e);
+      Alert.alert("오류", "계좌 불러오기 요청에 실패했습니다.");
+    } finally {
+      setFetchingCert(false);
+    }
+  };
+
+  // 인증 코드 확인
+  const handleConfirmAuthCode = async () => {
+    const code = authCode.trim();
+    if (code.length !== 4) {
+      Alert.alert("오류", "4자리 인증코드를 입력해주세요.");
+      return;
+    }
+    setAuthSubmitting(true);
+    try {
+      const accountNo = await getFetchAccountNo();
+      if (!accountNo) throw new Error("세션에 계좌번호가 없습니다.");
+
+      const response = await fetch(`${SERVER_URL}/api/v1/account/auth/fetch`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${await getToken()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ accountNo, authCode: code }),
+      });
+
+      const contentType = response.headers.get("content-type") || "";
+      let payload: any = null;
+      if (contentType.includes("application/json")) {
+        try { payload = await response.json(); } catch {}
+      } else {
+        try { payload = await response.text(); } catch {}
+      }
+
+      if (!response.ok) {
+        const message = payload?.responseMessage || "인증에 실패했습니다.";
+        Alert.alert("오류", message);
+        return;
+      }
+
+      // 에러 코드 케이스 처리 (200이지만 비즈니스 에러일 수 있음)
+      if (payload && payload.responseCode === "E002") {
+        Alert.alert("오류", payload.responseMessage || "인증 코드가 틀렸습니다.");
+        return;
+      }
+
+      await clearFetchAccountNo();
+      setShowAuthModal(false);
+      setAuthCode("");
+      Alert.alert("성공", "인증에 성공하였습니다.");
+      // 인증 성공 후 목록 갱신
+      fetchAccounts();
+    } catch (e) {
+      console.error("❌ 인증 코드 확인 실패:", e);
+      Alert.alert("오류", "인증 처리 중 오류가 발생했습니다.");
+    } finally {
+      setAuthSubmitting(false);
+    }
   };
 
   // AddAccountScreen에서 뒤로 가기 처리 함수
@@ -161,7 +264,74 @@ export default function AccountScreen({ onAccountPress, visibleHeader }: Account
           <Text style={styles.addButtonIcon}>+</Text>
           <Text style={styles.addButtonText}>새로운 계좌 추가하기</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.fetchAccountButton}
+          onPress={handleFetchAccount}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.fetchButtonText}>계좌 불러오기</Text>
+        </TouchableOpacity>
       </ScrollView>
+
+      {/* 계좌번호 입력 모달 */}
+      <Modal visible={showFetchModal} transparent animationType="fade" onRequestClose={() => setShowFetchModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>계좌번호 입력</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={inputAccountNo}
+              onChangeText={setInputAccountNo}
+              placeholder="계좌번호를 입력하세요"
+              keyboardType="number-pad"
+              autoFocus
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setShowFetchModal(false)}>
+                <Text style={styles.cancelButtonText}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.confirmButton]}
+                onPress={handleRequestFetchCert}
+                disabled={fetchingCert}
+              >
+                <Text style={styles.confirmButtonText}>{fetchingCert ? "요청 중..." : "1원 송금 인증 받기"}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 인증 코드 입력 모달 */}
+      <Modal visible={showAuthModal} transparent animationType="fade" onRequestClose={() => setShowAuthModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>인증 코드 입력</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={authCode}
+              onChangeText={(t) => setAuthCode(t.replace(/[^0-9]/g, '').slice(0, 4))}
+              placeholder="4자리 코드"
+              keyboardType="number-pad"
+              maxLength={4}
+              autoFocus
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setShowAuthModal(false)}>
+                <Text style={styles.cancelButtonText}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.confirmButton]}
+                onPress={handleConfirmAuthCode}
+                disabled={authSubmitting}
+              >
+                <Text style={styles.confirmButtonText}>{authSubmitting ? "확인 중..." : "확인"}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -190,7 +360,7 @@ const styles = StyleSheet.create({
     color: "#6B7280",
   },
   addAccountButton: {
-    backgroundColor: "#8C93FF",
+    backgroundColor: "#A78BFA",
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 28,
@@ -216,6 +386,24 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "600",
   },
+  fetchAccountButton: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    marginTop: 12,
+    alignSelf: "center",
+    minWidth: 200,
+  },
+  fetchButtonText: {
+    fontSize: 15,
+    color: "#4B5563",
+    fontWeight: "600",
+  },
   emptyWrap: {
     flex: 1,
     justifyContent: "center",
@@ -238,5 +426,66 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingHorizontal: 20,
     lineHeight: 20,
+  },
+  // 모달 스타일
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 24,
+    margin: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+    minWidth: 300,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111827",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 16,
+    backgroundColor: "#FFFFFF",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#F3F4F6",
+  },
+  confirmButton: {
+    backgroundColor: "#A78BFA",
+  },
+  cancelButtonText: {
+    color: "#6B7280",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  confirmButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
