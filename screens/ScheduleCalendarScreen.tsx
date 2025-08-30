@@ -296,57 +296,57 @@ export default function ScheduleCalendarScreen() {
         console.log("🗑️ 일정 삭제 시작:", selectedPlan.planId);
         
         const response = await fetch(`${SERVER_URL}/api/v1/plans/${selectedPlan.planId}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${await getToken()}`,
-            'Content-Type': 'application/json',
-          },
-        });
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${await getToken()}`,
+                  'Content-Type': 'application/json',
+                },
+              });
 
-        if (!response.ok) {
-          throw new Error(`일정 삭제 실패: ${response.status} ${response.statusText}`);
-        }
+              if (!response.ok) {
+                throw new Error(`일정 삭제 실패: ${response.status} ${response.statusText}`);
+              }
 
         console.log("✅ 일정 삭제 성공:", selectedPlan.planId);
         setSelectedDatePlansData(prev => prev.filter(p => p.planId !== selectedPlan.planId));
-
-        // 삭제 성공 후 UI 업데이트
-        // plans 상태에서 해당 일정 제거
-        setPlans(prev => {
-          const updatedPlans = { ...prev };
-          Object.keys(updatedPlans).forEach(userId => {
-            const userIdNum = parseInt(userId);
-            if (updatedPlans[userIdNum]) {
-              updatedPlans[userIdNum] = updatedPlans[userIdNum].filter(
+              
+              // 삭제 성공 후 UI 업데이트
+              // plans 상태에서 해당 일정 제거
+              setPlans(prev => {
+                const updatedPlans = { ...prev };
+                Object.keys(updatedPlans).forEach(userId => {
+                  const userIdNum = parseInt(userId);
+                  if (updatedPlans[userIdNum]) {
+                    updatedPlans[userIdNum] = updatedPlans[userIdNum].filter(
                 (plan: PlanEntity) => plan.planId !== selectedPlan.planId
-              );
+                    );
+                  }
+                });
+                return updatedPlans;
+              });
+
+              // 삭제 성공 알림
+              Alert.alert('성공', '일정이 삭제되었습니다.');
+
+            } catch (error) {
+              console.error('❌ 일정 삭제 실패:', error);
+              
+              let errorMessage = '일정 삭제에 실패했습니다.';
+              if (error instanceof Error) {
+                if (error.message.includes('401')) {
+                  errorMessage = '인증이 필요합니다. 다시 로그인해 주세요.';
+                } else if (error.message.includes('404')) {
+                  errorMessage = '삭제할 일정을 찾을 수 없습니다.';
+                } else if (error.message.includes('403')) {
+                  errorMessage = '일정을 삭제할 권한이 없습니다.';
+                } else if (error.message.includes('500')) {
+                  errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+                }
+              }
+              
+              // 에러 알림 표시
+              Alert.alert('오류', errorMessage);
             }
-          });
-          return updatedPlans;
-        });
-
-        // 삭제 성공 알림
-        Alert.alert('성공', '일정이 삭제되었습니다.');
-
-      } catch (error) {
-        console.error('❌ 일정 삭제 실패:', error);
-        
-        let errorMessage = '일정 삭제에 실패했습니다.';
-        if (error instanceof Error) {
-          if (error.message.includes('401')) {
-            errorMessage = '인증이 필요합니다. 다시 로그인해 주세요.';
-          } else if (error.message.includes('404')) {
-            errorMessage = '삭제할 일정을 찾을 수 없습니다.';
-          } else if (error.message.includes('403')) {
-            errorMessage = '일정을 삭제할 권한이 없습니다.';
-          } else if (error.message.includes('500')) {
-            errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
-          }
-        }
-        
-        // 에러 알림 표시
-        Alert.alert('오류', errorMessage);
-      }
     }
 
     setModalVisible(false);

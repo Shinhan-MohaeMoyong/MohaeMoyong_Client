@@ -215,14 +215,15 @@ export function useAddPlanScreen() {
     // 반복 설정을 RecurrenceConfig 형식으로 변환
     let count: number | null = formData.repeatConfig.count || null;
     console.log('createAddPlanRequest count calculate : ', formData.repeatConfig.enabled, count, formData.repeatConfig.until);
-    
+    console.log('condition : ', formData.repeatConfig.enabled && !count && formData.repeatConfig.until);
     // 반복 옵션이 활성화되어 있고 count가 설정되지 않은 경우, 종료일을 기준으로 자동 계산
     if (formData.repeatConfig.enabled && !count && formData.repeatConfig.until) {
       try {
-        const startDate = new Date(formData.selectedYear, formData.selectedMonth - 1, parseInt(formData.selectedDate));
+        const startDate = new Date(formData.selectedDate);
         const endDate = new Date(formData.repeatConfig.until);
-        
+        console.log('start, end',startDate, endDate);
         if (endDate > startDate) {
+          console.log('count 계산');
           // 반복 주기와 간격에 따라 count 계산
           const timeDiff = endDate.getTime() - startDate.getTime();
           const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));

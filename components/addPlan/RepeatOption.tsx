@@ -123,17 +123,32 @@ export default function RepeatOption({
             <Text style={styles.sectionTitle}>반복 간격</Text>
             <View style={styles.intervalInputContainer}>
               <Text style={styles.intervalLabel}>매</Text>
-              <TextInput
-                style={styles.intervalTextInput}
-                value={localConfig.interval.toString()}
-                onChangeText={(text) => {
-                  const num = parseInt(text) || 1;
-                  updateConfig({ interval: Math.max(1, Math.min(10, num)) });
-                }}
-                keyboardType="numeric"
-                placeholder="1"
-                placeholderTextColor="#999"
-              />
+                                <TextInput
+                    style={styles.intervalTextInput}
+                    value={localConfig.interval.toString()}
+                    onChangeText={(text) => {
+                      if (text === "") {
+                        // interval은 필수값이면, UI에 빈 문자열을 보여주고 싶다면
+                        // 별도 temp 상태를 두는게 가장 깔끔하지만,
+                        // 간단히 여기서는 1로 되돌리지 않도록 바로 확정하지 않고 return만 합니다.
+                        return;
+                      }
+                      const num = parseInt(text.replace(/[^\d]/g, ""), 10);
+                      if (Number.isNaN(num)) return;
+                      const clamped = Math.max(1, Math.min(10, num));
+                      updateConfig({ interval: clamped });
+                    }}
+                    onBlur={() => {
+                      // 비워둔 채로 포커스가 빠졌다면 기본값 확정
+                      if (!localConfig.interval || localConfig.interval < 1) {
+                        updateConfig({ interval: 1 });
+                      }
+                    }}
+                    keyboardType="number-pad"
+                    placeholder="1"
+                    placeholderTextColor="#999"
+                  />
+
               <Text style={styles.intervalLabel}>
                 {localConfig.freq === "DAILY"
                   ? "일"
@@ -248,17 +263,36 @@ export default function RepeatOption({
                 <Text style={styles.countInputLabel}>반복 횟수:</Text>
                 <TextInput
                   style={styles.countTextInput}
-                  value={localConfig.count?.toString() || ""}
+                  value={localConfig.count?.toString() ?? ""}  // null이면 빈 문자열
                   onChangeText={(text) => {
-                    const num = parseInt(text) || 1;
-                    updateConfig({ count: Math.max(1, Math.min(10, num)) });
+                    // 1) 입력 중엔 빈 문자열 허용 (지우는 과정)
+                    if (text === "") {
+                      // 화면에 빈 문자열 유지하려면 count를 null로 두세요
+                      updateConfig({ count: null });
+                      return;
+                    }
+                    // 2) 숫자만 추출 후 숫자 아니면 무시
+                    const num = parseInt(text.replace(/[^\d]/g, ""), 10);
+                    if (Number.isNaN(num)) return;
+
+                    // 3) 입력 중에도 대략적인 범위는 묶어주되, 즉시 1로 되돌리지 않음
+                    // (원하면 상한/하한 조정: 예 1~99)
+                    const clamped = Math.max(1, Math.min(99, num));
+                    updateConfig({ count: clamped });
                   }}
-                  keyboardType="numeric"
+                  onBlur={() => {
+                    // 포커스 빠질 때 최종 보정: null이면 기본 1로 확정
+                    if (localConfig.count === null) {
+                      updateConfig({ count: 1 });
+                    }
+                  }}
+                  keyboardType="number-pad"
                   placeholder="1"
                   placeholderTextColor="#999"
                 />
               </View>
             )}
+
           </View>
 
           {/* 예외일 설정 */}
