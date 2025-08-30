@@ -191,11 +191,11 @@ export function useAddPlanScreen() {
     console.log('createAddPlanRequest default ', formData.selectedDate);
     
     // 시작 시간과 종료 시간을 YYYY-MM-DDTHH:MM:SS 형식으로 변환
-    const startDateTime = new Date(formData.selectedYear, formData.selectedMonth - 1, parseInt(formData.selectedDate));
+    const startDateTime = new Date(formData.selectedDate);
     const [startHour, startMinute] = formData.startTime.split(':').map(Number);
     startDateTime.setHours(startHour, startMinute, 0, 0);
     
-    const endDateTime = new Date(formData.selectedYear, formData.selectedMonth - 1, parseInt(formData.selectedDate));
+    const endDateTime = new Date(formData.selectedDate);
     const [endHour, endMinute] = formData.endTime.split(':').map(Number);
     endDateTime.setHours(endHour, endMinute, 0, 0);
     
