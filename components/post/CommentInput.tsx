@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   btn: {
-    backgroundColor: "#6C5CE7",
+    backgroundColor: "#8C93FF",
     width: 40,
     height: 40,
     marginLeft: 8,

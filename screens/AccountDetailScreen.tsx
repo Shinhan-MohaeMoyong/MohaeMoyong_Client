@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: "#A78BFA",
+    backgroundColor: "#8C93FF",
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
@@ -568,7 +568,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   editButton: {
-    backgroundColor: '#A78BFA',
+    backgroundColor: '#8C93FF',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
@@ -609,7 +609,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   filterButtonActive: {
-    backgroundColor: "#A78BFA",
+    backgroundColor: "#8C93FF",
   },
   filterButtonText: {
     fontSize: 14,
@@ -714,7 +714,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
   },
   confirmButton: {
-    backgroundColor: '#A78BFA',
+    backgroundColor: '#8C93FF',
   },
   cancelButtonText: {
     color: '#6B7280',
@@ -782,7 +782,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   emptyPrimaryBtn: {
-    backgroundColor: "#A78BFA",
+    backgroundColor: "#8C93FF",
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 10,

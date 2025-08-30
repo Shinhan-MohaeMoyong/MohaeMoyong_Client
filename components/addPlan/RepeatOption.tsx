@@ -321,7 +321,7 @@ export default function RepeatOption({
                 style={styles.addExceptionButton}
                 onPress={() => setShowExceptionDatePicker(true)}
               >
-                <Ionicons name="add-circle-outline" size={20} color="#6C5CE7" />
+                <Ionicons name="add-circle-outline" size={20} color="#8C93FF" />
                 <Text style={styles.addExceptionButtonText}>예외일 추가</Text>
               </TouchableOpacity>
             </View>
@@ -352,18 +352,18 @@ export default function RepeatOption({
               markedDates={{
                 [localConfig.until || ""]: {
                   selected: true,
-                  selectedColor: "#6C5CE7",
+                  selectedColor: "#8C93FF",
                 },
               }}
               theme={{
-                selectedDayBackgroundColor: "#6C5CE7",
+                selectedDayBackgroundColor: "#8C93FF",
                 selectedDayTextColor: "#ffffff",
-                todayTextColor: "#6C5CE7",
+                todayTextColor: "#8C93FF",
                 dayTextColor: "#2d4150",
                 textDisabledColor: "#d9e1e8",
-                arrowColor: "#6C5CE7",
-                monthTextColor: "#6C5CE7",
-                indicatorColor: "#6C5CE7",
+                arrowColor: "#8C93FF",
+                monthTextColor: "#8C93FF",
+                indicatorColor: "#8C93FF",
                 textDayFontWeight: "300",
                 textMonthFontWeight: "bold",
                 textDayHeaderFontWeight: "300",
@@ -411,12 +411,12 @@ export default function RepeatOption({
               theme={{
                 selectedDayBackgroundColor: "#FF3B30",
                 selectedDayTextColor: "#ffffff",
-                todayTextColor: "#6C5CE7",
+                todayTextColor: "#8C93FF",
                 dayTextColor: "#2d4150",
                 textDisabledColor: "#d9e1e8",
-                arrowColor: "#6C5CE7",
-                monthTextColor: "#6C5CE7",
-                indicatorColor: "#6C5CE7",
+                arrowColor: "#8C93FF",
+                monthTextColor: "#8C93FF",
+                indicatorColor: "#8C93FF",
                 textDayFontWeight: "300",
                 textMonthFontWeight: "bold",
                 textDayHeaderFontWeight: "300",
@@ -520,8 +520,8 @@ const styles = StyleSheet.create({
     borderColor: "#e0e0e0",
   },
   freqButtonActive: {
-    backgroundColor: "#6C5CE7",
-    borderColor: "#6C5CE7",
+    backgroundColor: "#8C93FF",
+    borderColor: "#8C93FF",
   },
   freqButtonText: {
     fontSize: 14,
@@ -574,8 +574,8 @@ const styles = StyleSheet.create({
     borderColor: "#e0e0e0",
   },
   dayButtonActive: {
-    backgroundColor: "#6C5CE7",
-    borderColor: "#6C5CE7",
+    backgroundColor: "#8C93FF",
+    borderColor: "#8C93FF",
   },
   dayButtonText: {
     fontSize: 14,
@@ -603,8 +603,8 @@ const styles = StyleSheet.create({
     borderColor: "#e0e0e0",
   },
   endConditionButtonActive: {
-    backgroundColor: "#6C5CE7",
-    borderColor: "#6C5CE7",
+    backgroundColor: "#8C93FF",
+    borderColor: "#8C93FF",
   },
   endConditionButtonText: {
     fontSize: 14,
@@ -714,7 +714,7 @@ const styles = StyleSheet.create({
   },
   addExceptionButtonText: {
     fontSize: 16,
-    color: "#6C5CE7",
+    color: "#8C93FF",
     fontWeight: "500",
   },
 

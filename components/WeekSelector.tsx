@@ -1,4 +1,3 @@
-import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface WeekSelectorProps {
@@ -98,7 +97,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   selectedDate: {
-    backgroundColor: '#A78BFA',
+    backgroundColor: '#8C93FF',
   },
   dateText: {
     fontSize: 16,

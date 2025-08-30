@@ -1,5 +1,4 @@
-import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 
 interface TabItemProps {
   icon: string;
@@ -11,8 +10,8 @@ interface TabItemProps {
 export default function TabItem({ icon, label, active, onPress }: TabItemProps) {
   return (
     <TouchableOpacity style={styles.tabItem} onPress={onPress}>
-      <Text style={[styles.iconText, active && { color: "#6C63FF" }]}>{icon}</Text>
-      <Text style={[styles.tabLabel, active && { color: "#6C63FF" }]}>{label}</Text>
+      <Text style={[styles.iconText, active && { color: "#8C93FF" }]}>{icon}</Text>
+      <Text style={[styles.tabLabel, active && { color: "#8C93FF" }]}>{label}</Text>
     </TouchableOpacity>
   );
 }

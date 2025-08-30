@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     color: "#6B7280",
   },
   addAccountButton: {
-    backgroundColor: "#A78BFA",
+    backgroundColor: "#8C93FF",
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 28,

@@ -278,7 +278,7 @@ export default function AddAccountScreen({ onProductSelect, onBackPress }: AddAc
         showsVerticalScrollIndicator={false}
       >
         {loading ? (
-          <ActivityIndicator size="small" color="#8B5CF6" style={{ marginTop: 40 }} />
+          <ActivityIndicator size="small" color="#8C93FF" style={{ marginTop: 40 }} />
         ) : filtered.length > 0 ? (
           filtered.map((product) => (
             <ProductCard
@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  clearBtnText: { fontSize: 16, color: "#6D28D9" },
+  clearBtnText: { fontSize: 16, color: "#8C93FF" },
   content: { flex: 1 },
   contentContainer: { padding: 20, paddingBottom: 40 },
   emptyWrap: { alignItems: "center", paddingVertical: 64 },
@@ -450,9 +450,9 @@ const styles = StyleSheet.create({
   },
   btnGhostText: { color: "#374151", textAlign: "center", fontWeight: "800" },
   btnPrimary: {
-    backgroundColor: "#8B5CF6",
+    backgroundColor: "#8C93FF",
     marginLeft: 8,
-    shadowColor: "#8B5CF6",
+    shadowColor: "#8C93FF",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
     shadowRadius: 12,
