@@ -1,6 +1,5 @@
 import { SERVER_URL } from '@/constants/server';
 import { getToken } from '@/contexts/tokenManager';
-import { AccountEntity } from '@/types/entity/AccountEntity';
 import { PlanEntity } from '@/types/entity/PlanEntity';
 import { useEffect, useState } from 'react';
 import {
@@ -21,6 +20,13 @@ interface PlanActionModalProps {
   onCancel: () => void;
 }
 
+interface AccountInfo {
+  accountNo: string;
+  accountBalance: number;
+  accountName: string;
+  authenticated: boolean;
+}
+
 export default function PlanActionModal({
   visible,
   plan,
@@ -28,7 +34,7 @@ export default function PlanActionModal({
   onConfirm,
   onCancel,
 }: PlanActionModalProps) {
-  const [accounts, setAccounts] = useState<AccountEntity[]>([]);
+  const [accounts, setAccounts] = useState<AccountInfo[]>([]);
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
 
   // 계좌 목록 가져오기
@@ -38,7 +44,7 @@ export default function PlanActionModal({
       const response = await fetch(`${SERVER_URL}/api/v1/account/simpleList`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${await getToken()}`,
+          Authorization: `Bearer ${await getToken()}`,
           'Content-Type': 'application/json',
         },
       });
@@ -47,9 +53,9 @@ export default function PlanActionModal({
         throw new Error(`계좌 목록 조회 실패: ${response.status} ${response.statusText}`);
       }
 
-      const accountsData: AccountEntity[] = await response.json();
-      setAccounts(accountsData);
-      console.log('!!!!!계좌 목록 조회 성공:', accountsData);
+      const data = await response.json();
+      setAccounts(data);
+      console.log('!!!!!계좌 목록 조회 성공:', data);
     } catch (error) {
       console.error('계좌 목록 조회 실패:', error);
     } finally {
@@ -59,15 +65,13 @@ export default function PlanActionModal({
 
   // 계좌 번호를 별칭으로 변환하는 함수
   const getAccountAlias = (accountNumber: string): string => {
-    const account = accounts.find(acc => acc.accountNumber === accountNumber);
-    return account ? account.accountAlias : accountNumber;
+    const account = accounts.find(acc => acc.accountNo === accountNumber);
+    return account ? account.accountName : accountNumber;
   };
 
   useEffect(() => {
-    if (visible && plan?.hasSavingsGoal) {
       fetchAccounts();
-    }
-  }, [visible, plan]);
+  }, []);
 
   if (!plan) return null;
 
