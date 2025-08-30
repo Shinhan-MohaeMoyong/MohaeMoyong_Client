@@ -14,6 +14,7 @@ interface EventItemProps {
   onDelete: () => void;
   onComplete: () => void;
   hasSavingsGoal?: boolean;
+  savingAmount?: number | null;
   withdrawalAccount?: AccountInfo | null;
   depositAccount?: AccountInfo | null;
   onSelectWithdrawalAccount?: () => void;
@@ -47,6 +48,7 @@ export default function EventItem({
   onComplete,
   hasSavingsGoal = false,
   withdrawalAccount,
+  savingAmount,
   depositAccount,
   onSelectWithdrawalAccount,
   onSelectDepositAccount,

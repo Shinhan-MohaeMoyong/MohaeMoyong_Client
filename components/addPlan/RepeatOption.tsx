@@ -192,26 +192,6 @@ export default function RepeatOption({
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>종료 조건</Text>
             <View style={styles.endConditionContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.endConditionButton,
-                  localConfig.until === null &&
-                    localConfig.count === null &&
-                    styles.endConditionButtonActive,
-                ]}
-                onPress={() => updateConfig({ until: null, count: null })}
-              >
-                <Text
-                  style={[
-                    styles.endConditionButtonText,
-                    localConfig.until === null &&
-                      localConfig.count === null &&
-                      styles.endConditionButtonTextActive,
-                  ]}
-                >
-                  종료 없음
-                </Text>
-              </TouchableOpacity>
 
               <TouchableOpacity
                 style={[

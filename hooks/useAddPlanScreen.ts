@@ -212,12 +212,58 @@ export function useAddPlanScreen() {
     };
     
     // 반복 설정을 RecurrenceConfig 형식으로 변환
+    // 반복 설정을 RecurrenceConfig 형식으로 변환
+    let count: number | null = formData.repeatConfig.count || null;
+    console.log('createAddPlanRequest count calculate : ', formData.repeatConfig.enabled, count, formData.repeatConfig.until);
+    
+    // 반복 옵션이 활성화되어 있고 count가 설정되지 않은 경우, 종료일을 기준으로 자동 계산
+    if (formData.repeatConfig.enabled && !count && formData.repeatConfig.until) {
+      try {
+        const startDate = new Date(formData.selectedYear, formData.selectedMonth - 1, parseInt(formData.selectedDate));
+        const endDate = new Date(formData.repeatConfig.until);
+        
+        if (endDate > startDate) {
+          // 반복 주기와 간격에 따라 count 계산
+          const timeDiff = endDate.getTime() - startDate.getTime();
+          const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+          
+          switch (formData.repeatConfig.freq) {
+            case 'DAILY':
+              count = Math.floor(daysDiff / formData.repeatConfig.interval) + 1;
+              break;
+            case 'WEEKLY':
+              count = Math.floor(daysDiff / (7 * formData.repeatConfig.interval)) + 1;
+              break;
+            case 'MONTHLY':
+              count = Math.floor(daysDiff / (30 * formData.repeatConfig.interval)) + 1;
+              break;
+            case 'YEARLY':
+              count = Math.floor(daysDiff / (365 * formData.repeatConfig.interval)) + 1;
+              break;
+            default:
+              count = 1;
+          }
+          
+          console.log('📅 반복 횟수 자동 계산:', {
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString(),
+            freq: formData.repeatConfig.freq,
+            interval: formData.repeatConfig.interval,
+            calculatedCount: count
+          });
+        }
+      } catch (error) {
+        console.error('반복 횟수 계산 오류:', error);
+        count = 1; // 오류 시 기본값
+      }
+    }
+    
     const recurrenceConfig: RecurrenceConfig = {
       enabled: formData.repeatConfig.enabled,
       freq: formData.repeatConfig.freq as any,
       interval: formData.repeatConfig.interval,
       byDays: formData.repeatConfig.byDays as any,
-      count: formData.repeatConfig.count || undefined,
+      count: count,
       exceptions: formData.repeatConfig.exceptions || undefined
     };
     

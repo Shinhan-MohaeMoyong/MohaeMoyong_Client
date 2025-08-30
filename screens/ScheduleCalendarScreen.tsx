@@ -24,6 +24,7 @@ import AccountScreen from "./AccountScreen";
 import SavingScreen from "./SavingScreen";
 // 맨 위 import들 사이에
 import AccountSelectionModal, { Account } from '@/components/AccountSelectionModal';
+import PlanActionModal from '@/components/PlanActionModal';
 
 const { height: screenHeight } = Dimensions.get("window");
 const BOTTOM_SHEET_HEIGHT = screenHeight * 0.6; // 60% - 초기상태
@@ -197,80 +198,8 @@ export default function ScheduleCalendarScreen() {
     setSelectedDatePlansData(plansData);
   };
 
-  // 일정 삭제 핸들러
-  const handleDeletePlan = async (planId: string) => {
-    // 삭제 확인 알림창 표시
-    Alert.alert(
-      "일정 삭제",
-      "정말로 이 일정을 삭제하시겠습니까?",
-      [
-        {
-          text: "취소",
-          style: "cancel",
-        },
-        {
-          text: "삭제",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              console.log("🗑️ 일정 삭제 시작:", planId);
-              
-              const response = await fetch(`${SERVER_URL}/api/v1/plans/${planId}`, {
-                method: 'DELETE',
-                headers: {
-                  'Authorization': `Bearer ${await getToken()}`,
-                  'Content-Type': 'application/json',
-                },
-              });
-
-              if (!response.ok) {
-                throw new Error(`일정 삭제 실패: ${response.status} ${response.statusText}`);
-              }
-
-              console.log("✅ 일정 삭제 성공:", planId);
-              
-              // 삭제 성공 후 UI 업데이트
-              // plans 상태에서 해당 일정 제거
-              setPlans(prev => {
-                const updatedPlans = { ...prev };
-                Object.keys(updatedPlans).forEach(userId => {
-                  const userIdNum = parseInt(userId);
-                  if (updatedPlans[userIdNum]) {
-                    updatedPlans[userIdNum] = updatedPlans[userIdNum].filter(
-                      (plan: PlanEntity) => String(plan.planId) !== planId
-                    );
-                  }
-                });
-                return updatedPlans;
-              });
-
-              // 삭제 성공 알림
-              Alert.alert('성공', '일정이 삭제되었습니다.');
-
-            } catch (error) {
-              console.error('❌ 일정 삭제 실패:', error);
-              
-              let errorMessage = '일정 삭제에 실패했습니다.';
-              if (error instanceof Error) {
-                if (error.message.includes('401')) {
-                  errorMessage = '인증이 필요합니다. 다시 로그인해 주세요.';
-                } else if (error.message.includes('404')) {
-                  errorMessage = '삭제할 일정을 찾을 수 없습니다.';
-                } else if (error.message.includes('403')) {
-                  errorMessage = '일정을 삭제할 권한이 없습니다.';
-                } else if (error.message.includes('500')) {
-                  errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
-                }
-              }
-              
-              // 에러 알림 표시
-              Alert.alert('오류', errorMessage);
-            }
-          },
-        },
-      ]
-    );
-  };
+  // 일정 삭제 핸들러 (기존 Alert 대신 모달 사용)
+  
 
   // 계좌 선택 핸들러
   const handleAccountSelect = (plan: PlanEntity, type: 'withdrawal' | 'deposit') => {
@@ -300,9 +229,133 @@ export default function ScheduleCalendarScreen() {
   };
 
   // 일정 완료 핸들러
-  const handleCompletePlan = (planId: string) => {
-    // TODO: 일정 완료 로직 구현
-    console.log("Complete plan:", planId);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PlanEntity | null>(null);
+  const [modalActionType, setModalActionType] = useState<'complete' | 'delete'>('complete');
+
+  const handleCompletePlan = async (plan: PlanEntity) => {
+    setSelectedPlan(plan);
+    setModalActionType('complete');
+    setModalVisible(true);
+  };
+
+  const handleDeletePlan = async (plan: PlanEntity) => {
+    setSelectedPlan(plan);
+    setModalActionType('delete');
+    setModalVisible(true);
+  };
+
+  const handleModalConfirm = async () => {
+    if (!selectedPlan) return;
+
+    if (modalActionType === 'complete') {
+      if (selectedPlan.hasSavingsGoal) {
+        try {
+          const requestBody = {
+            withdrawAccountNo: selectedPlan.withDrawAccountNo,
+          }
+          const response = await fetch(`${SERVER_URL}/api/v1/account/deposit/${selectedPlan.planId}`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${await getToken()}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody)
+          });
+  
+          if (!response.ok) {
+            throw new Error(`저축 일정 완료 실패: ${response.status} ${response.statusText}`);
+          }
+          console.log(response.status);
+  
+          setSelectedDatePlansData(prev => prev.map(p => p.planId === selectedPlan.planId ? { ...p, completed: true } : p));
+        } catch (error) {
+          console.error('❌ 저축 일정 완료 실패:', error);
+        }
+      } else {
+        try {
+          const response = await fetch(`${SERVER_URL}/api/v1/plans/complete/${selectedPlan.planId}`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${await getToken()}`,
+            },
+          });
+  
+          if (!response.ok) {
+            throw new Error(`비저축 일정 완료 실패: ${response.status} ${response.statusText}`);
+          }
+          console.log(response.status);
+          
+          setSelectedDatePlansData(prev => prev.map(p => p.planId === selectedPlan.planId ? { ...p, completed: true } : p));
+        } catch (error) {
+          console.error('❌ 비저축 일정 완료 실패:', error);
+        }
+      }
+    } else if (modalActionType === 'delete') {
+      try {
+        console.log("🗑️ 일정 삭제 시작:", selectedPlan.planId);
+        
+        const response = await fetch(`${SERVER_URL}/api/v1/plans/${selectedPlan.planId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${await getToken()}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`일정 삭제 실패: ${response.status} ${response.statusText}`);
+        }
+
+        console.log("✅ 일정 삭제 성공:", selectedPlan.planId);
+        setSelectedDatePlansData(prev => prev.filter(p => p.planId !== selectedPlan.planId));
+
+        // 삭제 성공 후 UI 업데이트
+        // plans 상태에서 해당 일정 제거
+        setPlans(prev => {
+          const updatedPlans = { ...prev };
+          Object.keys(updatedPlans).forEach(userId => {
+            const userIdNum = parseInt(userId);
+            if (updatedPlans[userIdNum]) {
+              updatedPlans[userIdNum] = updatedPlans[userIdNum].filter(
+                (plan: PlanEntity) => plan.planId !== selectedPlan.planId
+              );
+            }
+          });
+          return updatedPlans;
+        });
+
+        // 삭제 성공 알림
+        Alert.alert('성공', '일정이 삭제되었습니다.');
+
+      } catch (error) {
+        console.error('❌ 일정 삭제 실패:', error);
+        
+        let errorMessage = '일정 삭제에 실패했습니다.';
+        if (error instanceof Error) {
+          if (error.message.includes('401')) {
+            errorMessage = '인증이 필요합니다. 다시 로그인해 주세요.';
+          } else if (error.message.includes('404')) {
+            errorMessage = '삭제할 일정을 찾을 수 없습니다.';
+          } else if (error.message.includes('403')) {
+            errorMessage = '일정을 삭제할 권한이 없습니다.';
+          } else if (error.message.includes('500')) {
+            errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+          }
+        }
+        
+        // 에러 알림 표시
+        Alert.alert('오류', errorMessage);
+      }
+    }
+
+    setModalVisible(false);
+    setSelectedPlan(null);
+  };
+
+  const handleModalCancel = () => {
+    setModalVisible(false);
+    setSelectedPlan(null);
   };
 
 
@@ -492,8 +545,8 @@ export default function ScheduleCalendarScreen() {
                    <View style={styles.errorContainer}>
                      <Text style={styles.errorText}>{plansError}</Text>
                    </View>
-                                   ) : selectedDatePlans.length > 0 ? (
-                    selectedDatePlans
+                                   ) : selectedDatePlansData.length > 0 ? (
+                    selectedDatePlansData
                       .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
                       .map((plan, index) => {
                         // EventItem에 전달되는 정보 로깅
@@ -508,6 +561,9 @@ export default function ScheduleCalendarScreen() {
                           depositAccount: plan.depositAccountNo ? { bankName: "은행명", accountNumber: plan.depositAccountNo } : null,
                           rawPlanData: plan // 전체 원본 데이터
                         });
+
+                        if(plan.completed) return null;
+
                         
                         return (
                           <EventItem
@@ -517,11 +573,12 @@ export default function ScheduleCalendarScreen() {
                             title={plan.title}
                             location={plan.place || "장소 없음"}
                             hasSavingsGoal={plan.hasSavingsGoal}
+                            savingAmount={plan.savingsAmount}
                             onDelete={() =>
-                              handleDeletePlan(String(plan.planId || ""))
+                              handleDeletePlan(plan)
                             }
                             onComplete={() =>
-                              handleCompletePlan(String(plan.planId || ""))
+                              handleCompletePlan(plan)
                             }
                             withdrawalAccount={plan.withDrawAccountNo ? { bankName: "은행명", accountNumber: plan.withDrawAccountNo } : null}
                             depositAccount={plan.depositAccountNo ? { bankName: "은행명", accountNumber: plan.depositAccountNo } : null}
@@ -545,6 +602,15 @@ export default function ScheduleCalendarScreen() {
           </ScrollView>
         </BottomSheetModal>
       )}
+      
+      {/* 일정 완료/삭제 모달 */}
+      <PlanActionModal
+        visible={modalVisible}
+        plan={selectedPlan}
+        actionType={modalActionType}
+        onConfirm={handleModalConfirm}
+        onCancel={handleModalCancel}
+      />
     </SafeAreaView>
   );
 }

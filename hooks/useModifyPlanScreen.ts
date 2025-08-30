@@ -160,7 +160,7 @@ export function useModifyPlanScreen(
        updateFormData({ files: existingPhotos });
        console.log('useModifyPlanScreen: 기존 사진 매핑 완료 (중복 제거):', existingPhotos);
      }
-   }, [planId, postData]);
+   }, []);
 
   const updateFormData = (updates: Partial<AddPlanFormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
@@ -381,7 +381,7 @@ export function useModifyPlanScreen(
 
                                        // 사진 정보를 올바른 구조로 구성 (커버 이미지 제외)
        const photos: PhotoInfo[] = formData.files
-         .filter((file, index) => index > 1) // 0번째(커버 이미지) 제외
+         .filter((file, index) => index > 0) // 0번째(커버 이미지) 제외
          .map((file, index) => {
            if (file.isExisting && file.photoId) {
              // 기존 사진: photoId, url, width, height, orderNo 포함
