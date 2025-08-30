@@ -14,7 +14,7 @@ import {
 } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Keyboard, StyleSheet, Text, TouchableWithoutFeedback, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import CommentInput from "./CommentInput";
 import CommentItem from "./CommentItem";
@@ -132,13 +132,14 @@ export default function PostBottomSheet({
   };
 
   return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
     <BottomSheetModal
+      keyboardBehavior="interactive"
       ref={sheetRef}
       index={0}
       snapPoints={snapPoints}
       enablePanDownToClose={true}
       onDismiss={onClose}
-      keyboardBehavior="extend"
       keyboardBlurBehavior="restore"
       android_keyboardInputMode="adjustResize"
       enableContentPanningGesture={true}
@@ -177,6 +178,8 @@ export default function PostBottomSheet({
         </BottomSheetFooter>
       )}
     >
+    
+
       <BottomSheetScrollView
         style={styles.listContainer}
         contentContainerStyle={{ paddingBottom: footerHeight, paddingHorizontal: 16 }}
@@ -200,20 +203,67 @@ export default function PostBottomSheet({
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingText}>댓글을 불러오는 중...</Text>
           </View>
-        ) : comments && comments.length > 0 ? (
-          [...comments]
-            .reverse()
-            .map((item, index) => (
-              <CommentItem
-                key={item.id}
-                id={item.id}
-                comment={item}
-                userDTO={item.userDTO}
-                time={item.time}
-                text={item.text}
-                isAfterPlanEnd={postData?.isCompleted}
-              />
-            ))
+        ) : postData && comments && comments.length > 0 ? (
+          (() => {
+            const reversedComments = [...comments].reverse();
+            let hasShownReviewPrompt = false;
+            
+            // 모든 댓글이 일정 종료 시간 이전인지 확인
+            const planEndTime = new Date(postData.endTime);
+            const currentTime = new Date();
+            const allCommentsBeforeEnd = reversedComments.every(item => {
+              const commentTime = new Date(item.time);
+              return commentTime <= planEndTime;
+            });
+            
+            // 현재 시간도 일정 종료 시간 이전인지 확인
+            const isCurrentTimeBeforeEnd = currentTime <= planEndTime;
+            
+            // 모든 댓글이 일정 종료 시간 이전이고 현재 시간도 일정 종료 시간 이전이면 후기 프롬프트 표시
+            if (allCommentsBeforeEnd && isCurrentTimeBeforeEnd) {
+              hasShownReviewPrompt = true;
+            }
+            
+            const commentItems = reversedComments.map((item, index) => {
+              // 일정 종료 시간 이후의 댓글인지 확인
+              const commentTime = new Date(item.time);
+              const isAfterPlanEnd = commentTime > planEndTime;
+              
+              // 후기 프롬프트 표시 여부 결정
+              let shouldShowReviewPrompt = false;
+              if (isAfterPlanEnd && !hasShownReviewPrompt) {
+                shouldShowReviewPrompt = true;
+                hasShownReviewPrompt = true;
+              }
+              
+              return (
+                <CommentItem
+                  key={item.id}
+                  planId={postData.planId}
+                  id={item.id}
+                  comment={item}
+                  userDTO={item.userDTO}
+                  time={item.time}
+                  text={item.text}
+                  isAfterPlanEnd={shouldShowReviewPrompt}
+                />
+              );
+            });
+            
+            // 모든 댓글이 일정 종료 시간 이전이고 현재 시간도 일정 종료 시간 이전이면 마지막에 후기 프롬프트 추가
+            if (allCommentsBeforeEnd && isCurrentTimeBeforeEnd && !hasShownReviewPrompt) {
+              commentItems.push(
+                <View key="review-prompt" style={{ marginTop: 12 }}>
+                  <View style={{ height: 1, backgroundColor: "#EDEDED", marginVertical: 12 }} />
+                  <Text style={{ fontSize: 13, color: "#666", textAlign: "center", marginBottom: 12 }}>
+                    일정 후기를 남겨보세요..
+                  </Text>
+                </View>
+              );
+            }
+            
+            return commentItems;
+          })()
         ) : (
           <View style={styles.emptyWrap}>
             <Text style={styles.emptyEmoji}>🫧</Text>
@@ -222,10 +272,11 @@ export default function PostBottomSheet({
           </View>
         )}
       </BottomSheetScrollView>
+      
     </BottomSheetModal>
+    </TouchableWithoutFeedback>
   );
 }
-
 const styles = StyleSheet.create({
   listContainer: {
     flex: 1,

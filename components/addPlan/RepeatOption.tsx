@@ -30,45 +30,47 @@ export default function RepeatOption({
   },
   onRepeatConfigChange,
 }: Props) {
+  // 내부 로컬 상태 (초기값만 props로부터 주입)
   const [localConfig, setLocalConfig] = useState<RepeatConfig>(repeatConfig);
+
+  // 입력 중 빈 문자열을 표시하기 위한 로컬 텍스트 상태
+  const [intervalText, setIntervalText] = useState<string>(String(repeatConfig.interval ?? 1));
+  const [countText, setCountText] = useState<string>(
+    repeatConfig.count === null || repeatConfig.count === undefined ? "" : String(repeatConfig.count)
+  );
+
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [showExceptionDatePicker, setShowExceptionDatePicker] = useState(false);
 
+  const emitChange = (cfg: RepeatConfig) => {
+    setLocalConfig(cfg);
+    onRepeatConfigChange?.(cfg);
+  };
+
   const handleRepeatToggle = () => {
     const newEnabled = !localConfig.enabled;
-    const newConfig = { ...localConfig, enabled: newEnabled };
-    setLocalConfig(newConfig);
-
-    if (onRepeatConfigChange) {
-      onRepeatConfigChange(newConfig);
-    }
+    emitChange({ ...localConfig, enabled: newEnabled });
   };
 
   const updateConfig = (updates: Partial<RepeatConfig>) => {
-    const newConfig = { ...localConfig, ...updates };
-    setLocalConfig(newConfig);
-
-    if (onRepeatConfigChange) {
-      onRepeatConfigChange(newConfig);
-    }
+    emitChange({ ...localConfig, ...updates });
   };
 
   const handleEndDatePickerChange = (day: any) => {
     setShowEndDatePicker(false);
-    if (day && day.dateString) {
-      updateConfig({ until: day.dateString });
-    }
+    if (day?.dateString) updateConfig({ until: day.dateString, count: null });
   };
 
   const handleExceptionDatePickerChange = (day: any) => {
     setShowExceptionDatePicker(false);
-    if (day && day.dateString) {
-      const newExceptions = localConfig.exceptions
-        ? [...localConfig.exceptions, day.dateString]
-        : [day.dateString];
+    if (day?.dateString) {
+      const newExceptions = localConfig.exceptions ? [...localConfig.exceptions, day.dateString] : [day.dateString];
       updateConfig({ exceptions: newExceptions });
     }
   };
+
+  // 숫자만 추출
+  const onlyDigits = (s: string) => s.replace(/[^\d]/g, "");
 
   return (
     <View style={styles.container}>
@@ -84,10 +86,9 @@ export default function RepeatOption({
         </View>
       </View>
 
-      {/* 반복 설정이 활성화되면 바로 아래에 표시 */}
       {localConfig.enabled && (
         <View style={styles.settingsContainer}>
-          {/* 반복 주기 선택 */}
+          {/* 반복 주기 */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>반복 주기</Text>
             <View style={styles.freqContainer}>
@@ -103,7 +104,7 @@ export default function RepeatOption({
                     styles.freqButton,
                     localConfig.freq === freq.key && styles.freqButtonActive,
                   ]}
-                  onPress={() => updateConfig({ freq: freq.key as any })}
+                  onPress={() => updateConfig({ freq: freq.key as RepeatConfig["freq"] })}
                 >
                   <Text
                     style={[
@@ -118,37 +119,44 @@ export default function RepeatOption({
             </View>
           </View>
 
-          {/* 반복 간격 설정 */}
+          {/* 반복 간격 */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>반복 간격</Text>
             <View style={styles.intervalInputContainer}>
               <Text style={styles.intervalLabel}>매</Text>
-                                <TextInput
-                    style={styles.intervalTextInput}
-                    value={localConfig.interval.toString()}
-                    onChangeText={(text) => {
-                      if (text === "") {
-                        // interval은 필수값이면, UI에 빈 문자열을 보여주고 싶다면
-                        // 별도 temp 상태를 두는게 가장 깔끔하지만,
-                        // 간단히 여기서는 1로 되돌리지 않도록 바로 확정하지 않고 return만 합니다.
-                        return;
-                      }
-                      const num = parseInt(text.replace(/[^\d]/g, ""), 10);
-                      if (Number.isNaN(num)) return;
-                      const clamped = Math.max(1, Math.min(10, num));
-                      updateConfig({ interval: clamped });
-                    }}
-                    onBlur={() => {
-                      // 비워둔 채로 포커스가 빠졌다면 기본값 확정
-                      if (!localConfig.interval || localConfig.interval < 1) {
-                        updateConfig({ interval: 1 });
-                      }
-                    }}
-                    keyboardType="number-pad"
-                    placeholder="1"
-                    placeholderTextColor="#999"
-                  />
-
+              <TextInput
+                style={styles.intervalTextInput}
+                value={intervalText}
+                onChangeText={(text) => {
+                  // 입력 중에는 빈 문자열 허용
+                  const digits = onlyDigits(text);
+                  if (text === "") {
+                    setIntervalText("");
+                    return;
+                  }
+                  setIntervalText(digits);
+                  const num = parseInt(digits, 10);
+                  if (!Number.isNaN(num)) {
+                    const clamped = Math.max(1, Math.min(10, num));
+                    updateConfig({ interval: clamped });
+                  }
+                }}
+                onBlur={() => {
+                  // 비워둔 채 포커스 아웃 → 기본 1로 확정
+                  if (intervalText === "") {
+                    setIntervalText("1");
+                    updateConfig({ interval: 1 });
+                  } else {
+                    const num = parseInt(intervalText, 10);
+                    const clamped = Number.isNaN(num) ? 1 : Math.max(1, Math.min(10, num));
+                    setIntervalText(String(clamped));
+                    updateConfig({ interval: clamped });
+                  }
+                }}
+                keyboardType="number-pad"
+                placeholder="1"
+                placeholderTextColor="#999"
+              />
               <Text style={styles.intervalLabel}>
                 {localConfig.freq === "DAILY"
                   ? "일"
@@ -162,7 +170,7 @@ export default function RepeatOption({
             </View>
           </View>
 
-          {/* 요일 선택 (주 단위일 때만) */}
+          {/* 요일 (주 단위) */}
           {localConfig.freq === "WEEKLY" && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>반복 요일</Text>
@@ -175,45 +183,62 @@ export default function RepeatOption({
                   { key: "FR", label: "금" },
                   { key: "SA", label: "토" },
                   { key: "SU", label: "일" },
-                ].map((day) => (
-                  <TouchableOpacity
-                    key={day.key}
-                    style={[
-                      styles.dayButton,
-                      localConfig.byDays.includes(day.key) && styles.dayButtonActive,
-                    ]}
-                    onPress={() => {
-                      const newByDays = localConfig.byDays.includes(day.key)
-                        ? localConfig.byDays.filter((d) => d !== day.key)
-                        : [...localConfig.byDays, day.key];
-                      updateConfig({ byDays: newByDays });
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.dayButtonText,
-                        localConfig.byDays.includes(day.key) && styles.dayButtonTextActive,
-                      ]}
+                ].map((day) => {
+                  const active = localConfig.byDays.includes(day.key);
+                  return (
+                    <TouchableOpacity
+                      key={day.key}
+                      style={[styles.dayButton, active && styles.dayButtonActive]}
+                      onPress={() => {
+                        const newByDays = active
+                          ? localConfig.byDays.filter((d) => d !== day.key)
+                          : [...localConfig.byDays, day.key];
+                        updateConfig({ byDays: newByDays });
+                      }}
                     >
-                      {day.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <Text style={[styles.dayButtonText, active && styles.dayButtonTextActive]}>
+                        {day.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
           )}
 
-          {/* 종료 조건 설정 */}
+          {/* 종료 조건 */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>종료 조건</Text>
             <View style={styles.endConditionContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.endConditionButton,
+                  localConfig.until === null && localConfig.count === null && styles.endConditionButtonActive,
+                ]}
+                onPress={() => {
+                  updateConfig({ until: null, count: null });
+                  setCountText("");
+                }}
+              >
+                <Text
+                  style={[
+                    styles.endConditionButtonText,
+                    localConfig.until === null && localConfig.count === null && styles.endConditionButtonTextActive,
+                  ]}
+                >
+                  종료 없음
+                </Text>
+              </TouchableOpacity>
 
               <TouchableOpacity
                 style={[
                   styles.endConditionButton,
                   localConfig.until !== null && styles.endConditionButtonActive,
                 ]}
-                onPress={() => updateConfig({ until: "2025-12-31", count: null })}
+                onPress={() => {
+                  updateConfig({ until: "2025-12-31", count: null });
+                  setCountText("");
+                }}
               >
                 <Text
                   style={[
@@ -224,213 +249,204 @@ export default function RepeatOption({
                   종료일 설정
                 </Text>
               </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.endConditionButton,
+              localConfig.count !== null && styles.endConditionButtonActive,
+            ]}
+            onPress={() => {
+              const next = localConfig.count ?? 1;
+              updateConfig({ until: null, count: next });
+              setCountText(String(next));
+            }}
+          >
+            <Text
+              style={[
+                styles.endConditionButtonText,
+                localConfig.count !== null && styles.endConditionButtonTextActive,
+              ]}
+            >
+              횟수 설정
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-              <TouchableOpacity
-                style={[
-                  styles.endConditionButton,
-                  localConfig.count !== null && styles.endConditionButtonActive,
-                ]}
-                onPress={() => updateConfig({ until: null, count: 3 })}
-              >
-                <Text
-                  style={[
-                    styles.endConditionButtonText,
-                    localConfig.count !== null && styles.endConditionButtonTextActive,
-                  ]}
-                >
-                  횟수 설정
-                </Text>
-              </TouchableOpacity>
-            </View>
+        {/* 종료일 입력 */}
+        {localConfig.until !== null && (
+          <View style={styles.dateInputContainer}>
+            <Text style={styles.dateInputLabel}>종료일:</Text>
+            <TouchableOpacity style={styles.dateButton} onPress={() => setShowEndDatePicker(true)}>
+              <Text style={styles.dateButtonText}>{localConfig.until || "날짜 선택"}</Text>
+              <Ionicons name="calendar-outline" size={20} color="#666" />
+            </TouchableOpacity>
+          </View>
+        )}
 
-            {/* 종료일 입력 */}
-            {localConfig.until !== null && (
-              <View style={styles.dateInputContainer}>
-                <Text style={styles.dateInputLabel}>종료일:</Text>
+        {/* 횟수 입력 */}
+        {localConfig.count !== null && (
+          <View style={styles.countInputContainer}>
+            <Text style={styles.countInputLabel}>반복 횟수:</Text>
+            <TextInput
+              style={styles.countTextInput}
+              value={countText}
+              onChangeText={(text) => {
+                const digits = onlyDigits(text);
+                if (text === "") {
+                  setCountText("");        // 입력 중 빈 문자열 허용
+                  updateConfig({ count: null });
+                  return;
+                }
+                setCountText(digits);
+                const num = parseInt(digits, 10);
+                if (!Number.isNaN(num)) {
+                  const clamped = Math.max(1, Math.min(99, num));
+                  updateConfig({ count: clamped });
+                }
+              }}
+              onBlur={() => {
+                // 빈 채로 나가면 기본 1로 확정
+                if (countText === "" || localConfig.count === null) {
+                  setCountText("1");
+                  updateConfig({ count: 1 });
+                } else {
+                  const num = parseInt(countText, 10);
+                  const clamped = Number.isNaN(num) ? 1 : Math.max(1, Math.min(99, num));
+                  setCountText(String(clamped));
+                  updateConfig({ count: clamped });
+                }
+              }}
+              keyboardType="number-pad"
+              placeholder="1"
+              placeholderTextColor="#999"
+            />
+          </View>
+        )}
+      </View>
+
+      {/* 예외일 설정 */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>예외일 설정</Text>
+        <View style={styles.exceptionContainer}>
+          <Text style={styles.exceptionLabel}>반복하지 않을 날짜:</Text>
+          <View style={styles.exceptionDatesContainer}>
+            {localConfig.exceptions?.map((date, index) => (
+              <View key={`${date}-${index}`} style={styles.exceptionDateItem}>
+                <Text style={styles.exceptionDateText}>{date}</Text>
                 <TouchableOpacity
-                  style={styles.dateButton}
-                  onPress={() => setShowEndDatePicker(true)}
+                  style={styles.removeDateButton}
+                  onPress={() => {
+                    const newExceptions = (localConfig.exceptions ?? []).filter((_, i) => i !== index);
+                    updateConfig({ exceptions: newExceptions.length ? newExceptions : null });
+                  }}
                 >
-                  <Text style={styles.dateButtonText}>{localConfig.until || "날짜 선택"}</Text>
-                  <Ionicons name="calendar-outline" size={20} color="#666" />
+                  <Ionicons name="close-circle" size={20} color="#FF3B30" />
                 </TouchableOpacity>
               </View>
-            )}
-
-            {/* 횟수 입력 */}
-            {localConfig.count !== null && (
-              <View style={styles.countInputContainer}>
-                <Text style={styles.countInputLabel}>반복 횟수:</Text>
-                <TextInput
-                  style={styles.countTextInput}
-                  value={localConfig.count?.toString() ?? ""}  // null이면 빈 문자열
-                  onChangeText={(text) => {
-                    // 1) 입력 중엔 빈 문자열 허용 (지우는 과정)
-                    if (text === "") {
-                      // 화면에 빈 문자열 유지하려면 count를 null로 두세요
-                      updateConfig({ count: null });
-                      return;
-                    }
-                    // 2) 숫자만 추출 후 숫자 아니면 무시
-                    const num = parseInt(text.replace(/[^\d]/g, ""), 10);
-                    if (Number.isNaN(num)) return;
-
-                    // 3) 입력 중에도 대략적인 범위는 묶어주되, 즉시 1로 되돌리지 않음
-                    // (원하면 상한/하한 조정: 예 1~99)
-                    const clamped = Math.max(1, Math.min(99, num));
-                    updateConfig({ count: clamped });
-                  }}
-                  onBlur={() => {
-                    // 포커스 빠질 때 최종 보정: null이면 기본 1로 확정
-                    if (localConfig.count === null) {
-                      updateConfig({ count: 1 });
-                    }
-                  }}
-                  keyboardType="number-pad"
-                  placeholder="1"
-                  placeholderTextColor="#999"
-                />
-              </View>
-            )}
-
+            ))}
           </View>
-
-          {/* 예외일 설정 */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>예외일 설정</Text>
-            <View style={styles.exceptionContainer}>
-              <Text style={styles.exceptionLabel}>반복하지 않을 날짜:</Text>
-              <View style={styles.exceptionDatesContainer}>
-                {localConfig.exceptions?.map((date, index) => (
-                  <View key={index} style={styles.exceptionDateItem}>
-                    <Text style={styles.exceptionDateText}>{date}</Text>
-                    <TouchableOpacity
-                      style={styles.removeDateButton}
-                      onPress={() => {
-                        const newExceptions =
-                          localConfig.exceptions?.filter((_, i) => i !== index) || [];
-                        updateConfig({ exceptions: newExceptions });
-                      }}
-                    >
-                      <Ionicons name="close-circle" size={20} color="#FF3B30" />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </View>
-              <TouchableOpacity
-                style={styles.addExceptionButton}
-                onPress={() => setShowExceptionDatePicker(true)}
-              >
-                <Ionicons name="add-circle-outline" size={20} color="#6C5CE7" />
-                <Text style={styles.addExceptionButtonText}>예외일 추가</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          <TouchableOpacity
+            style={styles.addExceptionButton}
+            onPress={() => setShowExceptionDatePicker(true)}
+          >
+            <Ionicons name="add-circle-outline" size={20} color="#6C5CE7" />
+            <Text style={styles.addExceptionButtonText}>예외일 추가</Text>
+          </TouchableOpacity>
         </View>
-      )}
-
-      {/* 종료일 날짜 선택 모달 */}
-      <Modal
-        visible={showEndDatePicker}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowEndDatePicker(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>종료일 선택</Text>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setShowEndDatePicker(false)}
-              >
-                <Ionicons name="close" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
-            <Calendar
-              onDayPress={handleEndDatePickerChange}
-              markedDates={{
-                [localConfig.until || ""]: {
-                  selected: true,
-                  selectedColor: "#6C5CE7",
-                },
-              }}
-              theme={{
-                selectedDayBackgroundColor: "#6C5CE7",
-                selectedDayTextColor: "#ffffff",
-                todayTextColor: "#6C5CE7",
-                dayTextColor: "#2d4150",
-                textDisabledColor: "#d9e1e8",
-                arrowColor: "#6C5CE7",
-                monthTextColor: "#6C5CE7",
-                indicatorColor: "#6C5CE7",
-                textDayFontWeight: "300",
-                textMonthFontWeight: "bold",
-                textDayHeaderFontWeight: "300",
-                textDayFontSize: 16,
-                textMonthFontSize: 16,
-                textDayHeaderFontSize: 13,
-              }}
-            />
-          </View>
-        </View>
-      </Modal>
-
-      {/* 예외일 날짜 선택 모달 */}
-      <Modal
-        visible={showExceptionDatePicker}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowExceptionDatePicker(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>예외일 선택</Text>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setShowExceptionDatePicker(false)}
-              >
-                <Ionicons name="close" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
-            <Calendar
-              onDayPress={handleExceptionDatePickerChange}
-              markedDates={{
-                ...(localConfig.exceptions?.reduce(
-                  (acc, date) => ({
-                    ...acc,
-                    [date]: {
-                      selected: true,
-                      selectedColor: "#FF3B30",
-                    },
-                  }),
-                  {}
-                ) || {}),
-              }}
-              theme={{
-                selectedDayBackgroundColor: "#FF3B30",
-                selectedDayTextColor: "#ffffff",
-                todayTextColor: "#6C5CE7",
-                dayTextColor: "#2d4150",
-                textDisabledColor: "#d9e1e8",
-                arrowColor: "#6C5CE7",
-                monthTextColor: "#6C5CE7",
-                indicatorColor: "#6C5CE7",
-                textDayFontWeight: "300",
-                textMonthFontWeight: "bold",
-                textDayHeaderFontWeight: "300",
-                textDayFontSize: 16,
-                textMonthFontSize: 16,
-                textDayHeaderFontSize: 13,
-              }}
-            />
-          </View>
-        </View>
-      </Modal>
+      </View>
     </View>
+  )}
+
+  {/* 종료일 모달 */}
+  <Modal
+    visible={showEndDatePicker}
+    transparent
+    animationType="fade"
+    onRequestClose={() => setShowEndDatePicker(false)}
+  >
+    <View style={styles.modalOverlay}>
+      <View style={styles.modalContent}>
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>종료일 선택</Text>
+          <TouchableOpacity style={styles.closeButton} onPress={() => setShowEndDatePicker(false)}>
+            <Ionicons name="close" size={24} color="#666" />
+          </TouchableOpacity>
+        </View>
+        <Calendar
+          onDayPress={handleEndDatePickerChange}
+          markedDates={
+            localConfig.until
+              ? { [localConfig.until]: { selected: true, selectedColor: "#6C5CE7" } }
+              : {}
+          }
+          theme={{
+            selectedDayBackgroundColor: "#6C5CE7",
+            selectedDayTextColor: "#ffffff",
+            todayTextColor: "#6C5CE7",
+            dayTextColor: "#2d4150",
+            textDisabledColor: "#d9e1e8",
+            arrowColor: "#6C5CE7",
+            monthTextColor: "#6C5CE7",
+            indicatorColor: "#6C5CE7",
+            textDayFontWeight: "300",
+            textMonthFontWeight: "bold",
+            textDayHeaderFontWeight: "300",
+            textDayFontSize: 16,
+            textMonthFontSize: 16,
+            textDayHeaderFontSize: 13,
+          }}
+        />
+      </View>
+    </View>
+  </Modal>
+
+  {/* 예외일 모달 */}
+  <Modal
+    visible={showExceptionDatePicker}
+    transparent
+    animationType="fade"
+    onRequestClose={() => setShowExceptionDatePicker(false)}
+  >
+    <View style={styles.modalOverlay}>
+      <View style={styles.modalContent}>
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>예외일 선택</Text>
+          <TouchableOpacity style={styles.closeButton} onPress={() => setShowExceptionDatePicker(false)}>
+            <Ionicons name="close" size={24} color="#666" />
+          </TouchableOpacity>
+        </View>
+        <Calendar
+          onDayPress={handleExceptionDatePickerChange}
+          markedDates={{
+            ...(localConfig.exceptions?.reduce<Record<string, any>>((acc, date) => {
+              acc[date] = { selected: true, selectedColor: "#FF3B30" };
+              return acc;
+            }, {}) ?? {}),
+          }}
+          theme={{
+            selectedDayBackgroundColor: "#FF3B30",
+            selectedDayTextColor: "#ffffff",
+            todayTextColor: "#6C5CE7",
+            dayTextColor: "#2d4150",
+            textDisabledColor: "#d9e1e8",
+            arrowColor: "#6C5CE7",
+            monthTextColor: "#6C5CE7",
+            indicatorColor: "#6C5CE7",
+            textDayFontWeight: "300",
+            textMonthFontWeight: "bold",
+            textDayHeaderFontWeight: "300",
+            textDayFontSize: 16,
+            textMonthFontSize: 16,
+            textDayHeaderFontSize: 13,
+          }}
+        />
+      </View>
+    </View>
+  </Modal>
+</View>
   );
 }
+
+
 
 const styles = StyleSheet.create({
   container: {

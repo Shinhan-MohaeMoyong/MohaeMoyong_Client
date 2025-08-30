@@ -188,14 +188,14 @@ export function useAddPlanScreen() {
     // 사용자가 선택한 연도, 월, 일을 사용
     const selectedDay = parseInt(formData.selectedDate);
 
-    console.log(formData.selectedDate)
+    console.log('createAddPlanRequest default ', formData.selectedDate);
     
     // 시작 시간과 종료 시간을 YYYY-MM-DDTHH:MM:SS 형식으로 변환
-    const startDateTime = new Date(formData.selectedDate);
+    const startDateTime = new Date(formData.selectedYear, formData.selectedMonth - 1, parseInt(formData.selectedDate));
     const [startHour, startMinute] = formData.startTime.split(':').map(Number);
     startDateTime.setHours(startHour, startMinute, 0, 0);
     
-    const endDateTime = new Date(formData.selectedDate);
+    const endDateTime = new Date(formData.selectedYear, formData.selectedMonth - 1, parseInt(formData.selectedDate));
     const [endHour, endMinute] = formData.endTime.split(':').map(Number);
     endDateTime.setHours(endHour, endMinute, 0, 0);
     
@@ -219,7 +219,7 @@ export function useAddPlanScreen() {
     // 반복 옵션이 활성화되어 있고 count가 설정되지 않은 경우, 종료일을 기준으로 자동 계산
     if (formData.repeatConfig.enabled && !count && formData.repeatConfig.until) {
       try {
-        const startDate = new Date(formData.selectedDate);
+        const startDate = new Date(formData.selectedYear, formData.selectedMonth - 1, parseInt(formData.selectedDate));
         const endDate = new Date(formData.repeatConfig.until);
         console.log('start, end',startDate, endDate);
         if (endDate > startDate) {

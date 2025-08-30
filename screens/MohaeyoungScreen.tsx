@@ -27,7 +27,8 @@ export default function MohaeyoungScreen() {
         changeWeek,
         refetch, 
         onItemPress, 
-        setCurrentUserTo 
+        setCurrentUserTo,
+        refreshUserPlans
     } = useMohaeyoung({
         currentUser: loggedUser ? {
             id: loggedUser.userId,
@@ -163,6 +164,7 @@ export default function MohaeyoungScreen() {
                          {
                  (postBottomSheetData) && (
                      <PostBottomSheet
+                        refreshUserPlans={refreshUserPlans}
                          plan={selectedPlan || undefined}
                          postData={postBottomSheetData || undefined}
                          friends={friends}

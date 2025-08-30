@@ -17,12 +17,17 @@ type Props = {
   onSavingAmountChange: (amount: string) => void; // 숫자만 넘김
 };
 
-// 천단위 콤마 포맷
+const MAX_SAVING = 10_000_000_000;
+
+
+// 천단위 콤마 포맷 (빈 문자열 허용)
 const formatCurrency = (value: string) => {
   if (!value) return "";
   const numeric = value.replace(/[^0-9]/g, "");
   if (!numeric) return "";
-  return Number(numeric).toLocaleString("ko-KR");
+  // 100억으로 상한 보정 (표시도 일관되게)
+  const clamped = Math.min(Number(numeric), MAX_SAVING);
+  return clamped.toLocaleString("ko-KR");
 };
 
 // 계좌번호 구간별 마스킹: ***-***-9012
@@ -51,11 +56,23 @@ export default function SaveOption({
   onDepositAccountSelect,
   onSavingAmountChange,
 }: Props) {
-  // 입력 시: 숫자만 상위로 전달 → 화면에는 콤마 포함 문자열 표시
+  // ✅ 입력 시: 숫자만 상위로 전달 + 100억 상한 적용
   const handleAmountChange = (text: string) => {
+    // 1) 숫자만 추출
     const numeric = text.replace(/[^0-9]/g, "");
-    onSavingAmountChange(numeric);
+    // 2) 선행 0 제거 (단, 빈 문자열은 허용)
+    const trimmed = numeric.replace(/^0+(?!$)/, "");
+    if (trimmed === "") {
+      onSavingAmountChange("");
+      return;
+    }
+    // 3) 길이 제한(최대 11자리: 10000000000), 4) 상한 클램프
+    const limited = trimmed.length > 11 ? "10000000000" : trimmed;
+    const clamped = Math.min(Number(limited), MAX_SAVING);
+    onSavingAmountChange(String(clamped));
   };
+
+  const isMax = savingAmount !== "" && Number(savingAmount) >= MAX_SAVING;
 
   return (
     <View style={styles.container}>
@@ -105,7 +122,7 @@ export default function SaveOption({
             </TouchableOpacity>
           </View>
 
-          {/* 저축 금액 (천단위 콤마 표시) */}
+          {/* 저축 금액 (천단위 콤마 표시, 100억 상한) */}
           <View style={styles.fieldContainer}>
             <Text style={styles.fieldLabel}>저축 금액</Text>
             <View style={styles.amountContainer}>
@@ -113,7 +130,7 @@ export default function SaveOption({
               <TextInput
                 style={styles.amountInput}
                 value={formatCurrency(savingAmount)}     // 포맷된 값 표시
-                onChangeText={handleAmountChange}        // 숫자만 상위로 전달
+                onChangeText={handleAmountChange}        // 숫자만 상위로 전달(상한 포함)
                 placeholder="0"
                 placeholderTextColor="#999"
                 keyboardType="numeric"
@@ -121,6 +138,12 @@ export default function SaveOption({
               />
               <Text style={styles.currencyText}>원</Text>
             </View>
+            {/* 선택: 상한 도달 안내 */}
+            {isMax && (
+              <Text style={{ marginTop: 6, fontSize: 12, color: "#E53935", fontWeight: "600" }}>
+                최대 입력 금액은 100억 원입니다.
+              </Text>
+            )}
           </View>
         </View>
       )}
