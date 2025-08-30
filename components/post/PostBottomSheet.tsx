@@ -91,7 +91,7 @@ export default function PostBottomSheet({
         
         // 성공 시 로딩 해제
         console.log('loggedUser?.userId:', loggedUser?.userId);
-        fetchPlans(loggedUser?.userId || 0);
+        refreshUserPlans?.(loggedUser?.userId || 0);
         refetch();
         onClose();
       } catch (error) {
