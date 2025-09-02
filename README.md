@@ -1,5 +1,5 @@
 # 🌟 뭐해? 모여!
-
+<img width="1920" height="1080" alt="logo-background" src="https://github.com/user-attachments/assets/940f963e-2df8-4bb1-a229-6c6d217189bb" />
 대학생들의 시간표 공유와 저축 목표 달성을 함께할 수 있는 **캠퍼스 기반 소셜 일정 공유 & 금융 연동 서비스**입니다.
 
 ---
@@ -47,7 +47,7 @@
 
 ## 🗂 DB ERD
 
-
+<img width="1294" height="1500" alt="최종ERD" src="https://github.com/user-attachments/assets/f31ff941-10a5-4a9d-a583-96b3d968c623" />
 
 ## 📦 폴더 구조 (예시)
 
